@@ -20,8 +20,16 @@
             android:orientation="vertical"
             android:padding="18dp">
 
+            <!-- Not verified members see their warning here instead of the countdown. -->
+            <LinearLayout
+                android:id="@+id/top_slot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
             <!-- Countdown to the next release -->
             <LinearLayout
+                android:id="@+id/countdown"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_countdown"
@@ -32,7 +40,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Next release in"
+                    android:text="Get new contacts in"
                     android:textColor="@color/text2"
                     android:textSize="13.5sp" />
                 <TextView

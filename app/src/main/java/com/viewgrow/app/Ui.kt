@@ -1,7 +1,16 @@
 package com.viewgrow.app
 
 import android.content.Context
+import android.animation.ValueAnimator
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.RectF
+import android.graphics.drawable.Drawable
+import android.view.animation.LinearInterpolator
+import com.google.android.material.button.MaterialButton
 import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.Spanned
@@ -86,10 +95,30 @@ object Ui {
         lastToast = Toast.makeText(view.context.applicationContext, message, Toast.LENGTH_SHORT).also { it.show() }
     }
 
-    // Button waiting for the database: greyed out with "Please wait".
-    fun setBusy(btn: Button, busy: Boolean, label: String) {
-        btn.isEnabled = !busy
-        btn.text = if (busy) "Please wait" else label
+    // Button waiting for the database: a small spinner inside the button and a "...ing" label.
+    // The button keeps its green colour and ignores taps until it is done.
+    fun setBusy(btn: Button, busy: Boolean, label: String, busyLabel: String = "Please wait") {
+        btn.isClickable = !busy
+        btn.text = if (busy) busyLabel else label
+        if (btn is MaterialButton) {
+            if (busy) showSpinner(btn) else hideSpinner(btn)
+        }
+    }
+
+    // Puts the spinning ring in front of the button text (also used by the Sync button).
+    fun showSpinner(btn: MaterialButton) {
+        val d = Spinner(btn.context)
+        btn.iconTint = null
+        btn.iconSize = dp(btn.context, 18)
+        btn.iconPadding = dp(btn.context, 10)
+        btn.iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
+        btn.icon = d
+        d.start()
+    }
+
+    fun hideSpinner(btn: MaterialButton) {
+        (btn.icon as? Spinner)?.stop()
+        btn.icon = null
     }
 
     // Shows a red message under a form, or hides it when the message is null.
@@ -130,19 +159,17 @@ object Ui {
         }
     }
 
-    // The small "Verified" / "Not verified" pill in the green header.
+    // The small "Verified" / "Not verified" pill beside the phone number in the green header.
+    // Same glass pill both ways; only the little dot changes colour.
     fun setBadge(root: View, verified: Boolean) {
         val badge = root.findViewById<TextView>(R.id.badge)
         badge.visibility = View.VISIBLE
-        if (verified) {
-            badge.text = "\u2713 Verified"
-            badge.setBackgroundResource(R.drawable.bg_hero_chip)
-            badge.setTextColor(ContextCompat.getColor(root.context, R.color.white))
-        } else {
-            badge.text = "Not verified"
-            badge.setBackgroundResource(R.drawable.bg_badge_warn)
-            badge.setTextColor(ContextCompat.getColor(root.context, R.color.amber_text))
-        }
+        badge.text = if (verified) "Verified" else "Not verified"
+        badge.setBackgroundResource(R.drawable.bg_badge_glass)
+        badge.setTextColor(ContextCompat.getColor(root.context, R.color.white))
+        badge.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            if (verified) R.drawable.dot_mint else R.drawable.dot_amber, 0, 0, 0
+        )
     }
 
     // First letter of the name, for the round avatar.
@@ -160,4 +187,46 @@ object Ui {
         btn.setImageResource(if (AppTheme.isDark(root.context)) R.drawable.ic_sun else R.drawable.ic_moon)
         btn.setOnClickListener { AppTheme.toggle(root.context) }
     }
+}
+
+// A white ring that turns. Drawn here so it needs no extra library, and it keeps turning
+// by itself until stop() is called or the screen it belongs to is gone.
+class Spinner(ctx: Context) : Drawable() {
+    private val size = Ui.dp(ctx, 18)
+    private val stroke = Ui.dp(ctx, 2).toFloat() + 0.5f
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeWidth = stroke
+        color = Color.WHITE
+    }
+    private val box = RectF()
+    private var angle = 0f
+    private val anim = ValueAnimator.ofFloat(0f, 360f).apply {
+        duration = 800
+        repeatCount = ValueAnimator.INFINITE
+        interpolator = LinearInterpolator()
+        addUpdateListener {
+            if (callback == null) { cancel(); return@addUpdateListener }
+            angle = it.animatedValue as Float
+            invalidateSelf()
+        }
+    }
+
+    fun start() { if (!anim.isRunning) anim.start() }
+    fun stop() { anim.cancel() }
+
+    override fun draw(c: Canvas) {
+        val b = bounds
+        val half = stroke / 2f
+        box.set(b.left + half, b.top + half, b.right - half, b.bottom - half)
+        c.drawArc(box, angle - 90f, 270f, false, paint)
+    }
+
+    override fun getIntrinsicWidth() = size
+    override fun getIntrinsicHeight() = size
+    override fun setAlpha(a: Int) { paint.alpha = a }
+    override fun setColorFilter(f: ColorFilter?) { paint.colorFilter = f }
+    @Deprecated("Deprecated in Java")
+    override fun getOpacity() = PixelFormat.TRANSLUCENT
 }

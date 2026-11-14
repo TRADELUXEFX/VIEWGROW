@@ -45,10 +45,6 @@ object HomeViews {
         return tv
     }
 
-    // The red reminder under the Sync button and after a sync.
-    fun privateNotice(ctx: Context): TextView =
-        notice(ctx, RED, "Keep contacts private.", "Anyone who leaks them will be banned.")
-
     fun button(ctx: Context, parent: ViewGroup, label: String, icon: Int?): MaterialButton {
         val b = LayoutInflater.from(ctx).inflate(R.layout.part_button, parent, false) as MaterialButton
         b.text = label

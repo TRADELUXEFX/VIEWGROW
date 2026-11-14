@@ -5,34 +5,36 @@
     android:background="@color/surface"
     android:orientation="vertical">
 
-    <LinearLayout
+    <!-- Same header as VG Reshare: Back in a round container at the start, title centred. -->
+    <FrameLayout
         android:id="@+id/hero"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_hero"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="20dp"
+        android:paddingStart="18dp"
+        android:paddingTop="26dp"
+        android:paddingEnd="18dp"
         android:paddingBottom="26dp">
         <ImageView
             android:id="@+id/back"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="start|center_vertical"
+            android:background="@drawable/bg_back_circle"
+            android:clickable="true"
             android:contentDescription="Back"
-            android:padding="10dp"
+            android:focusable="true"
+            android:padding="8dp"
             android:src="@drawable/ic_back" />
         <TextView
             android:id="@+id/title"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_weight="1"
-            android:tag="bold"
+            android:layout_gravity="center"
+            android:tag="extrabold"
             android:textColor="@color/white"
             android:textSize="20sp" />
-    </LinearLayout>
+    </FrameLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -43,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:lineSpacingExtra="4dp"
-            android:padding="20dp"
+            android:padding="24dp"
             android:textColor="@color/text"
             android:textSize="14sp" />
     </ScrollView>

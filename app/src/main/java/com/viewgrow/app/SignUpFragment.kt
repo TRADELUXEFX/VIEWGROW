@@ -74,7 +74,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         if (!passwordRule.matches(password)) { Ui.showError(error, "Your password can only use letters and numbers."); return }
 
         busy = true
-        Ui.setBusy(button, true, "Sign up")
+        Ui.setBusy(button, true, "Sign up", "Signing up")
         val args = JSONObject()
             .put("p_name", name)
             .put("p_phone", phone)

@@ -149,9 +149,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val ctx = v.context
         val body = v.findViewById<LinearLayout>(R.id.body)
         body.removeAllViews()
+        val top = v.findViewById<LinearLayout>(R.id.top_slot)
+        top.removeAllViews()
 
         val state = j.optString("state")
         val verified = state != "NOT_VERIFIED"
+        // Not verified: no countdown. The "Not verified yet" box takes its place at the top.
+        v.findViewById<View>(R.id.countdown).visibility = if (verified) View.VISIBLE else View.GONE
         setBadge(v, verified)
 
         val total = if (j.isNull("total")) 0 else j.optInt("total")
@@ -171,7 +175,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         when (state) {
             "NOT_VERIFIED" -> {
-                body.addView(HomeViews.notice(ctx, HomeViews.WARN, "Not verified yet.", "Reshare the admin\u2019s status to unlock your contacts."))
+                val warn = HomeViews.notice(ctx, HomeViews.WARN, "Not verified yet.", "Reshare the admin\u2019s status to unlock your contacts.")
+                (warn.layoutParams as LinearLayout.LayoutParams).topMargin = 0
+                top.addView(warn)
+                Fonts.apply(top)
                 body.addView(HomeViews.stepsCard(ctx))
                 val msg = "Hi, I just registered on ViewGrow. My name is $name."
                 if (Remote.adminLink(msg) != null) {
@@ -184,11 +191,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (j.optBoolean("full")) {
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Re-download approved.", "You\u2019ll get every contact you\u2019ve earned."))
                 }
-                val b = HomeViews.button(ctx, body, if (syncing) "Syncing\u2026" else "Sync Contacts to Phone", R.drawable.ic_sync)
+                val b = HomeViews.button(ctx, body, if (syncing) "Syncing" else "Sync Contacts to Phone", if (syncing) null else R.drawable.ic_sync)
+                if (syncing) Ui.showSpinner(b)
                 b.setOnClickListener { onSyncTap() }
                 b.isClickable = !syncing
                 body.addView(b)
-                body.addView(HomeViews.privateNotice(ctx))
             }
             "LIMIT_REACHED" -> {
                 body.addView(HomeViews.limitCard(ctx))
@@ -206,8 +213,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (recentSync) {
                     val n = Store.lastSyncCount
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Contacts saved.", (if (n == 1) "1 new contact is" else "$n new contacts are") + " now in your phone."))
-                    body.addView(HomeViews.privateNotice(ctx))
-                } else if (state == "ALREADY_TODAY") {
+                    } else if (state == "ALREADY_TODAY") {
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Already downloaded today.", "You\u2019ve used today\u2019s download. Come back tomorrow, after your reshare is verified."))
                 } else if (state == "NOTHING_NEW") {
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "All caught up.", "You\u2019ve received all your contacts for now. New ones arrive after your next verified reshare."))

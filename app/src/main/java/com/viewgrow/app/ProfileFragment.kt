@@ -44,10 +44,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        Ui.bindUserHeader(view)
-        val state = Status.last?.optString("state")
-        if (!state.isNullOrEmpty()) Ui.setBadge(view, state != "NOT_VERIFIED")
-
         val ctx = view.context
         val version = try {
             ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "?"
@@ -87,7 +83,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         view.findViewById<View>(R.id.row_battery).setOnClickListener { openBatterySettings() }
         view.findViewById<View>(R.id.row_terms).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.TERMS) }
         view.findViewById<View>(R.id.row_privacy).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.PRIVACY) }
-        view.findViewById<View>(R.id.row_logout).setOnClickListener { (activity as? MainActivity)?.onLoggedOut() }
+        view.findViewById<View>(R.id.btn_logout).setOnClickListener { (activity as? MainActivity)?.onLoggedOut() }
         view.findViewById<View>(R.id.btn_delete).setOnClickListener { confirmDelete() }
 
         Fonts.apply(view)
@@ -125,7 +121,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             val seg = v.findViewById<TextView>(segIds[i])
             val on = hours[i] == selected
             seg.setBackgroundResource(if (on) R.drawable.bg_seg_on else 0)
-            seg.setTextColor(ContextCompat.getColor(ctx, if (on) R.color.white else R.color.text2))
+            seg.setTextColor(ContextCompat.getColor(ctx, if (on) R.color.green_text else R.color.text2))
         }
     }
 

@@ -69,7 +69,7 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
         if (password.length < 6) { Ui.showError(error, "Your password needs at least 6 characters."); return }
         if (!passwordRule.matches(password)) { Ui.showError(error, "Your password can only use letters and numbers."); return }
 
-        Ui.setBusy(button, true, "Log in")
+        Ui.setBusy(button, true, "Log in", "Logging in")
         val args = JSONObject().put("p_phone", phone).put("p_pin", password)
         Api.call("web_status", args) { r ->
             if (!isAdded || view.parent == null) return@call
