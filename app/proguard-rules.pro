@@ -1,0 +1,8 @@
+# Keep line numbers in crash reports so they can be read.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# Android creates fragments by class name when a screen is restored, so their constructors must be kept.
+-keep public class * extends androidx.fragment.app.Fragment {
+    public <init>();
+}

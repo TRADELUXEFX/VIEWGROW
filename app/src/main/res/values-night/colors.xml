@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark mode palette. Keeps the same names as values/colors.xml. -->
+<resources>
+    <color name="white">#FFFFFF</color>
+    <color name="splash_bg">#F6F6F6</color>
+    <color name="green">#1FAA59</color>
+    <color name="green_dark">#158245</color>
+    <color name="tint">#1B3A2C</color>
+    <color name="border">#2A3B33</color>
+    <color name="field">#1A2A23</color>
+    <color name="text">#C9D3CE</color>
+    <color name="text2">#9AA8A1</color>
+    <color name="muted">#8F9C96</color>
+    <color name="dark">#EDF3F0</color>
+    <color name="red_dark">#F08A86</color>
+    <color name="red_bg">#3A2220</color>
+    <color name="amber">#E8A93B</color>
+    <color name="amber_bg">#3A2E14</color>
+    <color name="amber_text">#F2C36B</color>
+    <color name="track">#2E3A35</color>
+    <color name="locked_bg">#222B27</color>
+    <color name="locked_text">#6B7770</color>
+    <color name="range_tint">#1B3A2C</color>
+    <color name="out_muted">#5C6963</color>
+    <color name="header_text_soft">#D6F4E2</color>
+    <color name="tag_blue_bg">#1E2D4A</color>
+    <color name="tag_blue_text">#9BB8F0</color>
+    <color name="surface">#15201C</color>
+    <color name="seg_track">#1F2A25</color>
+    <color name="green_text">#7FE3AE</color>
+    <!-- Filled button green. Dark mode uses the deeper green so white text stays readable. -->
+    <color name="btn_fill">#158245</color>
+    <color name="btn_fill_pressed">#0F6B38</color>
+    <!-- Filled red button (Log out). White text on it in both modes. -->
+    <color name="btn_red">#B3413D</color>
+    <!-- Text on the green header and nav bar. Same in light and dark mode. -->
+    <color name="header_label">#D9F2E4</color>
+    <color name="nav_inactive">#B3FFFFFF</color>
+    <!-- Switch track when off: clearly darker than the card so the white thumb stands out. -->
+    <color name="switch_off">#4A5750</color>
+    <!-- Launcher icon background and launch splash (the icon's own light grey). -->
+    <color name="ic_launcher_bg">#F6F6F6</color>
+    <color name="glass">#26FFFFFF</color>
+    <color name="glass_line">#40FFFFFF</color>
+    <color name="white_soft">#D9FFFFFF</color>
+</resources>

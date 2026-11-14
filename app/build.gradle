@@ -1,0 +1,66 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+def releaseKsPath = System.getenv('KEYSTORE_FILE')
+def hasReleaseKs = releaseKsPath && new File(releaseKsPath).exists()
+def runNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '0').toInteger()
+
+android {
+    namespace 'com.viewgrow.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.viewgrow.app"
+        minSdk 24
+        targetSdk 34
+        // Goes up by one on every GitHub build, so each APK installs over the last one.
+        versionCode 1 + runNumber
+        versionName "1.0.${runNumber}"
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseKs) {
+                storeFile new File(releaseKsPath)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS')
+                keyPassword System.getenv('KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Release key when the secrets are set, debug key until then (testing only).
+            signingConfig hasReleaseKs ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.fragment:fragment-ktx:1.8.2'
+    implementation 'androidx.activity:activity-ktx:1.9.1'
+}
