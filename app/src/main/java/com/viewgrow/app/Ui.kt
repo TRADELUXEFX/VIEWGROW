@@ -130,6 +130,21 @@ object Ui {
         }
     }
 
+    // The small "Verified" / "Not verified" pill in the green header.
+    fun setBadge(root: View, verified: Boolean) {
+        val badge = root.findViewById<TextView>(R.id.badge)
+        badge.visibility = View.VISIBLE
+        if (verified) {
+            badge.text = "\u2713 Verified"
+            badge.setBackgroundResource(R.drawable.bg_hero_chip)
+            badge.setTextColor(ContextCompat.getColor(root.context, R.color.white))
+        } else {
+            badge.text = "Not verified"
+            badge.setBackgroundResource(R.drawable.bg_badge_warn)
+            badge.setTextColor(ContextCompat.getColor(root.context, R.color.amber_text))
+        }
+    }
+
     // First letter of the name, for the round avatar.
     fun initial(name: String): String {
         val c = name.trim().firstOrNull() ?: return "V"
@@ -139,7 +154,6 @@ object Ui {
     // Fills the green header on Home and Profile: initial, name, number and the light/dark button.
     fun bindUserHeader(root: View) {
         val name = Store.name
-        root.findViewById<TextView>(R.id.avatar).text = initial(name)
         root.findViewById<TextView>(R.id.user_name).text = if (name.isEmpty()) "Welcome" else name
         root.findViewById<TextView>(R.id.user_phone).text = Phone.show(Store.phone)
         val btn = root.findViewById<ImageView>(R.id.theme_btn)

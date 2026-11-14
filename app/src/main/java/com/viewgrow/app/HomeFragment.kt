@@ -228,19 +228,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         Fonts.apply(body)
     }
 
-    private fun setBadge(v: View, verified: Boolean) {
-        val badge = v.findViewById<TextView>(R.id.badge)
-        badge.visibility = View.VISIBLE
-        if (verified) {
-            badge.text = "\u2713 Verified"
-            badge.setBackgroundResource(R.drawable.bg_hero_chip)
-            badge.setTextColor(ContextCompat.getColor(v.context, R.color.white))
-        } else {
-            badge.text = "Not verified"
-            badge.setBackgroundResource(R.drawable.bg_badge_warn)
-            badge.setTextColor(ContextCompat.getColor(v.context, R.color.amber_text))
-        }
-    }
+    private fun setBadge(v: View, verified: Boolean) = Ui.setBadge(v, verified)
 
     // 312/500 with the /500 smaller. The total goes red when the limit is reached.
     private fun setStats(v: View, total: Int, limit: String, available: Int, atLimit: Boolean) {

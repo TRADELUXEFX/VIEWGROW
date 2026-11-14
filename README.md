@@ -18,4 +18,4 @@ Settings, Profile shows the app version.
 ## Progress
 1. Done: project base, Welcome, Sign up, Log in, bottom bar, light and dark mode.
 2. Done: Home (countdown, all states, sync to phone tagged VGC, background timer, "contacts saved" message).
-3. Next: History, Profile, Terms and Privacy, cleanup.
+3. Done: History (20 per page), Profile (sync every 1h/6h/12h/24h, pause, permissions, battery, Delete My Contacts), Terms and Privacy pages.

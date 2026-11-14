@@ -1,24 +1,198 @@
 package com.viewgrow.app
 
+import android.Manifest
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.View
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 
-// Profile. In this first update: the app version and Log out. Settings come in a later update.
+// Profile: how often the phone checks for contacts, the permissions it needs, the legal pages,
+// Log out, and Delete My Contacts.
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
+
+    private val hours = intArrayOf(1, 6, 12, 24)
+    private val segIds = intArrayOf(R.id.seg_1, R.id.seg_6, R.id.seg_12, R.id.seg_24)
+    private val main = Handler(Looper.getMainLooper())
+
+    private val contactsAsk = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        refresh()
+        val ctx = context
+        if (ctx != null && !ContactsSaver.hasPermission(ctx) &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.WRITE_CONTACTS)
+        ) openAppSettings()
+    }
+
+    private val notificationsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        refresh()
+        if (!granted && Build.VERSION.SDK_INT >= 33 &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+        ) openAppSettings()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Ui.bindUserHeader(view)
+        val state = Status.last?.optString("state")
+        if (!state.isNullOrEmpty()) Ui.setBadge(view, state != "NOT_VERIFIED")
+
+        val ctx = view.context
         val version = try {
-            val ctx = requireContext()
             ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "?"
         } catch (e: Exception) {
             "?"
         }
-        view.findViewById<TextView>(R.id.version).text = "App version $version"
-        view.findViewById<View>(R.id.btn_logout).setOnClickListener {
-            (activity as? MainActivity)?.onLoggedOut()
+        view.findViewById<TextView>(R.id.version).text = "ViewGrow \u00b7 App version $version"
+
+        // Sync every 1h / 6h / 12h / 24h
+        for (i in hours.indices) {
+            view.findViewById<View>(segIds[i]).setOnClickListener {
+                Store.syncHours = hours[i]
+                SyncScheduler.schedule(ctx)
+                refresh()
+            }
         }
+
+        view.findViewById<SwitchCompat>(R.id.sw_pause).setOnClickListener {
+            Store.syncPaused = (it as SwitchCompat).isChecked
+            SyncScheduler.schedule(ctx)
+            refresh()
+        }
+
+        // The two permission switches show what the phone says. Tapping asks, or opens the phone's settings.
+        view.findViewById<SwitchCompat>(R.id.sw_contacts).setOnClickListener {
+            if (ContactsSaver.hasPermission(ctx)) openAppSettings()
+            else contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
+            refresh()
+        }
+        view.findViewById<SwitchCompat>(R.id.sw_notif).setOnClickListener {
+            if (NotificationManagerCompat.from(ctx).areNotificationsEnabled()) openNotificationSettings()
+            else if (Build.VERSION.SDK_INT >= 33) notificationsAsk.launch(Manifest.permission.POST_NOTIFICATIONS)
+            else openNotificationSettings()
+            refresh()
+        }
+
+        view.findViewById<View>(R.id.row_battery).setOnClickListener { openBatterySettings() }
+        view.findViewById<View>(R.id.row_terms).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.TERMS) }
+        view.findViewById<View>(R.id.row_privacy).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.PRIVACY) }
+        view.findViewById<View>(R.id.row_logout).setOnClickListener { (activity as? MainActivity)?.onLoggedOut() }
+        view.findViewById<View>(R.id.btn_delete).setOnClickListener { confirmDelete() }
+
         Fonts.apply(view)
+        refresh()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refresh()
+    }
+
+    // Shows what is true right now: the saved choices and the phone's permissions.
+    private fun refresh() {
+        val v = view ?: return
+        val ctx = v.context
+        v.findViewById<SwitchCompat>(R.id.sw_pause).isChecked = Store.syncPaused
+        v.findViewById<SwitchCompat>(R.id.sw_contacts).isChecked = ContactsSaver.hasPermission(ctx)
+        v.findViewById<SwitchCompat>(R.id.sw_notif).isChecked = NotificationManagerCompat.from(ctx).areNotificationsEnabled()
+
+        val chip = v.findViewById<TextView>(R.id.battery_chip)
+        val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (pm.isIgnoringBatteryOptimizations(ctx.packageName)) {
+            chip.text = "OK"
+            chip.setBackgroundResource(R.drawable.bg_tag_green)
+            chip.setTextColor(ContextCompat.getColor(ctx, R.color.green_text))
+        } else {
+            chip.text = "Fix"
+            chip.setBackgroundResource(R.drawable.bg_badge_warn)
+            chip.setTextColor(ContextCompat.getColor(ctx, R.color.amber_text))
+        }
+        Fonts.apply(chip)
+
+        val selected = if (Store.syncHours in hours) Store.syncHours else 24
+        for (i in hours.indices) {
+            val seg = v.findViewById<TextView>(segIds[i])
+            val on = hours[i] == selected
+            seg.setBackgroundResource(if (on) R.drawable.bg_seg_on else 0)
+            seg.setTextColor(ContextCompat.getColor(ctx, if (on) R.color.white else R.color.text2))
+        }
+    }
+
+    // ---- The phone's own settings screens ----
+
+    private fun openAppSettings() {
+        val ctx = context ?: return
+        try {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
+        } catch (e: ActivityNotFoundException) {
+            // No settings screen to open.
+        }
+    }
+
+    private fun openNotificationSettings() {
+        val ctx = context ?: return
+        try {
+            startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName))
+        } catch (e: ActivityNotFoundException) {
+            openAppSettings()
+        }
+    }
+
+    // Opens the phone's battery optimisation list, where ViewGrow can be set to "Not optimised".
+    private fun openBatterySettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        } catch (e: ActivityNotFoundException) {
+            openAppSettings()
+        }
+    }
+
+    // ---- Delete My Contacts ----
+
+    private fun confirmDelete() {
+        val ctx = context ?: return
+        if (!ContactsSaver.hasPermission(ctx)) {
+            view?.let { Ui.toast(it, "Turn on the Contacts permission first.") }
+            return
+        }
+        AlertDialog.Builder(ctx)
+            .setTitle("Delete my contacts?")
+            .setMessage("This removes every contact ViewGrow saved to your phone. Your own ViewGrow contact stays. They will not come back unless the admin approves a new download.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Delete") { _, _ -> deleteNow() }
+            .show()
+    }
+
+    private fun deleteNow() {
+        val app = context?.applicationContext ?: return
+        Thread {
+            val n = ContactsSaver.deleteMine(app)
+            main.post {
+                if (n >= 0) Store.lastSyncAt = 0L
+                val v = view
+                if (isAdded && v != null) {
+                    Ui.toast(
+                        v,
+                        when {
+                            n < 0 -> "Could not delete. Please try again."
+                            n == 0 -> "No ViewGrow contacts found on this phone."
+                            n == 1 -> "1 contact deleted."
+                            else -> "$n contacts deleted."
+                        }
+                    )
+                }
+            }
+        }.start()
     }
 }

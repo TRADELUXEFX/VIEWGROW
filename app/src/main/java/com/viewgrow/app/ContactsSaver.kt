@@ -2,6 +2,7 @@ package com.viewgrow.app
 
 import android.Manifest
 import android.content.ContentProviderOperation
+import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.ContactsContract
@@ -129,6 +130,62 @@ object ContactsSaver {
                     .withValue(ContactsContract.CommonDataKinds.Note.NOTE, c.note)
                     .build()
             )
+        }
+    }
+
+    // Delete My Contacts: removes every contact the app saved (found by the database's "ViewGrow-<id>" note).
+    // The member's own marker contact ("ViewGrow <id>") stays. Blocking. Returns how many were removed, or -1 on failure.
+    fun deleteMine(ctx: Context): Int {
+        if (!hasPermission(ctx)) return -1
+        return try {
+            val resolver = ctx.contentResolver
+            val ids = ArrayList<Long>()
+            resolver.query(
+                ContactsContract.Data.CONTENT_URI,
+                arrayOf(ContactsContract.Data.RAW_CONTACT_ID),
+                ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.CommonDataKinds.Note.NOTE + " LIKE ?",
+                arrayOf(ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE, "ViewGrow-%"),
+                null
+            )?.use { c -> while (c.moveToNext()) ids.add(c.getLong(0)) }
+
+            // Which of them is the member's own marker contact: named "ViewGrow" and a number.
+            val keep = HashSet<Long>()
+            val marker = Regex("^ViewGrow \\d+$")
+            var i = 0
+            while (i < ids.size) {
+                val part = ids.subList(i, minOf(i + 400, ids.size))
+                val marks = part.joinToString(",") { "?" }
+                val args = ArrayList<String>()
+                args.add(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                part.forEach { args.add(it.toString()) }
+                resolver.query(
+                    ContactsContract.Data.CONTENT_URI,
+                    arrayOf(ContactsContract.Data.RAW_CONTACT_ID, ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME),
+                    ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.Data.RAW_CONTACT_ID + " IN (" + marks + ")",
+                    args.toTypedArray(),
+                    null
+                )?.use { c ->
+                    while (c.moveToNext()) {
+                        if (marker.matches(c.getString(1)?.trim() ?: "")) keep.add(c.getLong(0))
+                    }
+                }
+                i += 400
+            }
+
+            val remove = ids.filter { it !in keep }.distinct()
+            var k = 0
+            while (k < remove.size) {
+                val end = minOf(k + 100, remove.size)
+                val ops = ArrayList<ContentProviderOperation>()
+                for (n in k until end) {
+                    ops.add(ContentProviderOperation.newDelete(ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, remove[n])).build())
+                }
+                resolver.applyBatch(ContactsContract.AUTHORITY, ops)
+                k = end
+            }
+            remove.size
+        } catch (e: Exception) {
+            -1
         }
     }
 }
