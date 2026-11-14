@@ -1,10 +1,13 @@
 package com.viewgrow.app
 
+import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.TextPaint
+import android.text.style.ForegroundColorSpan
+import android.text.style.MetricAffectingSpan
 import android.text.method.LinkMovementMethod
 import android.text.method.PasswordTransformationMethod
 import android.text.style.ClickableSpan
@@ -34,6 +37,18 @@ object Fonts {
         }
     }
 
+    // A Poppins weight by name, for bold words inside a sentence.
+    fun typeface(ctx: Context, weight: String): Typeface? {
+        val res = when (weight) {
+            "medium" -> R.font.poppins_medium
+            "semibold" -> R.font.poppins_semibold
+            "bold" -> R.font.poppins_bold
+            "extrabold" -> R.font.poppins_extrabold
+            else -> R.font.poppins_regular
+        }
+        return cache.getOrPut(res) { ResourcesCompat.getFont(ctx, res) }
+    }
+
     private fun face(v: View, weight: String?): Typeface? {
         val res = when (weight) {
             "medium" -> R.font.poppins_medium
@@ -46,8 +61,24 @@ object Fonts {
     }
 }
 
+// Draws part of a text in another typeface (a bold lead-in inside a notice).
+class FaceSpan(private val face: Typeface?) : MetricAffectingSpan() {
+    override fun updateDrawState(p: TextPaint) { if (face != null) p.typeface = face }
+    override fun updateMeasureState(p: TextPaint) { if (face != null) p.typeface = face }
+}
+
 object Ui {
     private var lastToast: Toast? = null
+
+    fun dp(ctx: Context, v: Int): Int = (v * ctx.resources.displayMetrics.density).toInt()
+
+    // "Reshare verified. Your contacts will be ready tonight." The first part bold and coloured.
+    fun lead(ctx: Context, lead: String, rest: String, leadColor: Int): CharSequence {
+        val s = SpannableString("$lead $rest")
+        s.setSpan(FaceSpan(Fonts.typeface(ctx, "bold")), 0, lead.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        s.setSpan(ForegroundColorSpan(leadColor), 0, lead.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        return s
+    }
 
     // A new message replaces the one still showing.
     fun toast(view: View, message: String) {

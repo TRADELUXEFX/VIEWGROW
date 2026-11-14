@@ -3,6 +3,10 @@
 
     <!-- Talks to the ViewGrow database (sign up, log in, contacts). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Saves the contacts you receive to your phone, and shows the "contacts saved" message. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <queries>
         <package android:name="com.whatsapp" />

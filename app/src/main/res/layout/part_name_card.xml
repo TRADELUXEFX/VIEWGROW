@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shown on Home when the account has no name yet (accounts made on the website). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:background="@drawable/bg_card"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:tag="bold"
+        android:text="One last thing"
+        android:textColor="@color/dark"
+        android:textSize="17sp" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Please enter your name to continue."
+        android:textColor="@color/text2"
+        android:textSize="13.5sp" />
+    <EditText
+        android:id="@+id/nm_input"
+        style="@style/FieldInput"
+        android:layout_marginTop="14dp"
+        android:hint="Your name"
+        android:importantForAutofill="no"
+        android:inputType="textPersonName|textCapWords"
+        android:maxLength="60" />
+    <TextView
+        android:id="@+id/nm_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textColor="@color/red_dark"
+        android:textSize="13sp"
+        android:visibility="gone" />
+    <LinearLayout
+        android:id="@+id/nm_sugg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/nm_save"
+        style="@style/AppButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="Save name" />
+</LinearLayout>

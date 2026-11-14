@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         if (savedInstanceState == null) {
-            if (Store.loggedIn) showTab(0) else showWelcome()
+            if (Store.loggedIn) { SyncScheduler.schedule(this); showTab(0) } else showWelcome()
         } else {
             current = savedInstanceState.getInt("current", -1)
             highlight()
@@ -143,10 +143,16 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    fun onLoggedIn() = showTab(0)
+    fun onLoggedIn() {
+        SyncScheduler.schedule(this)
+        showTab(0)
+    }
 
     fun onLoggedOut() {
         Store.logOut()
+        SyncScheduler.cancel(this)
+        Status.last = null
+        Release.clear()
         showWelcome()
     }
 

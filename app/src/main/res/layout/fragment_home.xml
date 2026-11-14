@@ -12,21 +12,107 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="90dp">
+        android:paddingBottom="90dp"
+        android:scrollbars="none">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="18dp">
-            <TextView
+
+            <!-- Countdown to the next release -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_chip"
-                android:lineSpacingExtra="3dp"
-                android:padding="16dp"
-                android:text="You are logged in. Your countdown, contacts and sync arrive in the next update."
-                android:textColor="@color/text"
-                android:textSize="14sp" />
+                android:background="@drawable/bg_countdown"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Next release in"
+                    android:textColor="@color/text2"
+                    android:textSize="13.5sp" />
+                <TextView
+                    android:id="@+id/timer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:tag="extrabold"
+                    android:text="--:--:--"
+                    android:textColor="@color/green_text"
+                    android:textSize="40sp" />
+            </LinearLayout>
+
+            <!-- Contacts received / Available now -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_card"
+                android:orientation="horizontal"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Contacts received"
+                        android:textColor="@color/text2"
+                        android:textSize="12sp" />
+                    <TextView
+                        android:id="@+id/stat_received"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:tag="bold"
+                        android:text="0"
+                        android:textColor="@color/dark"
+                        android:textSize="26sp" />
+                </LinearLayout>
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp"
+                    android:background="@color/border" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Available now"
+                        android:textColor="@color/text2"
+                        android:textSize="12sp" />
+                    <TextView
+                        android:id="@+id/stat_available"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:tag="bold"
+                        android:text="0"
+                        android:textColor="@color/dark"
+                        android:textSize="26sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Everything that depends on the state is added here by HomeFragment -->
+            <LinearLayout
+                android:id="@+id/body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
