@@ -39,4 +39,11 @@
     <!-- History: a day with no contacts (red card). -->
     <color name="red_border">#5A3330</color>
     <color name="red_tag">#4D2B28</color>
+
+    <!-- Welcome screen -->
+    <color name="welcome_hero_start">#6FDD94</color>
+    <color name="welcome_hero_end">#0A6834</color>
+    <color name="welcome_lime">#DEFFA0</color>
+    <color name="welcome_line">#2A4A3A</color>
+    <color name="welcome_btn_stroke">#2F5A45</color>
 </resources>

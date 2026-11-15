@@ -52,4 +52,11 @@
     <color name="red_tag">#F4CFCD</color>
     <!-- Step dashes on the green permissions header: not reached yet (same in light and dark mode). -->
     <color name="dash_off">#59FFFFFF</color>
+
+    <!-- Welcome screen -->
+    <color name="welcome_hero_start">#6FDD94</color>
+    <color name="welcome_hero_end">#0A6834</color>
+    <color name="welcome_lime">#DEFFA0</color>
+    <color name="welcome_line">#B0DEC4</color>
+    <color name="welcome_btn_stroke">#A8D6BA</color>
 </resources>

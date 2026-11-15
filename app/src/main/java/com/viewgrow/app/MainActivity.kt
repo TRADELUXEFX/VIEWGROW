@@ -102,7 +102,7 @@ class MainActivity : AppCompatActivity() {
             override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
                 padHero(v)
                 when (f) {
-                    is WelcomeFragment -> chrome(false, R.color.green_dark)
+                    is WelcomeFragment -> chrome(false, R.color.surface)
                     is SignUpFragment, is LogInFragment, is TextPageFragment, is FaqFragment, is PurchaseHistoryFragment, is PermissionsFragment, is StopFragment -> chrome(false, R.color.surface)
                     is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
                 }

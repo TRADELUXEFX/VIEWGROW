@@ -62,6 +62,8 @@ Settings, Profile shows the app version.
 
 23. Done: more clean-up. Removed History search helpers that no screen used (`HistoryLog.matches`), `DayText.short`, `Ui.initial`, and the unused date range and day count in `HistoryLog.people`.
 
+24. Done: new Welcome screen (`fragment_welcome.xml`, `item_welcome_step.xml`, `WelcomeFragment.kt`). Green gradient header with soft circles and the logo, headline "Get more WhatsApp status viewers", "Just follow these three easy steps", then a white part with the three steps joined by a line (Sign up, Reshare and get verified, Get new status viewers) and a green gradient Sign up button plus an outlined Log in button. The strip under the screen is now white (`MainActivity`). Also new this round: dark launch splash (`#111B21`) with the ViewGrow icon as a rounded square, and the app icon 20% smaller inside its adaptive frame.
+
 ## Working rules for whoever edits this repo
 - **Always send the FULL updated zip** (every file of the app, paths starting at the repo root), never only the changed files. A partial zip leaves stale files in the repo and breaks the build (this happened with `dialog_duration.xml`).
 - When a file is removed from the app, list it in `DELETE_FILES.txt` at the zip root too, because uploading a zip never deletes anything by itself.
