@@ -1,5 +1,8 @@
 package com.viewgrow.app
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 
 // The settings the admin controls on the website: whether sign-up is open, and how to reach the admin.
@@ -27,22 +30,41 @@ object Remote {
                     }
                 }
                 contacts = list
+                target(list)?.let { Store.adminTarget = it }
             }
             done()
         }
     }
 
-    // A link that opens a chat with the admin, with the message filled in. Null when the admin set no contact.
-    // WhatsApp contacts become wa.me links; other options are used only if they are https links.
-    fun adminLink(text: String): String? {
-        for (c in contacts) {
+    // The first usable contact: WhatsApp digits, or an https link.
+    private fun target(list: List<AdminContact>): String? {
+        for (c in list) {
             if (c.channel == "whatsapp_dm") {
                 val digits = c.value.filter { it.isDigit() }
-                if (digits.isNotEmpty()) return "https://wa.me/" + digits + "?text=" + Uri.encode(text)
+                if (digits.isNotEmpty()) return digits
             } else if (c.value.startsWith("https://", ignoreCase = true)) {
                 return c.value
             }
         }
         return null
+    }
+
+    // A link that opens a chat with the admin, with the message filled in. Null when the admin set no contact.
+    // WhatsApp contacts become wa.me links; other options are used only if they are https links.
+    // When the settings have not been loaded in this run, the last saved contact is used.
+    fun adminLink(text: String): String? {
+        val t = target(contacts) ?: Store.adminTarget.ifEmpty { null } ?: return null
+        return if (t.startsWith("https://", ignoreCase = true)) t else "https://wa.me/" + t + "?text=" + Uri.encode(text)
+    }
+
+    // Opens the chat with the admin (WhatsApp or https link). False when no contact is set or it cannot open.
+    fun openAdmin(ctx: Context, text: String): Boolean {
+        val link = adminLink(text) ?: return false
+        return try {
+            ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
     }
 }

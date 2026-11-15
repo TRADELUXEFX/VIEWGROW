@@ -21,6 +21,7 @@ object Ban {
         Store.banned = true
         if (!reason.isNullOrBlank()) Store.banReason = reason
         SyncScheduler.cancel(app)
+        ReshareReminder.cancel(app)
         HistoryLog.clear(app)
         Status.last = null
         Release.clear()

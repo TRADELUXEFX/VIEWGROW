@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
                 padHero(v)
                 when (f) {
                     is WelcomeFragment -> chrome(false, R.color.green_dark)
-                    is SignUpFragment, is LogInFragment, is TextPageFragment, is PermissionsFragment, is StopFragment -> chrome(false, R.color.surface)
+                    is SignUpFragment, is LogInFragment, is TextPageFragment, is FaqFragment, is PermissionsFragment, is StopFragment -> chrome(false, R.color.surface)
                     is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
                 }
             }
@@ -121,6 +121,72 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         val stop = supportFragmentManager.findFragmentById(R.id.container) as? StopFragment
         if (Store.banned && (stop == null || !stop.isBanned)) showBanned()
+        // Back from the phone's Settings: the permission may have changed. Home shows its own banner;
+        // this just clears the old notification and the "already warned" flag once it is back on.
+        PermissionWatch.onAppOpen(this)
+        ReshareReminder.show(this)
+        maybeShowPermissionPopup()
+    }
+
+    // ---- "A permission is off" pop-up ----
+
+    private var permDialog: android.app.Dialog? = null
+    private var permPopupAt = 0L
+
+    // Inside the app: when it opens or returns from Settings and Contacts, Notifications or Battery is
+    // off, a pop-up names what is off. Only on Home, History and Profile (not during sign up or the
+    // permission steps, not on Profile where the member is already fixing it), never twice in a row
+    // within 10 seconds (the phone's own permission box also brings the app back to the front).
+    private fun maybeShowPermissionPopup() {
+        if (permDialog?.isShowing == true) return
+        if (current < 0 || current == 2 || !Store.loggedIn || Store.banned || notVerified()) return
+        if (System.currentTimeMillis() - permPopupAt < 10000L) return
+        val off = PermissionWatch.missing(this)
+        if (off.isEmpty()) return
+        permPopupAt = System.currentTimeMillis()
+
+        val v = layoutInflater.inflate(R.layout.dialog_permission, null)
+        v.findViewById<TextView>(R.id.perm_title).text =
+            if (off.size == 1) "${off[0]} is off" else "Some permissions are off"
+        val rows = v.findViewById<LinearLayout>(R.id.perm_rows)
+        val red = ContextCompat.getColor(this, R.color.red_dark)
+        for (name in off) {
+            val why = when (name) {
+                "Contacts" -> "to save your contacts"
+                "Notifications" -> "to tell you when contacts are saved"
+                else -> "so syncing keeps running in the background"
+            }
+            val row = TextView(this)
+            row.textSize = 14f
+            row.setTextColor(ContextCompat.getColor(this, R.color.text))
+            row.setBackgroundResource(R.drawable.bg_notice_red)
+            row.setPadding(Ui.dp(this, 14), Ui.dp(this, 11), Ui.dp(this, 14), Ui.dp(this, 11))
+            row.text = Ui.lead(this, name, "\u00b7 $why", red)
+            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            lp.topMargin = Ui.dp(this, 8)
+            row.layoutParams = lp
+            rows.addView(row)
+        }
+        val dialog = android.app.Dialog(this, R.style.Theme_ViewGrow_Dialog)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        Fonts.apply(v)
+        dialog.setContentView(v)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(resources.displayMetrics.widthPixels - Ui.dp(this, 44), android.view.WindowManager.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setGravity(android.view.Gravity.CENTER)
+        v.findViewById<TextView>(R.id.perm_fix).setOnClickListener {
+            dialog.dismiss()
+            showTab(2)
+        }
+        v.findViewById<TextView>(R.id.perm_later).setOnClickListener { dialog.dismiss() }
+        permDialog = dialog
+        dialog.show()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // A pop-up left open while the app is in the background is rebuilt fresh on return.
+        permDialog?.dismiss()
     }
 
     // Back: close an opened screen first. Then any tab goes to Home. Back on Home leaves the app
@@ -245,6 +311,15 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
+    // Help and FAQ, opened from Profile. Back returns to Profile.
+    fun showFaq() {
+        supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.container, FaqFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
     // A day opened from History. Back returns to the History list.
     fun showHistoryDay(day: String, count: Int) {
         supportFragmentManager.beginTransaction()
@@ -258,6 +333,7 @@ class MainActivity : AppCompatActivity() {
     // then Home. When everything is already allowed it goes straight to Home.
     fun onLoggedIn() {
         SyncScheduler.schedule(this)
+        ReshareReminder.show(this)
         if (PermissionsFragment.anythingToAsk(this)) showPermissions() else showTab(0)
     }
 
@@ -270,6 +346,7 @@ class MainActivity : AppCompatActivity() {
     fun onLoggedOut(goWelcome: Boolean = true) {
         Store.logOut()
         SyncScheduler.cancel(this)
+        ReshareReminder.cancel(this)
         Status.last = null
         HistoryLog.clear(this)
         Release.clear()

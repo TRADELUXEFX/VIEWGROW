@@ -30,6 +30,47 @@ object HomeViews {
     }
 
     // A coloured message box: bold lead-in, then the rest.
+    fun permissionCard(ctx: Context, off: List<String>, onFix: () -> Unit): View {
+        val box = LinearLayout(ctx)
+        box.orientation = LinearLayout.VERTICAL
+        box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        val lead = if (off.size == 1) "${off[0]} is off." else "Some permissions are off."
+        val rest = if (off.size == 1) "Turn it on so ViewGrow keeps working." else off.joinToString(", ") + ". Turn them on so ViewGrow keeps working."
+        box.addView(notice(ctx, RED, lead, rest))
+        val fix = button(ctx, box, "Fix in Profile", null)
+        fix.setOnClickListener { onFix() }
+        box.addView(fix)
+        return box
+    }
+
+    // "Increase my limit" button on Home. Always there for verified members.
+    fun upgradeButton(ctx: Context, onClick: () -> Unit): View {
+        val t = TextView(ctx)
+        t.tag = "semibold"
+        t.text = "Increase my limit"
+        t.gravity = Gravity.CENTER
+        t.textSize = 13f
+        t.setTextColor(color(ctx, R.color.green_text))
+        t.setBackgroundResource(R.drawable.bg_pill_outline)
+        t.isClickable = true
+        t.isFocusable = true
+        t.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(ctx, 44)).also { it.topMargin = Ui.dp(ctx, 12) }
+        t.setOnClickListener { onClick() }
+        return t
+    }
+
+    // Red bar on Home when the member has used 90% or more of their contact limit.
+    fun nearLimitCard(ctx: Context, total: Int, limit: Int, onUpgrade: () -> Unit): View {
+        val box = LinearLayout(ctx)
+        box.orientation = LinearLayout.VERTICAL
+        box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        box.addView(notice(ctx, RED, "Almost at your limit.", "You have used $total of $limit contacts. Upgrade so new contacts keep coming."))
+        val b = button(ctx, box, "UPGRADE CONTACT LIMIT", null)
+        b.setOnClickListener { onUpgrade() }
+        box.addView(b)
+        return box
+    }
+
     fun notice(ctx: Context, kind: Int, lead: String, rest: String): TextView {
         val tv = TextView(ctx)
         val bg = when (kind) { WARN -> R.drawable.bg_notice_warn; RED -> R.drawable.bg_notice_red; else -> R.drawable.bg_notice_green }

@@ -33,6 +33,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private var lastAuto = 0L
     private var syncError: String? = null
     private var savingSpinner: Spinner? = null
+    private var permShown: String? = null
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -45,44 +46,44 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         Ui.bindUserHeader(view)
         Fonts.apply(view)
         // The admin's contact (for the WhatsApp buttons) comes from the website's settings.
-        Remote.load { if (isAdded && view.parent != null) render() }
+        Remote.load {
+            // The admin's contact is now known: refresh the "Reshare" notification so its tap opens WhatsApp.
+            context?.let { ReshareReminder.show(it) }
+            if (isAdded && view.parent != null) render()
+        }
         if (status != null) render() else showLoading()
     }
 
     // ---- Loading ring ----
 
-    private var bar: android.animation.ObjectAnimator? = null
+    private var ring: Spinner? = null
 
-    // Until the database has answered, only a loading bar slides across the top. Nothing else, so no wrong state flashes.
+    // Until the database has answered, only the turning green ring shows. Nothing else, so no wrong state flashes.
     private fun showLoading() {
         val v = view ?: return
         v.findViewById<View>(R.id.home_scroll).visibility = View.INVISIBLE
-        val track = v.findViewById<View>(R.id.home_loading)
-        val fill = v.findViewById<View>(R.id.home_loading_fill)
-        track.visibility = View.VISIBLE
-        if (bar?.isRunning == true) return
-        track.post {
-            if (track.visibility != View.VISIBLE || track.width == 0) return@post
-            bar?.cancel()
-            bar = android.animation.ObjectAnimator.ofFloat(fill, View.TRANSLATION_X, -fill.width.toFloat(), track.width.toFloat()).apply {
-                duration = 1000
-                repeatCount = android.animation.ValueAnimator.INFINITE
-                interpolator = android.view.animation.AccelerateDecelerateInterpolator()
-                start()
-            }
+        val img = v.findViewById<ImageView>(R.id.home_loading)
+        if (ring == null) {
+            val d = Spinner(v.context, ContextCompat.getColor(v.context, R.color.green), 36, 4)
+            ring = d
+            img.setImageDrawable(d)
         }
+        img.visibility = View.VISIBLE
+        ring?.start()
     }
 
     private fun hideLoading() {
         val v = view ?: return
-        bar?.cancel()
-        bar = null
+        ring?.stop()
         v.findViewById<View>(R.id.home_loading).visibility = View.GONE
         v.findViewById<View>(R.id.home_scroll).visibility = View.VISIBLE
     }
 
     override fun onResume() {
         super.onResume()
+        // Back from the phone's Settings with Contacts turned on or off: update the banner at once.
+        val c = context
+        if (c != null && status != null && permShown != PermissionWatch.missing(c).joinToString()) render()
         tick()
         ui.postDelayed(ticker, 1000)
         reload()
@@ -95,8 +96,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        bar?.cancel()
-        bar = null
+        ring?.stop()
+        ring = null
         savingSpinner?.stop()
         savingSpinner = null
         ui.removeCallbacksAndMessages(null)
@@ -197,11 +198,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // Not verified: no countdown. The "Not verified yet" box takes its place at the top.
         v.findViewById<View>(R.id.countdown).visibility = if (verified) View.VISIBLE else View.GONE
         setBadge(v, verified)
-        // The contacts card leads. Under the "Not verified yet" box it needs a gap; at the top it does not.
-        v.findViewById<View>(R.id.stat_card).let {
-            (it.layoutParams as LinearLayout.LayoutParams).topMargin = if (verified) 0 else Ui.dp(ctx, 12)
-            it.requestLayout()
-        }
 
         val total = if (j.isNull("total")) 0 else j.optInt("total")
         val limit = if (j.isNull("limit")) "\u2014" else j.optInt("limit").toString()
@@ -210,6 +206,27 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // The automatic sync looks dead on a phone brand that blocks background apps.
         if (OemAutostart.needsPrompt()) {
             body.addView(HomeViews.autostartCard(ctx) { activity?.let { OemAutostart.openSettings(it) } })
+        }
+
+        // A permission turned off in the phone (Contacts, Notifications, Battery): say so on Home.
+        val off = PermissionWatch.missing(ctx)
+        permShown = off.joinToString()
+        if (off.isNotEmpty() && verified) {
+            body.addView(HomeViews.permissionCard(ctx, off) { (activity as? MainActivity)?.showTab(2) })
+        }
+
+        // 90% of the contact limit or more: the red bar. The limit reached card below takes over at 100%.
+        // Based on the total and limit the database sends, so an upgrade makes the bar go away on its own.
+        val limitN = if (j.isNull("limit")) 0 else j.optInt("limit")
+        if (verified && state != "LIMIT_REACHED" && limitN > 0 && total * 10 >= limitN * 9) {
+            body.addView(HomeViews.nearLimitCard(ctx, total, limitN) {
+                openAdmin("Hi, I am close to my contact limit on ViewGrow. My name is ${Store.name}. I would like to upgrade my limit so I can keep receiving new contacts.")
+            })
+        }
+
+        // "Increase my limit": always there for verified members, even well under the limit.
+        if (verified) {
+            body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
         }
 
         val name = Store.name
@@ -291,8 +308,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.muted)), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         if (atLimit) s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.red_dark)), 0, cut, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         v.findViewById<TextView>(R.id.stat_received).text = s
-        val lim = limit.toIntOrNull()
-        v.findViewById<GaugeView>(R.id.stat_gauge).set(if (lim != null && lim > 0) total.toFloat() / lim else 0f, atLimit)
     }
 
     // ---- WhatsApp ----
@@ -316,11 +331,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         if (Store.syncPaused || Store.banned) return
         val now = System.currentTimeMillis()
         if (now - lastAuto < 20000L) return
-        if (!ContactsSaver.hasPermission(ctx)) {
-            syncError = "Allow Contacts in Profile so ViewGrow can save your contacts."
-            render()
-            return
-        }
+        // Contacts permission off: the banner at the top of Home already says so.
+        if (!ContactsSaver.hasPermission(ctx)) return
         lastAuto = now
         startSync()
     }

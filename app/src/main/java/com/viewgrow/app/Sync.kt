@@ -146,7 +146,11 @@ object Notifier {
 object BackgroundSync {
     fun run(ctx: Context): Boolean? {
         Store.init(ctx)
+        // Put the "Reshare the admin's status" notification back if it was swiped away.
+        ReshareReminder.show(ctx)
         if (!Store.loggedIn || Store.syncPaused || Store.banned) return null
+        // Contacts, Battery or Notifications off: warn (once), then carry on if Contacts is still allowed.
+        PermissionWatch.check(ctx)
         if (!ContactsSaver.hasPermission(ctx)) return null
         val st = Api.request("web_status", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password))
         val j = st.json ?: return false
@@ -194,5 +198,6 @@ object SyncScheduler {
         WorkManager.getInstance(ctx.applicationContext).cancelUniqueWork(NAME)
         SyncAdapterSetup.disable(ctx.applicationContext)
         Reminder.cancel(ctx.applicationContext)
+        PermissionWatch.cancel(ctx.applicationContext)
     }
 }
