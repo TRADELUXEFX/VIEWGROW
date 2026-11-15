@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import org.json.JSONObject
 
 // Profile: how often the phone checks for contacts, the legal pages,
 // Log out, and Delete My Contacts.
@@ -41,11 +42,18 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             refresh()
         }
 
+        view.findViewById<SwitchCompat>(R.id.sw_weekly).setOnClickListener {
+            Store.weeklySummary = (it as SwitchCompat).isChecked
+            WeeklySummary.ensure(ctx)
+        }
+
+        view.findViewById<View>(R.id.row_purchases).setOnClickListener { (activity as? MainActivity)?.showPurchases() }
         view.findViewById<View>(R.id.row_help).setOnClickListener { (activity as? MainActivity)?.showFaq() }
         view.findViewById<View>(R.id.row_terms).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.TERMS) }
         view.findViewById<View>(R.id.row_privacy).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.PRIVACY) }
         view.findViewById<View>(R.id.btn_logout).setOnClickListener { (activity as? MainActivity)?.onLoggedOut() }
         view.findViewById<View>(R.id.btn_delete).setOnClickListener { confirmDelete() }
+        view.findViewById<View>(R.id.btn_delete_account).setOnClickListener { confirmDeleteAccount() }
 
         Fonts.apply(view)
         refresh()
@@ -61,6 +69,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         val v = view ?: return
         val ctx = v.context
         v.findViewById<SwitchCompat>(R.id.sw_pause).isChecked = Store.syncPaused
+        v.findViewById<SwitchCompat>(R.id.sw_weekly).isChecked = Store.weeklySummary
         // While syncing is paused the interval does nothing, so its card is dimmed.
         v.findViewById<View>(R.id.row_interval).alpha = if (Store.syncPaused) 0.5f else 1f
 
@@ -109,5 +118,40 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 }
             }
         }.start()
+    }
+
+    // ---- Delete my account ----
+
+    private fun confirmDeleteAccount() {
+        val ctx = context ?: return
+        ConfirmDialog.show(
+            ctx,
+            "Delete my account?",
+            "This sends a request to delete your ViewGrow account and its data. The contacts ViewGrow saved to your phone are removed and you are logged out. This cannot be undone.",
+            "Delete account"
+        ) { deleteAccountNow() }
+    }
+
+    private fun deleteAccountNow() {
+        val v = view ?: return
+        val btn = v.findViewById<TextView>(R.id.btn_delete_account)
+        btn.isClickable = false
+        btn.text = "Please wait"
+        val args = JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)
+        Api.call("web_delete_account", args) { r ->
+            val main = activity as? MainActivity
+            val j = r.json
+            if (j != null && j.optBoolean("ok")) {
+                if (main != null) main.onAccountDeleted()
+                return@call
+            }
+            if (j != null && AccountGate.handle(main, j)) return@call
+            val now = view
+            if (isAdded && now != null) {
+                btn.isClickable = true
+                btn.text = "Delete my account"
+                Ui.toast(now, if (j == null) Api.netMessage(r.error) else "Could not delete your account. Please try again or message the admin.")
+            }
+        }
     }
 }

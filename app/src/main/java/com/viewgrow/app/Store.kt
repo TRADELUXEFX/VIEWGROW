@@ -112,6 +112,16 @@ object Store {
         get() = p.getString("admin_target", "") ?: ""
         set(v) { p.edit().putString("admin_target", v).apply() }
 
+    // The contact limit the "80% used" notification was last shown for (0 = not shown, or the limit went up since).
+    var limitAlerted: Int
+        get() = p.getInt("limit_alerted", 0)
+        set(v) { p.edit().putInt("limit_alerted", v).apply() }
+
+    // The Sunday "new contacts this week" notification. On unless the member turns it off in Profile.
+    var weeklySummary: Boolean
+        get() = p.getBoolean("weekly_summary", true)
+        set(v) { p.edit().putBoolean("weekly_summary", v).apply() }
+
     val loggedIn: Boolean get() = phone.isNotEmpty() && password.isNotEmpty()
 
     fun logIn(phone: String, password: String, name: String) {
@@ -122,6 +132,11 @@ object Store {
     fun logOut() {
         p.edit().remove("password").remove("name").remove("last_sync_at").remove("last_sync_count")
             .remove("first_sync_at").remove("last_bg_sync_at").remove("perm_alerted")
-            .remove("last_total").remove("last_limit").apply()
+            .remove("last_total").remove("last_limit").remove("limit_alerted").apply()
+    }
+
+    // Account deleted: the phone forgets everything, including the number.
+    fun clearAll() {
+        p.edit().clear().apply()
     }
 }

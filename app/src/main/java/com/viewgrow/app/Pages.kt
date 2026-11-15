@@ -55,7 +55,7 @@ Who can see your data
 The admin can see account details to run the service. We do not sell your data. Your data is stored with our database provider, Supabase.
 
 Your choices
-You can log out, delete the contacts ViewGrow saved (Profile, Delete My Contacts), or turn off permissions in your phone's settings. To delete your account, message the admin on WhatsApp.
+You can log out, delete the contacts ViewGrow saved (Profile, Delete My Contacts), or turn off permissions in your phone's settings. To delete your account, open Profile and tap Delete my account. This sends a request to delete your account and its data, and removes the contacts ViewGrow saved to your phone.
 
 Changes
 This policy may change. The latest version is always in the app."""

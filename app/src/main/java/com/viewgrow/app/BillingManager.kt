@@ -151,6 +151,7 @@ object BillingManager {
     private fun verify(p: Purchase) {
         val token = p.purchaseToken
         if (!Store.loggedIn || !inFlight.add(token)) return
+        val phone = Store.phone
         val args = JSONObject()
             .put("p_phone", Store.phone)
             .put("p_pin", Store.password)
@@ -161,6 +162,11 @@ object BillingManager {
             inFlight.remove(token)
             val j = r.json
             if (j != null && j.optBoolean("ok")) {
+                // Written down for Profile, Purchase history (only after the database said ok).
+                val productId = p.products.firstOrNull() ?: ""
+                val pack = PRODUCT_IDS.entries.firstOrNull { it.value == productId }?.key ?: 0
+                val price = details[productId]?.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
+                appContext?.let { PurchaseLog.add(it, phone, pack, p.purchaseTime, price, p.orderId ?: "") }
                 consume(token)
                 Status.last = null
                 onMessage?.invoke("Payment received. Your contact limit has gone up.")

@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
                 padHero(v)
                 when (f) {
                     is WelcomeFragment -> chrome(false, R.color.green_dark)
-                    is SignUpFragment, is LogInFragment, is TextPageFragment, is FaqFragment, is PermissionsFragment, is StopFragment -> chrome(false, R.color.surface)
+                    is SignUpFragment, is LogInFragment, is TextPageFragment, is FaqFragment, is PurchaseHistoryFragment, is PermissionsFragment, is StopFragment -> chrome(false, R.color.surface)
                     is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
                 }
                 // The chat button shows on Home, History and Profile only.
@@ -154,6 +154,14 @@ class MainActivity : AppCompatActivity() {
             if (Store.loggedIn && !Store.banned && PermissionWatch.missing(this).isNotEmpty()) {
                 permPopupAt = System.currentTimeMillis()
                 fixPermission()
+                return
+            }
+        }
+        // Opened from the "80% of your limit used" notification: show Increase my contact limit.
+        if (intent?.getBooleanExtra(LimitAlert.EXTRA_UPGRADE, false) == true) {
+            intent.removeExtra(LimitAlert.EXTRA_UPGRADE)
+            if (current >= 0 && Store.loggedIn && !Store.banned && !notVerified()) {
+                UpgradeSheet.show(this, Store.lastTotal, Store.lastLimit)
                 return
             }
         }
@@ -432,6 +440,31 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.container, FaqFragment())
             .addToBackStack(null)
             .commit()
+    }
+
+    // Purchase history, opened from Profile. Back returns to Profile.
+    fun showPurchases() {
+        supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.container, PurchaseHistoryFragment())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    // The database took the request to delete the account. The phone lets go of everything: the contacts
+    // ViewGrow saved, the timers, the notifications, the records kept on the phone and the number itself.
+    fun onAccountDeleted() {
+        val app = applicationContext
+        Thread { Ban.removeContacts(app) }.start()
+        SyncScheduler.cancel(this)
+        ReshareReminder.cancel(this)
+        Store.clearAll()
+        Status.last = null
+        HistoryLog.clear(this)
+        PurchaseLog.clear(this)
+        Release.clear()
+        showWelcome()
+        Ui.toast(root, "Your account deletion request was sent.")
     }
 
     // A day opened from History. Back returns to the History list.

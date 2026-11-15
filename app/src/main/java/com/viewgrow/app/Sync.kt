@@ -161,7 +161,17 @@ object BackgroundSync {
             }
             return null
         }
-        if (j.optString("state") == "READY" && !Sync.runBlocking(ctx).ok) return null
+        var status = j
+        if (j.optString("state") == "READY") {
+            if (!Sync.runBlocking(ctx).ok) return null
+            // The sync changed the total, so ask again before checking the limit.
+            Api.request("web_status", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)).json
+                ?.takeIf { it.optBoolean("ok") }?.let { status = it }
+        }
+        // 80% of the contact limit used: one notification (LimitAlert.kt).
+        if (!status.isNull("limit")) {
+            LimitAlert.check(ctx, if (status.isNull("total")) 0 else status.optInt("total"), status.optInt("limit"))
+        }
         Store.lastBgSyncAt = System.currentTimeMillis()
         Reminder.restart(ctx)
         return true
@@ -187,6 +197,7 @@ object SyncScheduler {
         if (!Store.loggedIn || Store.syncPaused || Store.banned) { cancel(app); return }
         SyncAdapterSetup.enable(app)
         Reminder.ensure(app)
+        WeeklySummary.ensure(app)
         val hours = if (Store.syncHours in intArrayOf(1, 6, 12, 24)) Store.syncHours else 24
         val req = PeriodicWorkRequestBuilder<SyncWorker>(hours.toLong(), TimeUnit.HOURS)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
@@ -198,6 +209,7 @@ object SyncScheduler {
         WorkManager.getInstance(ctx.applicationContext).cancelUniqueWork(NAME)
         SyncAdapterSetup.disable(ctx.applicationContext)
         Reminder.cancel(ctx.applicationContext)
+        WeeklySummary.cancel(ctx.applicationContext)
         PermissionWatch.cancel(ctx.applicationContext)
     }
 }

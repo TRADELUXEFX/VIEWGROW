@@ -89,6 +89,19 @@ object HistoryLog {
             .sortedWith(compareByDescending<Person> { it.last }.thenBy { it.name.lowercase() })
     }
 
+    // How many contacts this phone saved in the last `days` days, today included (for the weekly summary).
+    fun countSince(ctx: Context, days: Int): Int {
+        val all = read(ctx)
+        val from = DayText.iso(Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -(days - 1)) })
+        var n = 0
+        val keys = all.keys()
+        while (keys.hasNext()) {
+            val day = keys.next()
+            if (day >= from) n += all.optJSONArray(day)?.length() ?: 0
+        }
+        return n
+    }
+
     fun clear(ctx: Context) {
         prefs(ctx).edit().clear().apply()
     }
