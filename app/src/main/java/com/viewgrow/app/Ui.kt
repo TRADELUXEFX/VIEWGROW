@@ -186,6 +186,7 @@ object Ui {
         val btn = root.findViewById<ImageView>(R.id.theme_btn)
         btn.setImageResource(if (AppTheme.isDark(root.context)) R.drawable.ic_sun else R.drawable.ic_moon)
         btn.setOnClickListener { AppTheme.toggle(root.context) }
+        TextFit.shrinkToFit(root.findViewById(R.id.user_name), 18)
     }
 }
 

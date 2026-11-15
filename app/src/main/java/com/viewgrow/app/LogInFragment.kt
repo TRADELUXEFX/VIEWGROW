@@ -23,6 +23,8 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
         val main = activity as? MainActivity
 
         Phone.attach(phone)
+        // The big green header shrinks while the keyboard is open, so the form has room.
+        view.findViewById<android.view.ViewGroup>(R.id.hero)?.let { KeyboardAware.compactHeader(view, it) }
         if (Store.phone.isNotEmpty()) phone.setText(Phone.show(Store.phone))
         Ui.passwordEye(password, view.findViewById(R.id.eye))
         Fonts.apply(view)

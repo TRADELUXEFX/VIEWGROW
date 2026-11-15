@@ -1,6 +1,5 @@
 package com.viewgrow.app
 
-import android.app.DatePickerDialog
 import android.app.Dialog
 import android.content.Context
 import android.view.LayoutInflater
@@ -89,18 +88,20 @@ object DurationDialog {
         }
 
         pick.setOnClickListener {
-            val now = Calendar.getInstance()
-            DatePickerDialog(ctx, { _, y1, m1, d1 ->
-                val start = String.format(java.util.Locale.US, "%04d-%02d-%02d", y1, m1 + 1, d1)
-                DatePickerDialog(ctx, { _, y2, m2, d2 ->
-                    val end = String.format(java.util.Locale.US, "%04d-%02d-%02d", y2, m2 + 1, d2)
+            // The calendar pop-up (single day or range). Reset then Apply means no dates, which is All time.
+            val custom = p == null && f != null && t != null
+            DateRangeSheet(ctx, if (custom) f else null, if (custom) t else null) { nf, nt ->
+                if (nf == null) {
+                    p = "All time"
+                    f = null
+                    t = null
+                } else {
                     p = null
-                    f = if (end < start) end else start
-                    t = if (end < start) start else end
-                    paint()
-                }, y1, m1, d1).apply { setTitle("To") }.show()
-            }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH))
-                .apply { setTitle("From") }.show()
+                    f = nf
+                    t = nt ?: nf
+                }
+                paint()
+            }.show()
         }
 
         v.findViewById<TextView>(R.id.cancel_btn).setOnClickListener {

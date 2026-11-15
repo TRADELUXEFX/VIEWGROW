@@ -21,6 +21,19 @@
         <item name="postSplashScreenTheme">@style/Theme.ViewGrow</item>
     </style>
 
+    <!-- Pop-up window for ConfirmDialog: no grey box, no title, no extra frame. Only our own rounded card shows. -->
+    <style name="Theme.ViewGrow.Dialog" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFrame">@null</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowMinWidthMajor">0dp</item>
+        <item name="android:windowMinWidthMinor">0dp</item>
+        <item name="android:windowElevation">0dp</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+    </style>
+
     <!-- Filled green pill. Add app:backgroundTint to change the colour. -->
     <style name="AppButton" parent="Widget.MaterialComponents.Button">
         <item name="android:elevation">0dp</item>
@@ -118,6 +131,17 @@
     <style name="SettingSub">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <!-- Weekday letters above the calendar pop-up. -->
+    <style name="DlgWeekday">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:tag">semibold</item>
         <item name="android:textColor">@color/muted</item>
         <item name="android:textSize">12sp</item>
     </style>

@@ -45,6 +45,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         }
         view.findViewById<TextView>(R.id.hist_foot).setOnClickListener { if (footTaps) load() }
         view.findViewById<TextView>(R.id.hist_chip).setOnClickListener { openDuration() }
+        view.findViewById<View>(R.id.help_btn).setOnClickListener { HelpPopup.show(requireContext(), HelpPopup.HISTORY) }
         view.findViewById<TextView>(R.id.tog_days).setOnClickListener { setMode(0) }
         view.findViewById<TextView>(R.id.tog_people).setOnClickListener { setMode(1) }
         showToggle()
@@ -205,6 +206,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         for (p in people) {
             val row = inflater.inflate(R.layout.item_history_contact, list, false)
             row.findViewById<TextView>(R.id.c_name).text = if (p.name.isBlank()) HistoryLog.display(p.number) else p.name
+            TextFit.shrinkToFit(row.findViewById(R.id.c_name), 14)
+            TextFit.shrinkToFit(row.findViewById(R.id.c_number), 12)
             val num = row.findViewById<TextView>(R.id.c_number)
             if (p.name.isBlank()) num.visibility = View.GONE else num.text = HistoryLog.display(p.number)
             val chat = View.OnClickListener { openChat(p.number) }

@@ -28,11 +28,12 @@ object ConfirmDialog {
         ok.setBackgroundResource(if (danger) R.drawable.bg_pill_red else R.drawable.bg_pill_fill)
         v.findViewById<TextView>(R.id.confirm_cancel).text = cancelLabel
         Fonts.apply(v)
-        val dialog = Dialog(ctx)
+        val dialog = Dialog(ctx, R.style.Theme_ViewGrow_Dialog)
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(v)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.window?.setLayout(ctx.resources.displayMetrics.widthPixels - Ui.dp(ctx, 44), WindowManager.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setGravity(android.view.Gravity.CENTER)
         v.findViewById<TextView>(R.id.confirm_cancel).setOnClickListener { dialog.dismiss() }
         ok.setOnClickListener {
             dialog.dismiss()

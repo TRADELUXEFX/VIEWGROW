@@ -89,6 +89,7 @@ object Sync {
         Store.lastSyncCount = count
         Store.lastSyncAt = System.currentTimeMillis()
         if (Store.firstSyncAt == 0L) Store.firstSyncAt = Store.lastSyncAt
+        Reminder.restart(ctx)
         Notifier.contactsSaved(ctx, count)
         return SyncResult(true, count, "")
     }
@@ -142,6 +143,7 @@ object BackgroundSync {
         if (!j.optBoolean("ok")) return null
         if (j.optString("state") == "READY" && !Sync.runBlocking(ctx).ok) return null
         Store.lastBgSyncAt = System.currentTimeMillis()
+        Reminder.restart(ctx)
         return true
     }
 }
@@ -164,6 +166,7 @@ object SyncScheduler {
         Store.init(app)
         if (!Store.loggedIn || Store.syncPaused) { cancel(app); return }
         SyncAdapterSetup.enable(app)
+        Reminder.ensure(app)
         val hours = if (Store.syncHours in intArrayOf(1, 6, 12, 24)) Store.syncHours else 24
         val req = PeriodicWorkRequestBuilder<SyncWorker>(hours.toLong(), TimeUnit.HOURS)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
@@ -174,5 +177,6 @@ object SyncScheduler {
     fun cancel(ctx: Context) {
         WorkManager.getInstance(ctx.applicationContext).cancelUniqueWork(NAME)
         SyncAdapterSetup.disable(ctx.applicationContext)
+        Reminder.cancel(ctx.applicationContext)
     }
 }

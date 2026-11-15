@@ -151,8 +151,12 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
                         .setData(Uri.parse("package:" + ctx.packageName))
                 )
             } catch (e: Exception) {
-                // The phone refused the pop-up. Never block the person.
-                advance(PermStep.BATTERY)
+                // The phone refused the pop-up: try the battery list, and never block the person.
+                try {
+                    batteryAsk.launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                } catch (e2: Exception) {
+                    advance(PermStep.BATTERY)
+                }
             }
             PermStep.DONE -> advance(PermStep.BATTERY)
         }

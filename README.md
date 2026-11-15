@@ -23,3 +23,6 @@ Settings, Profile shows the app version.
 5. Done: History has a Days | People toggle in the green header. People lists everyone this phone saved (from HistoryLog), once each, newest first, with the same chat button as a day. The Duration chip limits People too.
 6. Done: Profile, Sync. Add new contacts every has no title (the SYNC label says it), only the tip line; the chosen time is filled green, and the card is dimmed while syncing is paused.
 7. Done: removed the "One last thing" name card from Home. Every account has a name, and Sign up already requires one.
+8. Done: Delete My Contacts pop-up has its own dialog theme (no grey Android box). Battery pop-up entries added to the manifest, with a fallback to the battery list.
+9. Done, ideas taken from VG Reshare: the ? help pop-up on History and Profile (HelpPopup.kt), and a calendar for Duration > Pick dates, single day or range (DateRangeSheet.kt).
+10. Done, ideas taken from VG Contact: a reminder when nothing has synced for 3 days, or when Contacts permission is off (Reminder.kt); the Sign up and Log in header shrinks while the keyboard is open (KeyboardAware.kt); names and numbers shrink instead of being cut on big-font phones (TextFit.kt).
