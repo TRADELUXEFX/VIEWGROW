@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Help and FAQ: same header as Terms and Privacy. Questions open one at a time. -->
+<!-- Frequently asked questions: same header as Terms and Privacy. Questions open one at a time. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -26,14 +26,27 @@
             android:focusable="true"
             android:padding="8dp"
             android:src="@drawable/ic_back" />
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:tag="extrabold"
-            android:text="Help and FAQ"
-            android:textColor="@color/white"
-            android:textSize="20sp" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:tag="extrabold"
+                android:text="FAQ"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Frequently asked questions"
+                android:textColor="@color/header_text_soft"
+                android:textSize="12sp" />
+        </LinearLayout>
     </FrameLayout>
 
     <ScrollView

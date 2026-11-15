@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The round chat button that floats on Home, History and Profile. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <gradient android:angle="270" android:startColor="@color/green" android:endColor="@color/green_dark" />
+</shape>

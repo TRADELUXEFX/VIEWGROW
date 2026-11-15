@@ -45,6 +45,15 @@ object Store {
         get() = p.getLong("last_sync_at", 0L)
         set(v) { p.edit().putLong("last_sync_at", v).apply() }
 
+    // The contacts total and limit Home last showed, so the Help page can open Increase my limit with the right numbers.
+    var lastTotal: Int
+        get() = p.getInt("last_total", 0)
+        set(v) { p.edit().putInt("last_total", v).apply() }
+
+    var lastLimit: Int
+        get() = p.getInt("last_limit", 0)
+        set(v) { p.edit().putInt("last_limit", v).apply() }
+
     var lastSyncCount: Int
         get() = p.getInt("last_sync_count", 0)
         set(v) { p.edit().putInt("last_sync_count", v).apply() }

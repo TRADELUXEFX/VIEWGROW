@@ -189,20 +189,7 @@
                 style="@style/SettingRow"
                 android:clickable="true"
                 android:focusable="true">
-                <TextView style="@style/SettingTitle" android:layout_width="0dp" android:layout_weight="1" android:text="Help and FAQ" />
-                <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:contentDescription="@null"
-                    android:src="@drawable/ic_chevron_right" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_admin"
-                style="@style/SettingRow"
-                android:clickable="true"
-                android:focusable="true">
-                <TextView style="@style/SettingTitle" android:layout_width="0dp" android:layout_weight="1" android:text="Message admin" />
+                <TextView style="@style/SettingTitle" android:layout_width="0dp" android:layout_weight="1" android:text="Frequently asked questions" />
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"

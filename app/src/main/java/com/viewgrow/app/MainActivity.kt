@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var root: View
     private lateinit var nav: LinearLayout
+    private lateinit var fab: View
     private val tabIds = intArrayOf(R.id.tab_home, R.id.tab_history, R.id.tab_profile)
     private val iconIds = intArrayOf(R.id.icon_home, R.id.icon_history, R.id.icon_profile)
     private val labelIds = intArrayOf(R.id.label_home, R.id.label_history, R.id.label_profile)
@@ -71,6 +72,13 @@ class MainActivity : AppCompatActivity() {
         window.statusBarColor = Color.TRANSPARENT
         root = findViewById(R.id.root)
         nav = findViewById(R.id.nav)
+        // Floating chat button: opens the admin on WhatsApp.
+        fab = findViewById(R.id.fab_chat)
+        fab.setOnClickListener {
+            if (!Remote.openAdmin(this, "Hi, I need help with ViewGrow. My name is ${Store.name}.")) {
+                Ui.toast(root, "Could not open the link.")
+            }
+        }
         Fonts.apply(nav)
 
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
@@ -91,6 +99,8 @@ class MainActivity : AppCompatActivity() {
                     is SignUpFragment, is LogInFragment, is TextPageFragment, is FaqFragment, is PermissionsFragment, is StopFragment -> chrome(false, R.color.surface)
                     is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
                 }
+                // The chat button shows on Home, History and Profile only.
+                fab.visibility = if (f is HomeFragment || f is HistoryFragment || f is ProfileFragment) View.VISIBLE else View.GONE
             }
         }, true)
 
@@ -311,7 +321,7 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // Help and FAQ, opened from Profile. Back returns to Profile.
+    // Frequently asked questions, opened from Profile. Back returns to Profile.
     fun showFaq() {
         supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)

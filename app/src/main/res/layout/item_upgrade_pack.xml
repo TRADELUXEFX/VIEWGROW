@@ -1,20 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One pack row in the Increase my limit pop-up. -->
+<!-- One pack row in the Increase my limit pop-up. Tap to pick it; the picked row gets the green edge. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
     android:background="@drawable/bg_row_card"
+    android:clickable="true"
+    android:focusable="true"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:paddingStart="14dp"
-    android:paddingTop="14dp"
+    android:paddingTop="13dp"
     android:paddingEnd="14dp"
-    android:paddingBottom="14dp">
+    android:paddingBottom="13dp">
+
+    <ImageView
+        android:id="@+id/pack_dot"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="@drawable/bg_radio_off"
+        android:padding="4dp" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
         android:layout_weight="1"
         android:orientation="vertical">
 

@@ -218,14 +218,19 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // 90% of the contact limit or more: the red bar. The limit reached card below takes over at 100%.
         // Based on the total and limit the database sends, so an upgrade makes the bar go away on its own.
         val limitN = if (j.isNull("limit")) 0 else j.optInt("limit")
-        if (verified && state != "LIMIT_REACHED" && limitN > 0 && total * 10 >= limitN * 9) {
+        Store.lastTotal = total
+        Store.lastLimit = limitN
+        val nearLimit = verified && state != "LIMIT_REACHED" && limitN > 0 && total * 10 >= limitN * 9
+        if (nearLimit) {
+            // The red bar has its own big button, so the outline "Increase my limit" button is not shown as well.
             body.addView(HomeViews.nearLimitCard(ctx, total, limitN) {
-                openAdmin("Hi, I am close to my contact limit on ViewGrow. My name is ${Store.name}. I would like to upgrade my limit so I can keep receiving new contacts.")
+                UpgradeSheet.show(ctx, total, limitN)
             })
         }
 
         // "Increase my limit": always there for verified members, even well under the limit.
-        if (verified) {
+        // Not shown when the red bar or the limit reached card already has the big button.
+        if (verified && !nearLimit && state != "LIMIT_REACHED") {
             body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
         }
 
@@ -260,13 +265,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
             }
             "LIMIT_REACHED" -> {
+                // The same Google Play pop-up as everywhere else, so nobody is sent to WhatsApp to pay.
                 body.addView(HomeViews.limitCard(ctx))
-                val msg = "Hi, I have reached my contact limit on ViewGrow. My name is $name. I would like to pay to upgrade my limit so I can receive new contacts."
-                if (Remote.adminLink(msg) != null) {
-                    val b = HomeViews.button(ctx, body, "UPGRADE CONTACT LIMIT", null)
-                    b.setOnClickListener { openAdmin(msg) }
-                    body.addView(b)
-                }
+                val b = HomeViews.button(ctx, body, "Increase my limit", null)
+                b.setOnClickListener { UpgradeSheet.show(ctx, total, limitN) }
+                body.addView(b)
+                body.addView(HomeViews.paidHelpLink(ctx) { (activity as? MainActivity)?.showFaq() })
             }
             "PREPARING" -> {
                 // Verified, waiting for the release. The countdown already says when, so nothing else shows.
