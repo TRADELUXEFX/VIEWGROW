@@ -197,7 +197,9 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
         t.setBackgroundResource(R.drawable.bg_pill_outline)
         t.isClickable = true
         t.isFocusable = true
-        t.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(ctx, 44)).also { it.topMargin = Ui.dp(ctx, 14) }
+        t.minHeight = Ui.dp(ctx, 44)
+        t.setPadding(0, Ui.dp(ctx, 8), 0, Ui.dp(ctx, 8))
+        t.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).also { it.topMargin = Ui.dp(ctx, 14) }
         if (kind == "upgrade") {
             t.text = "Open Increase my contact limit"
             t.setOnClickListener { UpgradeSheet.show(ctx, Store.lastTotal, Store.lastLimit) }

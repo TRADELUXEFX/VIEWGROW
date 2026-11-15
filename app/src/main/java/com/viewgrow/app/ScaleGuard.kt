@@ -8,13 +8,14 @@ import android.util.DisplayMetrics
 // stretch this app. MainActivity runs every screen through it, so a screen is never drawn at a
 // size the layouts were not built for.
 //
-//  - MAX_FONT_SCALE: text is never scaled above this. 1.0 = normal, 1.3 = "Largest" on most
-//    phones. Phones set to 1.5 or 2.0 get 1.3.
+//  - MAX_FONT_SCALE: text is never scaled above this. 2.0 is the most Android itself allows, so
+//    every phone's text size is respected. The screens all scroll, buttons grow with their text
+//    (minHeight, not a fixed height), and names and numbers shrink to fit (TextFit).
 //  - MAX_DISPLAY_DENSITY_RATIO: "Display size" can make everything bigger, which leaves less room.
 //    1.0 means the app never grows beyond the phone's default display size. Smaller display sizes
 //    are respected.
 object ScaleGuard {
-    const val MAX_FONT_SCALE = 1.3f
+    const val MAX_FONT_SCALE = 2.0f
     const val MAX_DISPLAY_DENSITY_RATIO = 1.0f
 
     fun wrap(base: Context): Context {

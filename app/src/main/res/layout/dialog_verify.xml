@@ -40,7 +40,10 @@
     <TextView
         android:id="@+id/verify_admin"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         android:layout_marginTop="22dp"
         android:background="@drawable/bg_pill_fill"
         android:clickable="true"
@@ -54,7 +57,10 @@
     <TextView
         android:id="@+id/verify_close"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         android:layout_marginTop="10dp"
         android:background="@drawable/bg_pill_outline"
         android:clickable="true"

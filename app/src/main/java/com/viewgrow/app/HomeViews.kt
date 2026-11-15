@@ -54,7 +54,9 @@ object HomeViews {
         t.setBackgroundResource(R.drawable.bg_pill_outline)
         t.isClickable = true
         t.isFocusable = true
-        t.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(ctx, 44)).also { it.topMargin = Ui.dp(ctx, 12) }
+        t.minHeight = Ui.dp(ctx, 44)
+        t.setPadding(0, Ui.dp(ctx, 8), 0, Ui.dp(ctx, 8))
+        t.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).also { it.topMargin = Ui.dp(ctx, 12) }
         t.setOnClickListener { onClick() }
         return t
     }
