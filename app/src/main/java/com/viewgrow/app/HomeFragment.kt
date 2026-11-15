@@ -51,25 +51,32 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     // ---- Loading ring ----
 
-    private var ring: Spinner? = null
+    private var bar: android.animation.ObjectAnimator? = null
 
-    // Until the database has answered, only the turning green ring shows. Nothing else, so no wrong state flashes.
+    // Until the database has answered, only a loading bar slides across the top. Nothing else, so no wrong state flashes.
     private fun showLoading() {
         val v = view ?: return
         v.findViewById<View>(R.id.home_scroll).visibility = View.INVISIBLE
-        val img = v.findViewById<ImageView>(R.id.home_loading)
-        if (ring == null) {
-            val d = Spinner(v.context, ContextCompat.getColor(v.context, R.color.green), 36, 4)
-            ring = d
-            img.setImageDrawable(d)
+        val track = v.findViewById<View>(R.id.home_loading)
+        val fill = v.findViewById<View>(R.id.home_loading_fill)
+        track.visibility = View.VISIBLE
+        if (bar?.isRunning == true) return
+        track.post {
+            if (track.visibility != View.VISIBLE || track.width == 0) return@post
+            bar?.cancel()
+            bar = android.animation.ObjectAnimator.ofFloat(fill, View.TRANSLATION_X, -fill.width.toFloat(), track.width.toFloat()).apply {
+                duration = 1000
+                repeatCount = android.animation.ValueAnimator.INFINITE
+                interpolator = android.view.animation.AccelerateDecelerateInterpolator()
+                start()
+            }
         }
-        img.visibility = View.VISIBLE
-        ring?.start()
     }
 
     private fun hideLoading() {
         val v = view ?: return
-        ring?.stop()
+        bar?.cancel()
+        bar = null
         v.findViewById<View>(R.id.home_loading).visibility = View.GONE
         v.findViewById<View>(R.id.home_scroll).visibility = View.VISIBLE
     }
@@ -88,8 +95,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        ring?.stop()
-        ring = null
+        bar?.cancel()
+        bar = null
         savingSpinner?.stop()
         savingSpinner = null
         ui.removeCallbacksAndMessages(null)
@@ -190,6 +197,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // Not verified: no countdown. The "Not verified yet" box takes its place at the top.
         v.findViewById<View>(R.id.countdown).visibility = if (verified) View.VISIBLE else View.GONE
         setBadge(v, verified)
+        // The contacts card leads. Under the "Not verified yet" box it needs a gap; at the top it does not.
+        v.findViewById<View>(R.id.stat_card).let {
+            (it.layoutParams as LinearLayout.LayoutParams).topMargin = if (verified) 0 else Ui.dp(ctx, 12)
+            it.requestLayout()
+        }
 
         val total = if (j.isNull("total")) 0 else j.optInt("total")
         val limit = if (j.isNull("limit")) "\u2014" else j.optInt("limit").toString()
@@ -279,6 +291,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.muted)), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         if (atLimit) s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.red_dark)), 0, cut, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         v.findViewById<TextView>(R.id.stat_received).text = s
+        val lim = limit.toIntOrNull()
+        v.findViewById<GaugeView>(R.id.stat_gauge).set(if (lim != null && lim > 0) total.toFloat() / lim else 0f, atLimit)
     }
 
     // ---- WhatsApp ----

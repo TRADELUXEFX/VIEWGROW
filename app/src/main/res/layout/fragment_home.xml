@@ -13,13 +13,24 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-    <ImageView
+    <!-- Loading bar: a green stretch slides along the track until the database answers. -->
+    <FrameLayout
         android:id="@+id/home_loading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginBottom="60dp"
-        android:importantForAccessibility="no" />
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_gravity="top"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="22dp"
+        android:layout_marginEnd="18dp"
+        android:background="@drawable/bg_load_track"
+        android:clipToOutline="true"
+        android:importantForAccessibility="no">
+        <View
+            android:id="@+id/home_loading_fill"
+            android:layout_width="110dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_load_fill" />
+    </FrameLayout>
 
     <ScrollView
         android:id="@+id/home_scroll"
@@ -42,64 +53,74 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
-            <!-- Countdown to the next release -->
+            <!-- Contacts received: the main card: label and number on the left, gauge on the right -->
             <LinearLayout
-                android:id="@+id/countdown"
+                android:id="@+id/stat_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_countdown"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Get new contacts in"
-                    android:textColor="@color/text2"
-                    android:textSize="13.5sp" />
-                <TextView
-                    android:id="@+id/timer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:tag="extrabold"
-                    android:text="--:--:--"
-                    android:textColor="@color/green_text"
-                    android:textSize="40sp" />
-            </LinearLayout>
-
-            <!-- Contacts received -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_card"
+                                android:background="@drawable/bg_stat_card"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp">
+                android:paddingStart="18dp"
+                android:paddingTop="20dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="20dp">
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center_horizontal"
                     android:orientation="vertical">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Contacts received"
                         android:textColor="@color/text2"
-                        android:textSize="12sp" />
+                        android:textSize="15sp" />
                     <TextView
                         android:id="@+id/stat_received"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="6dp"
                         android:tag="bold"
                         android:text="0"
                         android:textColor="@color/dark"
-                        android:textSize="26sp" />
+                        android:textSize="46sp" />
                 </LinearLayout>
+                <com.viewgrow.app.GaugeView
+                    android:id="@+id/stat_gauge"
+                    android:layout_width="120dp"
+                    android:layout_height="70dp"
+                    android:importantForAccessibility="no" />
+            </LinearLayout>
+
+            <!-- Countdown to the next release: one small row under the contacts card -->
+            <LinearLayout
+                android:id="@+id/countdown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_countdown"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="18dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="12dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Get new contacts in"
+                    android:textColor="@color/text2"
+                    android:textSize="13sp" />
+                <TextView
+                    android:id="@+id/timer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:tag="extrabold"
+                    android:text="--:--:--"
+                    android:textColor="@color/green_text"
+                    android:textSize="24sp" />
             </LinearLayout>
 
             <!-- Everything that depends on the state is added here by HomeFragment -->
