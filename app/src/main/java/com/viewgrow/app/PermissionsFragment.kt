@@ -109,21 +109,21 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 3"
                 icon = R.drawable.ic_contacts
                 title = "Save your contacts"
-                text = "Allow Contacts so ViewGrow can save the contacts you receive straight to your phone."
+                text = "Allow Contacts to save your contacts to your phone."
                 button = "Allow Contacts"
             }
             PermStep.NOTIFICATIONS -> {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 2 OF 3"
                 icon = R.drawable.ic_bell
                 title = "Stay notified"
-                text = "Get a message on your phone when your new contacts are saved."
+                text = "Get notified when new contacts are saved."
                 button = "Allow Notifications"
             }
             else -> {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 3 OF 3"
                 icon = R.drawable.ic_sync
                 title = "Keep syncing"
-                text = "Allow ViewGrow to run in the background so your contacts keep saving, even when the app is closed."
+                text = "Allow background sync so contacts save even when the app is closed."
                 button = "Allow Background Sync"
             }
         }

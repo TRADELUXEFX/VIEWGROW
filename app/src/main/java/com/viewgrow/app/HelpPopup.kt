@@ -34,10 +34,10 @@ object HelpPopup {
         "Your history",
         "Everyone ViewGrow saved to this phone.",
         listOf(
-            HelpRow(R.drawable.ic_history, "Days", "Each day you got contacts, and how many. Tap a day to see their names and numbers."),
-            HelpRow(R.drawable.ic_person, "People", "Everyone saved on this phone, once each, newest first."),
+            HelpRow(R.drawable.ic_history, "Days", "Tap a day to see its names and numbers."),
+            HelpRow(R.drawable.ic_person, "People", "Everyone saved on this phone, newest first."),
             HelpRow(R.drawable.ic_chat, "Chat button", "Opens a WhatsApp chat with that person."),
-            HelpRow(R.drawable.ic_chevron_down, "Duration", "Pick Daily, Weekly, Monthly or All time, or choose your own dates on the calendar.")
+            HelpRow(R.drawable.ic_chevron_down, "Duration", "Pick a period, or choose your own dates.")
         ),
         "History is kept on this phone, so it clears when you log out."
     )
@@ -46,8 +46,8 @@ object HelpPopup {
         "Profile settings",
         "Control how contacts reach your phone.",
         listOf(
-            HelpRow(R.drawable.ic_sync, "Sync every", "How often the phone checks for new contacts: every 1, 6, 12 or 24 hours."),
-            HelpRow(R.drawable.ic_download, "Pause syncing", "Stops contacts saving by themselves until you turn it back on."),
+            HelpRow(R.drawable.ic_sync, "Sync every", "How often the phone checks for new contacts."),
+            HelpRow(R.drawable.ic_download, "Pause syncing", "Stops automatic saving until you turn it back on."),
             HelpRow(R.drawable.ic_bell, "Permissions", "Contacts, Notifications and Battery keep automatic saving working."),
             HelpRow(R.drawable.ic_person, "Delete My Contacts", "Removes the contacts ViewGrow saved. They do not come back unless the admin approves a new download.")
         ),

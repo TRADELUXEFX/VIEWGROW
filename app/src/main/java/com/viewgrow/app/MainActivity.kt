@@ -134,42 +134,58 @@ class MainActivity : AppCompatActivity() {
         }
         when {
             supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
+            isSignUpOrLogIn() -> showWelcome()
             current > 0 -> showTab(0)
             current == 0 -> moveTaskToBack(true)
             else -> finish()
         }
     }
 
+    // Puts a screen in place of whatever is showing and empties the back stack. The stack is cleared in the
+    // same step as the swap (not before it), so a page that was underneath (Profile under Terms, History
+    // under a day) is never rebuilt for a moment first. That brief rebuild was the flash.
+    private fun swap(f: Fragment) {
+        supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        supportFragmentManager.beginTransaction().setReorderingAllowed(true).replace(R.id.container, f).commit()
+    }
+
+    private fun isSignUpOrLogIn(): Boolean {
+        val f = supportFragmentManager.findFragmentById(R.id.container)
+        return f is SignUpFragment || f is LogInFragment
+    }
+
     // ---- Screens ----
 
     fun showWelcome() {
         current = -1
-        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        supportFragmentManager.beginTransaction().replace(R.id.container, WelcomeFragment()).commit()
+        swap(WelcomeFragment())
     }
 
     // Full-screen Banned page (StopFragment). Replaces whatever is showing, with nothing to go back to.
     fun showBanned() {
         current = -1
-        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        supportFragmentManager.beginTransaction().replace(R.id.container, StopFragment.banned()).commit()
+        swap(StopFragment.banned())
     }
 
     // Full-screen Blocked page: the password is locked. "Back to log in" opens Log in above Welcome.
     fun showBlocked(phone: String) {
         current = -1
-        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        supportFragmentManager.beginTransaction().replace(R.id.container, StopFragment.blocked(phone)).commit()
+        swap(StopFragment.blocked(phone))
     }
 
     fun showSignUp() = openAbove(SignUpFragment())
 
     fun showLogIn() = openAbove(LogInFragment())
 
-    // Sign up and Log in sit one step above Welcome, so Back always returns to Welcome.
+    // Sign up and Log in replace each other directly. They are not on the back stack: popping the stack
+    // used to bring Welcome back for a moment (a flash of the Welcome page and its green window colour)
+    // before the next page replaced it. Back from either one is handled in onBack and goes to Welcome.
     private fun openAbove(f: Fragment) {
-        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        supportFragmentManager.beginTransaction().replace(R.id.container, f).addToBackStack(null).commit()
+        current = -1
+        supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.container, f)
+            .commit()
     }
 
     // History and Profile are for verified members only. The last answer from the database decides:
@@ -207,20 +223,23 @@ class MainActivity : AppCompatActivity() {
             showVerifyPopup()
             return
         }
+        // Tapping the tab already showing does nothing (it used to rebuild the page and flash).
+        val showing = supportFragmentManager.findFragmentById(R.id.container)
+        if (index == current && showing != null && supportFragmentManager.backStackEntryCount == 0) return
         current = index
-        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val screen: Fragment = when (index) {
             0 -> HomeFragment()
             1 -> HistoryFragment()
             else -> ProfileFragment()
         }
-        supportFragmentManager.beginTransaction().replace(R.id.container, screen).commit()
+        swap(screen)
         highlight()
     }
 
     // Terms and Conditions, Privacy Policy. Back returns to the screen it was opened from.
     fun showPage(kind: Int) {
         supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
             .replace(R.id.container, TextPageFragment.newInstance(kind))
             .addToBackStack(null)
             .commit()
@@ -229,6 +248,7 @@ class MainActivity : AppCompatActivity() {
     // A day opened from History. Back returns to the History list.
     fun showHistoryDay(day: String, count: Int) {
         supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
             .replace(R.id.container, HistoryDayFragment.newInstance(day, count))
             .addToBackStack(null)
             .commit()
@@ -243,8 +263,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showPermissions() {
         current = -1
-        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        supportFragmentManager.beginTransaction().replace(R.id.container, PermissionsFragment()).commit()
+        swap(PermissionsFragment())
     }
 
     // goWelcome = false when another full screen (Blocked) is about to take over.

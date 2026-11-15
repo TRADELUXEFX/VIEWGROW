@@ -106,7 +106,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         "INVALID_PHONE" -> "Enter a valid Nigerian number, e.g. 0801 234 5678."
         "CONSENT_REQUIRED" -> "Please accept the terms to continue."
         "CHECK_DETAILS" -> "We could not create this account. If you already have one, tap Log in below, or message the admin."
-        "SIGNUP_CLOSED" -> "Sign-up is closed right now. Please check back later."
+        "SIGNUP_CLOSED" -> "Sign-up is closed right now. Check back later."
         "PIN_INVALID" -> "Your password needs at least 6 characters, letters and numbers only."
         "SIGNUP_LIMIT" -> "Too many sign-ups from this connection today. Please try again tomorrow."
         else -> "Could not sign up. Please try again."
@@ -122,7 +122,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         val arr = j.optJSONArray("suggestions")
         val count = arr?.length() ?: 0
         if (arr == null || count == 0) {
-            Ui.showError(error, "That name is already in use. Please try a slightly different name.")
+            Ui.showError(error, "That name is taken. Try a different one.")
             return
         }
         val ctx = view.context

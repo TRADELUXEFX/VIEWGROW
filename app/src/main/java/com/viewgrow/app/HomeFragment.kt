@@ -250,7 +250,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 } else if (state == "NOTHING_NEW") {
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "All caught up.", "You\u2019ve received all your contacts for now. New ones arrive after your next verified reshare."))
                 } else {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No contacts today.", "Nobody else was verified in time for this release, so there\u2019s nothing to save. You\u2019re all set."))
+                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No contacts today.", "Nothing new to save. You\u2019re all set."))
                 }
             }
             else -> {

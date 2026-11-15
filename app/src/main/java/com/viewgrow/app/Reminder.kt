@@ -76,10 +76,10 @@ object Reminder {
         val message: String
         if (!ContactsSaver.hasPermission(ctx)) {
             title = "Contacts permission is off"
-            message = "Turn on Contacts so ViewGrow can save your contacts to your phone. Tap to open the app."
+            message = "Turn on Contacts to save your contacts. Tap to open."
         } else {
             title = "New contacts may be waiting"
-            message = "ViewGrow has not synced in $DAYS days. Open the app to save any new contacts to your phone."
+            message = "Not synced in $DAYS days. Open the app to save new contacts."
         }
         val open = PendingIntent.getActivity(
             ctx, 0,

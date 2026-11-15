@@ -61,7 +61,7 @@ class HistoryDayFragment : Fragment(R.layout.fragment_history_day) {
         }
         val empty = v.findViewById<TextView>(R.id.day_empty)
         if (people.isEmpty()) {
-            empty.text = "The names and numbers for this day are not on this phone.\nDays saved from now on will show them here."
+            empty.text = "No names saved on this phone for this day."
             empty.visibility = View.VISIBLE
         } else {
             empty.visibility = View.GONE

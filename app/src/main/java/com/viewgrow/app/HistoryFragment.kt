@@ -244,7 +244,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         when {
             people.isNotEmpty() -> setFoot("", false)
             needAll() -> setFoot("No people on this phone in that duration.", false)
-            else -> setFoot("Nobody saved on this phone yet. People you sync from now on show here.", false)
+            else -> setFoot("No one saved on this phone yet.", false)
         }
     }
 

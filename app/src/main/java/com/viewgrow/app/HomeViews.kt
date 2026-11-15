@@ -50,7 +50,7 @@ object HomeViews {
         val box = LinearLayout(ctx)
         box.orientation = LinearLayout.VERTICAL
         box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        box.addView(notice(ctx, WARN, "Auto-sync looks stopped.", "Your phone may be blocking ViewGrow in the background. Allow auto-start so your contacts save by themselves. This goes away after the next automatic sync works."))
+        box.addView(notice(ctx, WARN, "Auto-sync looks stopped.", "Your phone may be blocking background sync. Allow auto-start so contacts save by themselves."))
         val fix = button(ctx, box, "Fix auto-start", null)
         fix.setOnClickListener { onFix() }
         box.addView(fix)
