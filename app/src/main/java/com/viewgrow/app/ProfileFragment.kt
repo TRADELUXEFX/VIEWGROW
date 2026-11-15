@@ -100,6 +100,8 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         val v = view ?: return
         val ctx = v.context
         v.findViewById<SwitchCompat>(R.id.sw_pause).isChecked = Store.syncPaused
+        // While syncing is paused the interval does nothing, so its card is dimmed.
+        v.findViewById<View>(R.id.row_interval).alpha = if (Store.syncPaused) 0.5f else 1f
         v.findViewById<SwitchCompat>(R.id.sw_contacts).isChecked = ContactsSaver.hasPermission(ctx)
         v.findViewById<SwitchCompat>(R.id.sw_notif).isChecked = NotificationManagerCompat.from(ctx).areNotificationsEnabled()
 
@@ -121,7 +123,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             val seg = v.findViewById<TextView>(segIds[i])
             val on = hours[i] == selected
             seg.setBackgroundResource(if (on) R.drawable.bg_seg_on else 0)
-            seg.setTextColor(ContextCompat.getColor(ctx, if (on) R.color.green_text else R.color.text2))
+            seg.setTextColor(ContextCompat.getColor(ctx, if (on) R.color.white else R.color.text2))
         }
     }
 

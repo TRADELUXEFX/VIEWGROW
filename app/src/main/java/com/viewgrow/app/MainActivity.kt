@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
                 when (f) {
                     is WelcomeFragment -> chrome(false, R.color.green_dark)
                     is SignUpFragment, is LogInFragment, is TextPageFragment -> chrome(false, R.color.surface)
-                    is HomeFragment, is HistoryFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
+                    is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
                 }
             }
         }, true)
@@ -143,6 +143,14 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
+    // A day opened from History. Back returns to the History list.
+    fun showHistoryDay(day: String, count: Int) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container, HistoryDayFragment.newInstance(day, count))
+            .addToBackStack(null)
+            .commit()
+    }
+
     fun onLoggedIn() {
         SyncScheduler.schedule(this)
         showTab(0)
@@ -152,6 +160,7 @@ class MainActivity : AppCompatActivity() {
         Store.logOut()
         SyncScheduler.cancel(this)
         Status.last = null
+        HistoryLog.clear(this)
         Release.clear()
         showWelcome()
     }

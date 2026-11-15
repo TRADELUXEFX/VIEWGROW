@@ -45,17 +45,17 @@
 
             <TextView style="@style/SectionLabel" android:layout_marginTop="0dp" android:text="SYNC" />
 
-            <!-- Add new contacts every: its own card, title on top, the four choices inside it. -->
+            <!-- Add new contacts every: its own card, no title (the SYNC label above already says it), just the tip line and the four choices. The chosen one is filled green. -->
             <LinearLayout
                 android:id="@+id/row_interval"
                 style="@style/SettingRow"
                 android:orientation="vertical"
                 android:gravity="start">
-                <TextView style="@style/SettingTitle" android:text="Add new contacts every" />
+                <TextView style="@style/SettingSub" android:text="How often the app checks for new contacts." />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="10dp"
                     android:background="@drawable/bg_seg_track"
                     android:orientation="horizontal"
                     android:padding="4dp">

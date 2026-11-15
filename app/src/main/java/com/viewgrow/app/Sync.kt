@@ -72,6 +72,8 @@ object Sync {
         if (!ContactsSaver.save(ctx, cards)) {
             return SyncResult(false, 0, "Could not save to your phone. Please try again.")
         }
+        // The phone keeps its own record of who was saved today, for the History day screen.
+        HistoryLog.add(ctx, cards, HistoryLog.today())
 
         val c = Api.request(
             "web_confirm_download",

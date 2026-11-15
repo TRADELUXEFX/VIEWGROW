@@ -46,4 +46,6 @@
     <color name="glass">#26FFFFFF</color>
     <color name="glass_line">#40FFFFFF</color>
     <color name="white_soft">#D9FFFFFF</color>
+    <!-- Selected side of the History toggle: white pill, so its text stays dark green in light and dark mode. -->
+    <color name="tog_on_text">#158245</color>
 </resources>

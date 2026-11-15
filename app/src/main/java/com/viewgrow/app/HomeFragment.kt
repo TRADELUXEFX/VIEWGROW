@@ -163,12 +163,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val available = if (state == "READY") j.optInt("count") else 0
         setStats(v, total, limit, available, state == "LIMIT_REACHED")
 
-        if (j.optBoolean("needs_name")) {
-            addNameCard(body)
-            Fonts.apply(body)
-            return
-        }
-
         val name = Store.name
         val recentSync = Store.lastSyncAt > 0L && Store.lastSyncCount > 0 &&
             System.currentTimeMillis() - Store.lastSyncAt < 24L * 3600L * 1000L
@@ -305,54 +299,5 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 render()
             }
         }
-    }
-
-    // ---- Accounts without a name (made on the website) ----
-
-    private fun addNameCard(body: LinearLayout) {
-        val ctx = body.context
-        val card = LayoutInflater.from(ctx).inflate(R.layout.part_name_card, body, false)
-        val input = card.findViewById<EditText>(R.id.nm_input)
-        val error = card.findViewById<TextView>(R.id.nm_error)
-        val sugg = card.findViewById<LinearLayout>(R.id.nm_sugg)
-        val save = card.findViewById<Button>(R.id.nm_save)
-        save.setOnClickListener {
-            val name = input.text.toString().trim()
-            sugg.visibility = View.GONE
-            Ui.showError(error, null)
-            if (name.isEmpty()) { Ui.showError(error, "Please enter your name."); return@setOnClickListener }
-            Ui.setBusy(save, true, "Save name")
-            val args = JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password).put("p_name", name)
-            Api.call("web_set_name", args) { r ->
-                if (!isAdded || view == null) return@call
-                Ui.setBusy(save, false, "Save name")
-                val j = r.json
-                if (j == null) { Ui.showError(error, Api.netMessage(r.error)); return@call }
-                if (j.optBoolean("ok")) {
-                    Store.name = name
-                    Ui.bindUserHeader(requireView())
-                    reload()
-                    return@call
-                }
-                val code = j.optString("code")
-                if (code == "NAME_TAKEN") {
-                    val names = j.optJSONArray("suggestions")
-                    if (names == null || names.length() == 0) {
-                        Ui.showError(error, "That name is already in use. Please try a slightly different name.")
-                    } else {
-                        HomeViews.suggestions(ctx, sugg, names) { picked ->
-                            input.setText(picked)
-                            input.setSelection(input.text.length)
-                            sugg.visibility = View.GONE
-                        }
-                        Fonts.apply(sugg)
-                        sugg.visibility = View.VISIBLE
-                    }
-                } else {
-                    Ui.showError(error, if (code == "NAME_REQUIRED") "Please enter your name." else Api.loginMessage(j))
-                }
-            }
-        }
-        body.addView(card)
     }
 }

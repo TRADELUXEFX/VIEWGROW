@@ -1,72 +1,116 @@
 package com.viewgrow.app
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import org.json.JSONObject
-import java.util.Calendar
 
-// History: the contacts added on each day the member was verified, 20 at a time.
-// A summary on top, then the days grouped by month. The list comes from the database
-// (web_history), the same as the website.
+// History: one card per day the member was verified, with the number of contacts, newest first.
+// Tap a day to open it (HistoryDayFragment) and see the people. The Duration chip and the Days | People
+// toggle sit in the green header. Days comes from the database (web_history), 20 days at a time.
+// People lists everyone this phone saved (HistoryLog), once each, newest first, with a chat button.
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
+    companion object {
+        // Kept while the app runs, so the chosen duration is still there when coming back to this tab.
+        // preset is null when the dates were picked on the calendar. No dates means All time.
+        private var preset: String? = "All time"
+        private var from: String? = null
+        private var to: String? = null
+        // 0 = Days, 1 = People. Kept while the app runs, like the duration.
+        private var mode = 0
+    }
+
     private val pageSize = 20
-    private var loaded = 0
+    private val days = ArrayList<Pair<String, Int>>()
     private var totalDays = 0
     private var loading = false
+    private var loadedOnce = false
     private var footTaps = false
-    private var monthKey = ""
-    private var monthCard: LinearLayout? = null
-
-    private val dayFull = arrayOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-    private val dayShort = arrayOf("SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT")
-    private val monthShort = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-    private val monthLong = arrayOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val foot = view.findViewById<TextView>(R.id.hist_foot)
-        foot.setOnClickListener { if (footTaps) load() }
         Fonts.apply(view)
-        fillSummary()
+        // Daily, Weekly and Monthly follow today's date each time the tab opens.
+        preset?.let { p ->
+            if (p != "All time") {
+                val r = DurationDialog.rangeFor(p)
+                from = r.first
+                to = r.second
+            }
+        }
+        view.findViewById<TextView>(R.id.hist_foot).setOnClickListener { if (footTaps) load() }
+        view.findViewById<TextView>(R.id.hist_chip).setOnClickListener { openDuration() }
+        view.findViewById<TextView>(R.id.tog_days).setOnClickListener { setMode(0) }
+        view.findViewById<TextView>(R.id.tog_people).setOnClickListener { setMode(1) }
+        showToggle()
+        showChip()
+        if (mode == 1) render()
+        fillTotal()
         if (Status.last == null) {
             val args = JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)
             Api.call("web_status", args) { r ->
                 val j = r.json
                 if (j != null && j.optBoolean("ok")) Status.last = j
-                if (isAdded && this.view != null) fillSummary()
+                if (isAdded && this.view != null) fillTotal()
             }
         }
         load()
     }
 
-    // The card on top: total, share of the limit, days verified, contacts left.
-    private fun fillSummary() {
+    // The total pill in the header: 312 and /500.
+    private fun fillTotal() {
         val v = view ?: return
         val j = Status.last
-        val total = if (j == null || j.isNull("total")) -1 else j.optInt("total")
-        val limit = if (j == null || j.isNull("limit")) -1 else j.optInt("limit")
-        v.findViewById<TextView>(R.id.sum_total).text = if (total >= 0) total.toString() else "0"
-        v.findViewById<TextView>(R.id.sum_of).text = if (limit > 0) "of $limit contacts" else "contacts received"
-        val pct = v.findViewById<TextView>(R.id.sum_pct)
-        val bar = v.findViewById<ProgressBar>(R.id.sum_bar)
-        if (total >= 0 && limit > 0) {
-            val p = minOf(100, total * 100 / limit)
-            pct.text = "$p%"
-            pct.visibility = View.VISIBLE
-            bar.progress = p
-            v.findViewById<TextView>(R.id.sum_left).text = maxOf(limit - total, 0).toString()
-        } else {
-            pct.visibility = View.GONE
-            bar.progress = 0
+        val total = if (j == null || j.isNull("total")) 0 else j.optInt("total")
+        val limit = if (j == null || j.isNull("limit")) 0 else j.optInt("limit")
+        v.findViewById<TextView>(R.id.hist_total).text = total.toString()
+        v.findViewById<TextView>(R.id.hist_limit).text = if (limit > 0) "/$limit" else ""
+    }
+
+    private fun setMode(m: Int) {
+        if (mode == m) return
+        mode = m
+        showToggle()
+        render()
+    }
+
+    // The selected side is a white pill with dark green text; the other side is plain white text on the glass.
+    private fun showToggle() {
+        val v = view ?: return
+        val ctx = v.context
+        val sides = listOf(v.findViewById<TextView>(R.id.tog_days), v.findViewById<TextView>(R.id.tog_people))
+        for ((i, t) in sides.withIndex()) {
+            val on = i == mode
+            if (on) t.setBackgroundResource(R.drawable.bg_tog_on) else t.background = null
+            t.setTextColor(androidx.core.content.ContextCompat.getColor(ctx, if (on) R.color.tog_on_text else R.color.white))
         }
-        v.findViewById<TextView>(R.id.sum_days).text = if (totalDays > 0) totalDays.toString() else "\u2014"
+    }
+
+    private fun showChip() {
+        view?.findViewById<TextView>(R.id.hist_chip)?.text = DurationDialog.chipText(preset, from, to)
+    }
+
+    private fun openDuration() {
+        DurationDialog.show(requireContext(), preset, from, to) { p, f, t ->
+            preset = p
+            from = f
+            to = t
+            showChip()
+            render()
+            loadMoreIfNeeded()
+        }
+    }
+
+    // A date range looks through every day, so the rest of the days are read too.
+    private fun needAll() = from != null
+
+    private fun loadMoreIfNeeded() {
+        if (needAll() && loadedOnce && days.size < totalDays) load()
     }
 
     private fun setFoot(text: String, tappable: Boolean) {
@@ -82,7 +126,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         loading = true
         setFoot("Loading\u2026", false)
         val args = JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)
-            .put("p_offset", loaded).put("p_limit", pageSize)
+            .put("p_offset", days.size).put("p_limit", pageSize)
         Api.call("web_history", args) { r ->
             loading = false
             val v = view
@@ -100,144 +144,91 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 return@call
             }
             val items = j.optJSONArray("items")
-            val list = v.findViewById<LinearLayout>(R.id.hist_list)
             var added = 0
             if (items != null) {
                 for (i in 0 until items.length()) {
                     val o = items.optJSONObject(i) ?: continue
-                    addDay(list, o.optString("day"), o.optInt("count"))
+                    days.add(Pair(o.optString("day"), o.optInt("count")))
                     added++
                 }
             }
-            loaded += added
-            totalDays = j.optInt("total_days", loaded)
-            when {
-                totalDays == 0 -> setFoot("No verified days yet.", false)
-                loaded < totalDays -> setFoot("Load more", true)
-                else -> setFoot("", false)
+            totalDays = j.optInt("total_days", days.size)
+            loadedOnce = true
+            render()
+            if (needAll() && added > 0 && days.size < totalDays) load()
+        }
+    }
+
+    private fun inRange(iso: String): Boolean {
+        val f = from
+        val t = to
+        if (f != null && iso < f) return false
+        if (t != null && iso > t) return false
+        return true
+    }
+
+    private fun render() {
+        val v = view ?: return
+        val list = v.findViewById<LinearLayout>(R.id.hist_list)
+        list.removeAllViews()
+        val ctx = v.context
+        val inflater = LayoutInflater.from(ctx)
+        if (mode == 1) { renderPeople(list, inflater); return }
+        val shown = days.filter { inRange(it.first) }
+        for ((iso, count) in shown) {
+            val row = inflater.inflate(R.layout.item_history_day, list, false)
+            row.findViewById<TextView>(R.id.h_date).text = DayText.label(iso)
+            val rel = DayText.relative(iso)
+            row.findViewById<TextView>(R.id.h_sub).apply {
+                text = rel
+                visibility = if (rel.isEmpty()) View.GONE else View.VISIBLE
             }
-            fillSummary()
+            row.findViewById<TextView>(R.id.h_count).text = "+$count"
+            row.setOnClickListener { (activity as? MainActivity)?.showHistoryDay(iso, count) }
+            Fonts.apply(row)
+            list.addView(row)
+        }
+        val allLoaded = days.size >= totalDays
+        when {
+            loading -> {}
+            !loadedOnce -> {}
+            totalDays == 0 -> setFoot("No verified days yet.", false)
+            shown.isEmpty() && allLoaded -> setFoot("No days match.", false)
+            !needAll() && !allLoaded -> setFoot("Load more", true)
+            else -> setFoot("", false)
         }
     }
 
-    // ---- Drawing the days ----
-
-    private fun dateOf(iso: String): Calendar? {
-        if (iso.length < 10) return null
-        return try {
-            val c = Calendar.getInstance()
-            c.clear()
-            c.set(iso.substring(0, 4).toInt(), iso.substring(5, 7).toInt() - 1, iso.substring(8, 10).toInt())
-            c
-        } catch (e: Exception) { null }
+    // People: everyone saved on this phone in the chosen duration, once each, with a chat button.
+    private fun renderPeople(list: LinearLayout, inflater: LayoutInflater) {
+        val people = HistoryLog.people(list.context, from, to)
+        for (p in people) {
+            val row = inflater.inflate(R.layout.item_history_contact, list, false)
+            row.findViewById<TextView>(R.id.c_name).text = if (p.name.isBlank()) HistoryLog.display(p.number) else p.name
+            val num = row.findViewById<TextView>(R.id.c_number)
+            if (p.name.isBlank()) num.visibility = View.GONE else num.text = HistoryLog.display(p.number)
+            val chat = View.OnClickListener { openChat(p.number) }
+            row.findViewById<View>(R.id.c_chat).setOnClickListener(chat)
+            row.setOnClickListener(chat)
+            Fonts.apply(row)
+            list.addView(row)
+        }
+        when {
+            people.isNotEmpty() -> setFoot("", false)
+            needAll() -> setFoot("No people on this phone in that duration.", false)
+            else -> setFoot("Nobody saved on this phone yet. People you sync from now on show here.", false)
+        }
     }
 
-    private fun sameDay(a: Calendar, b: Calendar) =
-        a.get(Calendar.YEAR) == b.get(Calendar.YEAR) && a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR)
-
-    // A new month gets its own small heading and its own card; days follow inside the card.
-    private fun addDay(list: LinearLayout, iso: String, count: Int) {
-        val ctx = list.context
-        val d = dateOf(iso)
-        val key = if (d == null) iso else d.get(Calendar.YEAR).toString() + "-" + d.get(Calendar.MONTH)
-        if (key != monthKey || monthCard == null) {
-            monthKey = key
-            val label = TextView(ctx)
-            label.tag = "semibold"
-            label.text = if (d == null) "" else (monthLong[d.get(Calendar.MONTH)] + " " + d.get(Calendar.YEAR)).uppercase()
-            label.textSize = 11f
-            label.letterSpacing = 0.08f
-            label.setTextColor(ContextCompat.getColor(ctx, R.color.muted))
-            val llp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            llp.topMargin = Ui.dp(ctx, if (list.childCount == 0) 0 else 14)
-            llp.bottomMargin = Ui.dp(ctx, 8)
-            label.layoutParams = llp
-            val card = LinearLayout(ctx)
-            card.orientation = LinearLayout.VERTICAL
-            card.setBackgroundResource(R.drawable.bg_card)
-            card.setPadding(Ui.dp(ctx, 12), Ui.dp(ctx, 2), Ui.dp(ctx, 12), Ui.dp(ctx, 2))
-            card.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            Fonts.apply(label)
-            list.addView(label)
-            list.addView(card)
-            monthCard = card
+    // Opens the WhatsApp chat (wa.me), in WhatsApp or WhatsApp Business, whichever the phone has.
+    private fun openChat(number: String) {
+        val url = HistoryLog.chatUrl(number)
+        val v = view ?: return
+        if (url == null) { Ui.toast(v, "No number to chat with."); return }
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: Exception) {
+            Ui.toast(v, "Could not open WhatsApp.")
         }
-        val card = monthCard ?: return
-        if (card.childCount > 0) {
-            val line = View(ctx)
-            line.setBackgroundColor(ContextCompat.getColor(ctx, R.color.border))
-            line.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(ctx, 1))
-            card.addView(line)
-        }
-        val row = dayRow(ctx, d, iso, count)
-        Fonts.apply(row)
-        card.addView(row)
-    }
-
-    // [ 9 / MON ]  Today            +36
-    //              9 Nov
-    private fun dayRow(ctx: android.content.Context, d: Calendar?, iso: String, count: Int): View {
-        val row = LinearLayout(ctx)
-        row.orientation = LinearLayout.HORIZONTAL
-        row.gravity = Gravity.CENTER_VERTICAL
-        row.setPadding(0, Ui.dp(ctx, 10), 0, Ui.dp(ctx, 10))
-
-        val tile = LinearLayout(ctx)
-        tile.orientation = LinearLayout.VERTICAL
-        tile.gravity = Gravity.CENTER
-        tile.setBackgroundResource(R.drawable.bg_day_tile)
-        tile.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 46), Ui.dp(ctx, 46))
-        val num = TextView(ctx)
-        num.tag = "bold"
-        num.text = if (d == null) "" else d.get(Calendar.DAY_OF_MONTH).toString()
-        num.textSize = 16f
-        num.setTextColor(ContextCompat.getColor(ctx, R.color.green_text))
-        val wk = TextView(ctx)
-        wk.tag = "semibold"
-        wk.text = if (d == null) "" else dayShort[d.get(Calendar.DAY_OF_WEEK) - 1]
-        wk.textSize = 8.5f
-        wk.setTextColor(ContextCompat.getColor(ctx, R.color.text2))
-        tile.addView(num)
-        tile.addView(wk)
-
-        val today = Calendar.getInstance()
-        val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
-        val title = when {
-            d == null -> iso
-            sameDay(d, today) -> "Today"
-            sameDay(d, yesterday) -> "Yesterday"
-            else -> dayFull[d.get(Calendar.DAY_OF_WEEK) - 1]
-        }
-        val sub = if (d == null) "" else d.get(Calendar.DAY_OF_MONTH).toString() + " " + monthShort[d.get(Calendar.MONTH)]
-
-        val mid = LinearLayout(ctx)
-        mid.orientation = LinearLayout.VERTICAL
-        val mlp = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-        mlp.marginStart = Ui.dp(ctx, 12)
-        mid.layoutParams = mlp
-        val t = TextView(ctx)
-        t.tag = "semibold"
-        t.text = title
-        t.textSize = 14f
-        t.setTextColor(ContextCompat.getColor(ctx, R.color.dark))
-        val s = TextView(ctx)
-        s.text = sub
-        s.textSize = 11.5f
-        s.setTextColor(ContextCompat.getColor(ctx, R.color.muted))
-        mid.addView(t)
-        mid.addView(s)
-
-        val n = TextView(ctx)
-        n.tag = "bold"
-        n.text = "+$count"
-        n.textSize = 13f
-        n.setBackgroundResource(R.drawable.bg_tag_green)
-        n.setPadding(Ui.dp(ctx, 12), Ui.dp(ctx, 5), Ui.dp(ctx, 12), Ui.dp(ctx, 5))
-        n.setTextColor(ContextCompat.getColor(ctx, R.color.green_text))
-
-        row.addView(tile)
-        row.addView(mid)
-        row.addView(n)
-        return row
     }
 }
