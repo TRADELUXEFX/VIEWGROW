@@ -1,87 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One permission step: counter, icon, title, line of text, big button, Not now. Text is set in code. -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/surface"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:scrollbars="none">
+    android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/hero"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_hero"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingStart="28dp"
-        android:paddingTop="56dp"
-        android:paddingEnd="28dp"
-        android:paddingBottom="28dp">
-
+        android:paddingTop="40dp"
+        android:paddingBottom="36dp">
         <TextView
             android:id="@+id/step_counter"
-            style="@style/SectionLabel"
-            android:layout_marginTop="0dp"
-            android:textColor="@color/green_text" />
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <ImageView
-            android:id="@+id/step_icon"
-            android:layout_width="88dp"
-            android:layout_height="88dp"
-            android:background="@drawable/bg_green_circle"
-            android:contentDescription="@null"
-            android:padding="26dp" />
-
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.08"
+            android:tag="semibold"
+            android:textColor="@color/white_soft"
+            android:textSize="12sp" />
         <TextView
             android:id="@+id/step_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:gravity="center"
-            android:tag="extrabold"
-            android:textColor="@color/dark"
-            android:textSize="24sp" />
-
-        <TextView
-            android:id="@+id/step_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:gravity="center"
-            android:lineSpacingExtra="3dp"
-            android:textColor="@color/text2"
-            android:textSize="14.5sp" />
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_allow"
-            style="@style/AppButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp" />
-
-        <TextView
-            android:id="@+id/btn_later"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="14dp"
-            android:tag="semibold"
-            android:text="Not now"
-            android:textColor="@color/muted"
-            android:textSize="14sp" />
+            android:tag="extrabold"
+            android:textColor="@color/white"
+            android:textSize="26sp" />
     </LinearLayout>
-</ScrollView>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="none">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="28dp">
+                <ImageView
+                    android:id="@+id/step_icon"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:background="@drawable/bg_tint_circle"
+                    android:contentDescription="@null"
+                    android:padding="24dp" />
+                <TextView
+                    android:id="@+id/step_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="@color/text"
+                    android:textSize="14.5sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_action"
+        style="@style/AppButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="24dp" />
+</LinearLayout>

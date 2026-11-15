@@ -1,131 +1,160 @@
 package com.viewgrow.app
 
 import android.Manifest
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.button.MaterialButton
 
-// Shown once, right after Sign up or Log in, before Home. One goal per screen, in this order:
-//   Contacts (needed to save contacts), Notifications (to hear when contacts arrive),
-//   Battery (so the phone does not stop the background sync).
-// A step that is already allowed is skipped. Saying no never blocks anything: every step has
-// "Not now", and a refused step is not asked again on this screen (Profile can turn it on later).
+private enum class PermStep { CONTACTS, NOTIFICATIONS, BATTERY, DONE }
+
+// Shown right after Sign up or Log in, before Home. One thing per screen, in this order:
+//   Step 1: Contacts (so ViewGrow can save your contacts)
+//   Step 2: Notifications (Android 13 and up only)
+//   Step 3: Battery (so the automatic sync is not stopped by battery saver)
+// A step that is already allowed is skipped, and when nothing is left the app goes straight to Home.
+// Saying no never blocks anyone: the app always moves on to the next step.
 class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
 
-    private enum class Step { CONTACTS, NOTIFICATIONS, BATTERY }
-
     companion object {
-        private fun needed(ctx: Context, step: Step): Boolean = when (step) {
-            Step.CONTACTS -> !ContactsSaver.hasPermission(ctx)
-            Step.NOTIFICATIONS -> !NotificationManagerCompat.from(ctx).areNotificationsEnabled()
-            Step.BATTERY -> {
-                val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-                !pm.isIgnoringBatteryOptimizations(ctx.packageName)
-            }
+        private fun notificationsAsked(ctx: Context): Boolean =
+            Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+
+        private fun batteryRestricted(ctx: Context): Boolean {
+            val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+            return !pm.isIgnoringBatteryOptimizations(ctx.packageName)
         }
 
-        // True when at least one step still has something to ask.
-        fun needsAny(ctx: Context): Boolean = Step.values().any { needed(ctx, it) }
+        private fun needed(ctx: Context, s: PermStep): Boolean = when (s) {
+            PermStep.CONTACTS -> !ContactsSaver.hasPermission(ctx)
+            PermStep.NOTIFICATIONS -> notificationsAsked(ctx)
+            PermStep.BATTERY -> batteryRestricted(ctx)
+            PermStep.DONE -> true
+        }
+
+        // True when at least one of the three steps still has something to ask.
+        fun anythingToAsk(ctx: Context): Boolean =
+            PermStep.values().any { it != PermStep.DONE && needed(ctx, it) }
     }
 
-    private var plan: List<Step> = emptyList()
-    private val done = HashSet<Step>()
-    private var current: Step? = null
+    private var step = PermStep.CONTACTS
 
-    private val contactsAsk = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { finishStep(Step.CONTACTS) }
-    private val notificationsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) { finishStep(Step.NOTIFICATIONS) }
-    private val settingsOpened = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        current?.let { finishStep(it) }
+    // Whatever the answer (Allow or Deny), the app moves on.
+    private val contactsAsk = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        advance(PermStep.CONTACTS)
+    }
+    private val notificationsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        advance(PermStep.NOTIFICATIONS)
+    }
+    private val batteryAsk = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        advance(PermStep.BATTERY)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val ctx = view.context
-        // Fixed when the screen opens, so "Step 2 of 3" does not change while going through.
-        plan = Step.values().filter { needed(ctx, it) }
         Fonts.apply(view)
-        view.findViewById<View>(R.id.btn_allow).setOnClickListener { onAllow() }
-        view.findViewById<View>(R.id.btn_later).setOnClickListener { current?.let { finishStep(it) } }
-        showNext()
+        val saved = savedInstanceState?.getInt("step", -1) ?: -1
+        if (saved >= 0) {
+            step = PermStep.values()[saved]
+            show()
+        } else {
+            advance(null)
+        }
     }
 
-    // The next step in the plan that is not done and still needed, or Home when there is none.
-    private fun showNext() {
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt("step", step.ordinal)
+    }
+
+    // Moves to the first step after [after] that still needs asking (the first step overall when
+    // [after] is null). When none is left, opens Home.
+    private fun advance(after: PermStep?) {
+        val ctx = context ?: return
+        val from = if (after == null) 0 else after.ordinal + 1
+        step = PermStep.values().drop(from).firstOrNull { needed(ctx, it) } ?: PermStep.DONE
+        if (!isAdded) return
+        if (step == PermStep.DONE) {
+            // Posted, so Home opens after any screen change that is still running.
+            Handler(Looper.getMainLooper()).post { if (isAdded) (activity as? MainActivity)?.showTab(0) }
+        } else if (view != null) {
+            show()
+        }
+    }
+
+    private fun show() {
         val v = view ?: return
         val ctx = v.context
-        val next = plan.firstOrNull { it !in done && needed(ctx, it) }
-        if (next == null) {
-            (activity as? MainActivity)?.onPermissionsDone()
-            return
+        val icon: Int
+        val title: String
+        val text: String
+        val button: String
+        when (step) {
+            PermStep.CONTACTS -> {
+                v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 3"
+                icon = R.drawable.ic_contacts
+                title = "Save your contacts"
+                text = "Allow Contacts so ViewGrow can save the contacts you receive straight to your phone."
+                button = "Allow Contacts"
+            }
+            PermStep.NOTIFICATIONS -> {
+                v.findViewById<TextView>(R.id.step_counter).text = "STEP 2 OF 3"
+                icon = R.drawable.ic_bell
+                title = "Stay notified"
+                text = "Get a message on your phone when your new contacts are saved."
+                button = "Allow Notifications"
+            }
+            else -> {
+                v.findViewById<TextView>(R.id.step_counter).text = "STEP 3 OF 3"
+                icon = R.drawable.ic_sync
+                title = "Keep syncing"
+                text = "Allow ViewGrow to run in the background so your contacts keep saving, even when the app is closed."
+                button = "Allow Background Sync"
+            }
         }
-        current = next
-        val (title, text, button, icon) = when (next) {
-            Step.CONTACTS -> Copy(
-                "Save your contacts",
-                "ViewGrow saves the contacts you receive straight to your phone. Nothing goes to any Google account.",
-                "Allow Contacts", R.drawable.ic_contacts
-            )
-            Step.NOTIFICATIONS -> Copy(
-                "Know when contacts arrive",
-                "Get a message when new contacts have been saved to your phone.",
-                "Allow Notifications", R.drawable.ic_chat
-            )
-            Step.BATTERY -> Copy(
-                "Keep syncing alive",
-                "Find ViewGrow in the list and set it to Not optimised, so your phone does not stop the background sync.",
-                "Open battery settings", R.drawable.ic_sync
-            )
-        }
-        v.findViewById<TextView>(R.id.step_counter).text = "STEP " + (plan.indexOf(next) + 1) + " OF " + plan.size
         v.findViewById<TextView>(R.id.step_title).text = title
         v.findViewById<TextView>(R.id.step_text).text = text
-        v.findViewById<TextView>(R.id.btn_allow).text = button
-        v.findViewById<ImageView>(R.id.step_icon).setImageResource(icon)
+        val img = v.findViewById<ImageView>(R.id.step_icon)
+        img.setImageResource(icon)
+        ImageViewCompat.setImageTintList(img, ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.green_text)))
+        val btn = v.findViewById<MaterialButton>(R.id.btn_action)
+        btn.text = button
+        btn.setOnClickListener { ask() }
     }
 
-    private class Copy(val title: String, val text: String, val button: String, val icon: Int) {
-        operator fun component1() = title
-        operator fun component2() = text
-        operator fun component3() = button
-        operator fun component4() = icon
-    }
-
-    private fun finishStep(step: Step) {
-        done.add(step)
-        if (isAdded && view != null) showNext()
-    }
-
-    private fun onAllow() {
-        when (current ?: return) {
-            Step.CONTACTS -> contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
-            Step.NOTIFICATIONS -> {
+    private fun ask() {
+        val ctx = context ?: return
+        when (step) {
+            PermStep.CONTACTS -> contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
+            PermStep.NOTIFICATIONS -> {
                 if (Build.VERSION.SDK_INT >= 33) notificationsAsk.launch(Manifest.permission.POST_NOTIFICATIONS)
-                else openOrSkip(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName))
+                else advance(PermStep.NOTIFICATIONS)
             }
-            Step.BATTERY -> openOrSkip(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-        }
-    }
-
-    // Opens one of the phone's settings screens. When the person comes back the step is done.
-    private fun openOrSkip(intent: Intent) {
-        try {
-            settingsOpened.launch(intent)
-        } catch (e: ActivityNotFoundException) {
-            try {
-                settingsOpened.launch(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", requireContext().packageName, null)))
-            } catch (e2: ActivityNotFoundException) {
-                current?.let { finishStep(it) }
+            PermStep.BATTERY -> try {
+                batteryAsk.launch(
+                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                        .setData(Uri.parse("package:" + ctx.packageName))
+                )
+            } catch (e: Exception) {
+                // The phone refused the pop-up. Never block the person.
+                advance(PermStep.BATTERY)
             }
+            PermStep.DONE -> advance(PermStep.BATTERY)
         }
     }
 }

@@ -39,13 +39,14 @@ class MainActivity : AppCompatActivity() {
     // Height of the phone's status bar. Green headers grow by this much and run behind it.
     private var topInset = 0
 
-    // The phone's Font size and Display size can only stretch the app so far (see ScaleGuard).
+    // Every screen goes through ScaleGuard, so the phone's Font size and Display size settings
+    // cannot stretch the app past what the layouts were built for.
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(ScaleGuard.wrap(newBase))
     }
 
-    // AppCompat puts the system configuration back on top of ours. Keep our scale, but let it keep its
-    // own light/dark mode (uiMode), so the moon button still works.
+    // AppCompat applies the phone's own configuration on top of ours. Keep our scale, but let it
+    // keep its own light/dark mode (uiMode).
     override fun applyOverrideConfiguration(overrideConfiguration: Configuration?) {
         if (overrideConfiguration != null) {
             val uiMode = overrideConfiguration.uiMode
@@ -116,7 +117,6 @@ class MainActivity : AppCompatActivity() {
     // without closing it. Back on Welcome closes it.
     private fun onBack() {
         when {
-            supportFragmentManager.findFragmentById(R.id.container) is PermissionsFragment -> showTab(0)
             supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
             current > 0 -> showTab(0)
             current == 0 -> moveTaskToBack(true)
@@ -170,11 +170,11 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
+    // After Sign up or Log in: ask for what is still missing (contacts, notifications, battery),
+    // then Home. When everything is already allowed it goes straight to Home.
     fun onLoggedIn() {
         SyncScheduler.schedule(this)
-        // First time here (or a new phone): walk through Contacts, Notifications and Battery.
-        // Nothing missing means straight to Home.
-        if (PermissionsFragment.needsAny(this)) showPermissions() else showTab(0)
+        if (PermissionsFragment.anythingToAsk(this)) showPermissions() else showTab(0)
     }
 
     private fun showPermissions() {
@@ -182,9 +182,6 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         supportFragmentManager.beginTransaction().replace(R.id.container, PermissionsFragment()).commit()
     }
-
-    // Called by the permissions screen when every step is done or skipped.
-    fun onPermissionsDone() = showTab(0)
 
     fun onLoggedOut() {
         Store.logOut()

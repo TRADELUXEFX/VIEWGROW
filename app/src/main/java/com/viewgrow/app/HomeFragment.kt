@@ -163,6 +163,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val available = if (state == "READY") j.optInt("count") else 0
         setStats(v, total, limit, available, state == "LIMIT_REACHED")
 
+        // The automatic sync looks dead on a phone brand that blocks background apps.
+        if (OemAutostart.needsPrompt()) {
+            body.addView(HomeViews.autostartCard(ctx) { activity?.let { OemAutostart.openSettings(it) } })
+        }
+
         val name = Store.name
         val recentSync = Store.lastSyncAt > 0L && Store.lastSyncCount > 0 &&
             System.currentTimeMillis() - Store.lastSyncAt < 24L * 3600L * 1000L
@@ -224,16 +229,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         if (state != "NOT_VERIFIED" && recent != null && recent.length() > 0) {
             val days = j.optInt("days", recent.length())
             body.addView(HomeViews.recentCard(ctx, recent, days) { (activity as? MainActivity)?.showTab(1) })
-        }
-        // Some phone brands stop the background timer. If it has not run for a long while, say so and
-        // open the phone's own auto-start screen. It goes away by itself once a background sync runs.
-        if (verified && Store.loggedIn && !Store.syncPaused && OemAutostart.needsPrompt()) {
-            val warn = HomeViews.notice(
-                ctx, HomeViews.WARN, "Auto-sync looks stopped.",
-                "Your phone may be blocking ViewGrow in the background. Tap here to fix it."
-            )
-            warn.setOnClickListener { activity?.let { OemAutostart.openSettings(it) } }
-            body.addView(warn, 0)
         }
         Fonts.apply(body)
     }

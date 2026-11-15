@@ -5,40 +5,21 @@ import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import android.widget.Toast
 
-// Did the background timer really run lately? Android cannot tell the app whether a brand's own
-// "auto-start" switch is on, so the app watches the result instead: every time the timer runs it
-// writes down the time, and if that has not happened for a long while the timer looks stopped.
-object SyncHealth {
-    fun markScheduled() {
-        if (Store.bgBaselineAt == 0L) Store.bgBaselineAt = System.currentTimeMillis()
-    }
-
-    fun recordBackgroundRun() {
-        Store.lastBgAt = System.currentTimeMillis()
-    }
-
-    // Twice the chosen interval, but never less than 30 hours. Android may run background jobs late to
-    // save battery, so one late run must not count as stopped. Never true before the timer was first
-    // scheduled, so a new install never shows it.
-    fun isStalled(): Boolean {
-        val since = if (Store.lastBgAt != 0L) Store.lastBgAt else Store.bgBaselineAt
-        if (since == 0L) return false
-        val interval = if (Store.syncHours in intArrayOf(1, 6, 12, 24)) Store.syncHours else 24
-        val limitHours = maxOf(30, 2 * interval)
-        return System.currentTimeMillis() - since > limitHours * 3600L * 1000L
-    }
-}
-
-// Phone brands that ship their own background-app killer on top of Android (Tecno, Infinix, itel,
-// Xiaomi, Oppo, Vivo, Huawei ...). The app can be exempt from battery optimisation and still be stopped
-// by the brand's manager. These screens are brand-specific and undocumented, so each one is tried in
-// turn and the app's own settings page is the fallback.
+// For phone brands that ship their own background-app killer on top of Android (Tecno, Infinix,
+// itel, Xiaomi, Oppo, Vivo, Huawei ...). On those phones ViewGrow can be exempt from battery
+// optimisation and still be stopped by the brand's own manager, so the automatic sync silently stops.
+//
+// Android has no way to read that setting back, so the app watches the result instead: the banner
+// on Home shows only when no BACKGROUND sync has worked for a while (Store.isSyncStalled), and it
+// goes away by itself as soon as one does.
+//
+// The screens below are brand-specific and can change between OS versions, so each one is tried in
+// turn and the app's own Settings page is the fallback.
 object OemAutostart {
 
-    private val KNOWN = setOf(
+    private val KNOWN_OEMS = setOf(
         "xiaomi", "redmi", "poco",
         "huawei", "honor",
         "oppo", "realme", "oneplus",
@@ -46,10 +27,11 @@ object OemAutostart {
         "tecno", "infinix", "itel"
     )
 
-    fun isKnownOem(): Boolean = Build.MANUFACTURER.lowercase() in KNOWN
+    fun isKnownOem(): Boolean = Build.MANUFACTURER.lowercase() in KNOWN_OEMS
 
-    // True only on a listed brand and only while the timer really looks stopped.
-    fun needsPrompt(): Boolean = isKnownOem() && SyncHealth.isStalled()
+    // True only on a listed brand, while syncing is not paused, and only while the automatic sync
+    // really looks stalled.
+    fun needsPrompt(): Boolean = isKnownOem() && !Store.syncPaused && Store.isSyncStalled()
 
     fun openSettings(activity: Activity) {
         val m = Build.MANUFACTURER.lowercase()
@@ -84,19 +66,24 @@ object OemAutostart {
             try {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 activity.startActivity(intent)
-                Toast.makeText(activity, "Allow ViewGrow to auto-start and run in the background, then come back", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    activity,
+                    "Allow ViewGrow to auto-start / run in background, then come back",
+                    Toast.LENGTH_LONG
+                ).show()
                 return
             } catch (e: Exception) {
-                // This screen does not exist on this phone or version: try the next one.
+                // This screen does not exist on this phone or OS version. Try the next one.
             }
         }
 
         try {
             activity.startActivity(
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).setData(Uri.parse("package:" + activity.packageName))
+                Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.parse("package:${activity.packageName}"))
             )
         } catch (e: Exception) {
-            Toast.makeText(activity, "Could not open Settings", Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, "Couldn't open Settings", Toast.LENGTH_SHORT).show()
         }
     }
 }

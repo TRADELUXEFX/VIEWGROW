@@ -14,9 +14,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.work.Constraints
-import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequest
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ListenableWorker
 import androidx.work.NetworkType
@@ -29,8 +26,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-// retryable: the only problem was the connection, so trying again when it is back makes sense.
-class SyncResult(val ok: Boolean, val count: Int, val message: String, val retryable: Boolean = false)
+class SyncResult(val ok: Boolean, val count: Int, val message: String)
 
 // Gets the contacts the database prepared, saves them to the phone, then tells the database they were saved.
 // The app never chooses the contacts: web_prepare_download does, with the same rules as the website.
@@ -58,8 +54,6 @@ object Sync {
         }
     }
 
-    private fun isNet(error: String?): Boolean = error == "NETWORK" || error == "TIMEOUT"
-
     private fun doSync(ctx: Context): SyncResult {
         Store.init(ctx)
         if (!Store.loggedIn) return SyncResult(false, 0, "Please log in again.")
@@ -70,7 +64,7 @@ object Sync {
         val password = Store.password
 
         val p = Api.request("web_prepare_download", JSONObject().put("p_phone", phone).put("p_pin", password))
-        val pj = p.json ?: return SyncResult(false, 0, Api.netMessage(p.error), isNet(p.error))
+        val pj = p.json ?: return SyncResult(false, 0, Api.netMessage(p.error))
         if (!pj.optBoolean("ok")) return SyncResult(false, 0, Api.loginMessage(pj))
         if (pj.optString("status") != "ready") return SyncResult(false, 0, "Nothing to save right now. Check back later.")
 
@@ -88,12 +82,13 @@ object Sync {
         val cj = c.json
         if (cj == null || !cj.optBoolean("ok")) {
             // The contacts are in the phone. Syncing again gives the same file, and nothing is saved twice.
-            return SyncResult(false, 0, "Saved, but could not confirm. Tap Sync again.", cj == null && isNet(c.error))
+            return SyncResult(false, 0, "Saved, but could not confirm. Tap Sync again.")
         }
 
         val count = pj.optInt("count", maxOf(0, cards.size - 1))
         Store.lastSyncCount = count
         Store.lastSyncAt = System.currentTimeMillis()
+        if (Store.firstSyncAt == 0L) Store.firstSyncAt = Store.lastSyncAt
         Notifier.contactsSaved(ctx, count)
         return SyncResult(true, count, "")
     }
@@ -133,28 +128,29 @@ object Notifier {
     }
 }
 
+// One automatic run, used by both triggers: the timer below and the sync adapter (SyncAdapter.kt).
+// Returns true when it finished cleanly (nothing to save counts), false when the database could not
+// be reached (try again soon), and null when it was skipped or did not finish.
+// A clean run is remembered, which is what clears the "Auto-sync looks stopped" banner on Home.
+object BackgroundSync {
+    fun run(ctx: Context): Boolean? {
+        Store.init(ctx)
+        if (!Store.loggedIn || Store.syncPaused) return null
+        if (!ContactsSaver.hasPermission(ctx)) return null
+        val st = Api.request("web_status", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password))
+        val j = st.json ?: return false
+        if (!j.optBoolean("ok")) return null
+        if (j.optString("state") == "READY" && !Sync.runBlocking(ctx).ok) return null
+        Store.lastBgSyncAt = System.currentTimeMillis()
+        return true
+    }
+}
+
 // The background timer: every 1h, 6h, 12h or 24h the phone asks the database if contacts are ready,
 // and saves them. It does nothing while paused, logged out, or without the Contacts permission.
 class SyncWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): ListenableWorker.Result {
-        val app = applicationContext
-        Store.init(app)
-        if (!Store.loggedIn || Store.syncPaused) return ListenableWorker.Result.success()
-        // The timer really ran, so the phone is letting the app work in the background.
-        SyncHealth.recordBackgroundRun()
-        if (!ContactsSaver.hasPermission(app)) return ListenableWorker.Result.success()
-        val attempt = inputData.getInt(SyncRetry.KEY, 0)
-        val st = Api.request("web_status", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password))
-        val j = st.json
-        if (j == null) {
-            // No answer (no data, or too slow): try again as soon as the connection is back.
-            SyncRetry.later(app, attempt)
-            return ListenableWorker.Result.success()
-        }
-        if (j.optBoolean("ok") && j.optString("state") == "READY") {
-            val res = Sync.runBlocking(app)
-            if (!res.ok && res.retryable) SyncRetry.later(app, attempt)
-        }
+        if (BackgroundSync.run(applicationContext) == false) return ListenableWorker.Result.retry()
         return ListenableWorker.Result.success()
     }
 }
@@ -166,13 +162,8 @@ object SyncScheduler {
     fun schedule(ctx: Context) {
         val app = ctx.applicationContext
         Store.init(app)
-        if (!Store.loggedIn || Store.syncPaused) {
-            cancel(app)
-            // Not running on purpose, so the "auto-sync stopped" check starts fresh when it is turned back on.
-            if (Store.loggedIn) { Store.bgBaselineAt = 0L; Store.lastBgAt = 0L }
-            return
-        }
-        SyncHealth.markScheduled()
+        if (!Store.loggedIn || Store.syncPaused) { cancel(app); return }
+        SyncAdapterSetup.enable(app)
         val hours = if (Store.syncHours in intArrayOf(1, 6, 12, 24)) Store.syncHours else 24
         val req = PeriodicWorkRequestBuilder<SyncWorker>(hours.toLong(), TimeUnit.HOURS)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
@@ -182,29 +173,6 @@ object SyncScheduler {
 
     fun cancel(ctx: Context) {
         WorkManager.getInstance(ctx.applicationContext).cancelUniqueWork(NAME)
-        SyncRetry.cancel(ctx)
-    }
-}
-
-// One extra try, held by Android until the phone has a connection again. Same worker, so it gets the
-// same checks. REPLACE keeps a single waiting job however many times it fails, and it gives up after
-// a few tries so a broken connection cannot loop all day. The next normal timer run still happens.
-object SyncRetry {
-    const val KEY = "attempt"
-    private const val NAME = "viewgrow-sync-retry"
-    private const val MAX_TRIES = 4
-
-    fun later(ctx: Context, attempt: Int) {
-        if (attempt >= MAX_TRIES) return
-        val req = OneTimeWorkRequest.Builder(SyncWorker::class.java)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .setInitialDelay(2, TimeUnit.MINUTES)
-            .setInputData(Data.Builder().putInt(KEY, attempt + 1).build())
-            .build()
-        WorkManager.getInstance(ctx.applicationContext).enqueueUniqueWork(NAME, ExistingWorkPolicy.REPLACE, req)
-    }
-
-    fun cancel(ctx: Context) {
-        WorkManager.getInstance(ctx.applicationContext).cancelUniqueWork(NAME)
+        SyncAdapterSetup.disable(ctx.applicationContext)
     }
 }
