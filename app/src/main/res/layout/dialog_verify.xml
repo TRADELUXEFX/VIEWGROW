@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Verified members only" pop-up: shown when a member who is not verified taps History or Profile. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingStart="22dp"
+    android:paddingTop="18dp"
+    android:paddingEnd="22dp"
+    android:paddingBottom="22dp">
+
+    <ImageView
+        android:layout_width="110dp"
+        android:layout_height="88dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ill_blocked" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:tag="extrabold"
+        android:text="This is only available to verified members"
+        android:textColor="@color/dark"
+        android:textSize="20sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:text="Contact the admin on WhatsApp to get verified."
+        android:textColor="@color/text2"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/verify_admin"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="22dp"
+        android:background="@drawable/bg_pill_fill"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:tag="semibold"
+        android:text="Message Admin"
+        android:textColor="@color/white"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/verify_close"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_pill_outline"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:tag="semibold"
+        android:text="Close"
+        android:textColor="@color/green_text"
+        android:textSize="15sp" />
+</LinearLayout>

@@ -26,7 +26,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SyncResult(val ok: Boolean, val count: Int, val message: String)
+// banned = the database said BANNED: the screens switch to the Banned page.
+class SyncResult(val ok: Boolean, val count: Int, val message: String, val banned: Boolean = false)
 
 // Gets the contacts the database prepared, saves them to the phone, then tells the database they were saved.
 // The app never chooses the contacts: web_prepare_download does, with the same rules as the website.
@@ -57,6 +58,7 @@ object Sync {
     private fun doSync(ctx: Context): SyncResult {
         Store.init(ctx)
         if (!Store.loggedIn) return SyncResult(false, 0, "Please log in again.")
+        if (Store.banned) return SyncResult(false, 0, "This account has been banned.", banned = true)
         if (!ContactsSaver.hasPermission(ctx)) {
             return SyncResult(false, 0, "Allow Contacts so ViewGrow can save your contacts.")
         }
@@ -65,7 +67,15 @@ object Sync {
 
         val p = Api.request("web_prepare_download", JSONObject().put("p_phone", phone).put("p_pin", password))
         val pj = p.json ?: return SyncResult(false, 0, Api.netMessage(p.error))
-        if (!pj.optBoolean("ok")) return SyncResult(false, 0, Api.loginMessage(pj))
+        if (!pj.optBoolean("ok")) {
+            if (pj.optString("code") == "BANNED") {
+                // Banned since the last time: remember it and take the saved contacts off the phone.
+                Ban.mark(ctx, pj.optString("reason"))
+                Ban.removeContacts(ctx)
+                return SyncResult(false, 0, Api.loginMessage(pj), banned = true)
+            }
+            return SyncResult(false, 0, Api.loginMessage(pj))
+        }
         if (pj.optString("status") != "ready") return SyncResult(false, 0, "Nothing to save right now. Check back later.")
 
         val cards = ContactsSaver.parse(pj.optString("vcf"))
@@ -136,11 +146,17 @@ object Notifier {
 object BackgroundSync {
     fun run(ctx: Context): Boolean? {
         Store.init(ctx)
-        if (!Store.loggedIn || Store.syncPaused) return null
+        if (!Store.loggedIn || Store.syncPaused || Store.banned) return null
         if (!ContactsSaver.hasPermission(ctx)) return null
         val st = Api.request("web_status", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password))
         val j = st.json ?: return false
-        if (!j.optBoolean("ok")) return null
+        if (!j.optBoolean("ok")) {
+            if (j.optString("code") == "BANNED") {
+                Ban.mark(ctx, j.optString("reason"))
+                Ban.removeContacts(ctx)
+            }
+            return null
+        }
         if (j.optString("state") == "READY" && !Sync.runBlocking(ctx).ok) return null
         Store.lastBgSyncAt = System.currentTimeMillis()
         Reminder.restart(ctx)
@@ -164,7 +180,7 @@ object SyncScheduler {
     fun schedule(ctx: Context) {
         val app = ctx.applicationContext
         Store.init(app)
-        if (!Store.loggedIn || Store.syncPaused) { cancel(app); return }
+        if (!Store.loggedIn || Store.syncPaused || Store.banned) { cancel(app); return }
         SyncAdapterSetup.enable(app)
         Reminder.ensure(app)
         val hours = if (Store.syncHours in intArrayOf(1, 6, 12, 24)) Store.syncHours else 24

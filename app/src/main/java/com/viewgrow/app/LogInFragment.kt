@@ -78,7 +78,26 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
             Ui.setBusy(button, false, "Log in")
             val j = r.json
             if (j == null) { Ui.showError(error, Api.netMessage(r.error)); return@call }
-            if (!j.optBoolean("ok")) { Ui.showError(error, Api.loginMessage(j)); return@call }
+            if (!j.optBoolean("ok")) {
+                when (j.optString("code")) {
+                    // Banned and Blocked get their own full screens. The number (and for a ban, the password)
+                    // is kept so the Banned screen can ask again whether the ban is lifted.
+                    "BANNED" -> {
+                        Store.phone = phone
+                        Store.password = password
+                        Ban.mark(view.context, j.optString("reason"))
+                        (activity as? MainActivity)?.showBanned()
+                        return@call
+                    }
+                    "LOCKED" -> {
+                        Store.phone = phone
+                        (activity as? MainActivity)?.showBlocked(phone)
+                        return@call
+                    }
+                }
+                Ui.showError(error, Api.loginMessage(j))
+                return@call
+            }
             Store.logIn(phone, password, j.optString("name"))
             (activity as? MainActivity)?.onLoggedIn()
         }

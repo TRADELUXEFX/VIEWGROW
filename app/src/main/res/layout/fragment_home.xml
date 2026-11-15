@@ -7,13 +7,28 @@
 
     <include layout="@layout/part_header_user" />
 
-    <ScrollView
+    <!-- Nothing below the header shows until the database has answered: the ring turns first. -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="1">
+
+    <ImageView
+        android:id="@+id/home_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="60dp"
+        android:importantForAccessibility="no" />
+
+    <ScrollView
+        android:id="@+id/home_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:clipToPadding="false"
         android:paddingBottom="90dp"
-        android:scrollbars="none">
+        android:scrollbars="none"
+        android:visibility="invisible">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -123,4 +138,5 @@
                 android:orientation="vertical" />
         </LinearLayout>
     </ScrollView>
+    </FrameLayout>
 </LinearLayout>

@@ -17,6 +17,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -50,7 +51,32 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         Fonts.apply(view)
         // The admin's contact (for the WhatsApp buttons) comes from the website's settings.
         Remote.load { if (isAdded && view.parent != null) render() }
-        if (status != null) render()
+        if (status != null) render() else showLoading()
+    }
+
+    // ---- Loading ring ----
+
+    private var ring: Spinner? = null
+
+    // Until the database has answered, only the turning green ring shows. Nothing else, so no wrong state flashes.
+    private fun showLoading() {
+        val v = view ?: return
+        v.findViewById<View>(R.id.home_scroll).visibility = View.INVISIBLE
+        val img = v.findViewById<ImageView>(R.id.home_loading)
+        if (ring == null) {
+            val d = Spinner(v.context, ContextCompat.getColor(v.context, R.color.green), 36, 4)
+            ring = d
+            img.setImageDrawable(d)
+        }
+        img.visibility = View.VISIBLE
+        ring?.start()
+    }
+
+    private fun hideLoading() {
+        val v = view ?: return
+        ring?.stop()
+        v.findViewById<View>(R.id.home_loading).visibility = View.GONE
+        v.findViewById<View>(R.id.home_scroll).visibility = View.VISIBLE
     }
 
     override fun onResume() {
@@ -67,6 +93,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        ring?.stop()
+        ring = null
         ui.removeCallbacksAndMessages(null)
     }
 
@@ -83,6 +111,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun reload() {
         if (!Store.loggedIn) return
+        if (status == null) showLoading()
         lastLoad = System.currentTimeMillis()
         val mine = ++generation
         var pending = 2
@@ -111,7 +140,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
         if (!j.optBoolean("ok")) {
             val code = j.optString("code")
-            if (code == "WRONG_PIN" || code == "LOCKED" || code == "BANNED" || code == "NOT_FOUND" || code == "INVALID_PHONE") {
+            // Banned and Blocked get their own full screens.
+            if (AccountGate.handle(activity as? MainActivity, j)) return
+            if (code == "WRONG_PIN" || code == "NOT_FOUND" || code == "INVALID_PHONE") {
                 Ui.toast(v, Api.loginMessage(j))
                 (activity as? MainActivity)?.onLoggedOut()
             } else if (status == null) {
@@ -131,6 +162,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun showProblem(message: String) {
         val v = view ?: return
+        hideLoading()
         val ctx = v.context
         val body = v.findViewById<LinearLayout>(R.id.body)
         body.removeAllViews()
@@ -146,6 +178,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun render() {
         val v = view ?: return
         val j = status ?: return
+        hideLoading()
         val ctx = v.context
         val body = v.findViewById<LinearLayout>(R.id.body)
         body.removeAllViews()
@@ -297,6 +330,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         Sync.start(ctx) { res ->
             syncing = false
             if (!isAdded || view == null) return@start
+            if (res.banned) {
+                (activity as? MainActivity)?.showBanned()
+                return@start
+            }
             if (res.ok) {
                 reload()
             } else {

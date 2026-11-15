@@ -48,4 +48,9 @@
     <color name="white_soft">#D9FFFFFF</color>
     <!-- Selected side of the History toggle: white pill, so its text stays dark green in light and dark mode. -->
     <color name="tog_on_text">#158245</color>
+    <!-- Banned and Blocked screens: header colours, same in light and dark mode. -->
+    <color name="ban_start">#D9534F</color>
+    <color name="ban_end">#B3413D</color>
+    <color name="lock_start">#D9962B</color>
+    <color name="lock_end">#A86A12</color>
 </resources>

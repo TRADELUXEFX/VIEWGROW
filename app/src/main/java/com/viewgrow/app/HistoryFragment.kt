@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import org.json.JSONObject
 
@@ -45,7 +46,6 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         }
         view.findViewById<TextView>(R.id.hist_foot).setOnClickListener { if (footTaps) load() }
         view.findViewById<TextView>(R.id.hist_chip).setOnClickListener { openDuration() }
-        view.findViewById<View>(R.id.help_btn).setOnClickListener { HelpPopup.show(requireContext(), HelpPopup.HISTORY) }
         view.findViewById<TextView>(R.id.tog_days).setOnClickListener { setMode(0) }
         view.findViewById<TextView>(R.id.tog_people).setOnClickListener { setMode(1) }
         showToggle()
@@ -57,6 +57,11 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             Api.call("web_status", args) { r ->
                 val j = r.json
                 if (j != null && j.optBoolean("ok")) Status.last = j
+                // History is for verified members. If this answer says not verified, go back to Home.
+                if (isAdded && j != null && j.optString("state") == "NOT_VERIFIED") {
+                    (activity as? MainActivity)?.showTab(1)
+                    return@call
+                }
                 if (isAdded && this.view != null) fillTotal()
             }
         }
@@ -67,6 +72,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
     private fun fillTotal() {
         val v = view ?: return
         val j = Status.last
+        // No number until the database has answered, so a wrong 0 never flashes.
+        v.findViewById<View>(R.id.hist_total_pill).visibility = if (j == null) View.INVISIBLE else View.VISIBLE
         val total = if (j == null || j.isNull("total")) 0 else j.optInt("total")
         val limit = if (j == null || j.isNull("limit")) 0 else j.optInt("limit")
         v.findViewById<TextView>(R.id.hist_total).text = total.toString()
@@ -114,18 +121,35 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         if (needAll() && loadedOnce && days.size < totalDays) load()
     }
 
+    private var footSpinner: Spinner? = null
+
     private fun setFoot(text: String, tappable: Boolean) {
         val foot = view?.findViewById<TextView>(R.id.hist_foot) ?: return
+        footSpinner?.stop()
+        footSpinner = null
+        foot.setCompoundDrawables(null, null, null, null)
         foot.text = text
         foot.visibility = if (text.isEmpty()) View.GONE else View.VISIBLE
         foot.isClickable = tappable
         footTaps = tappable
     }
 
+    // The green spinning ring under the list while the days load (no text).
+    private fun showLoading() {
+        val foot = view?.findViewById<TextView>(R.id.hist_foot) ?: return
+        setFoot("", false)
+        val d = Spinner(foot.context, ContextCompat.getColor(foot.context, R.color.green), 28, 3)
+        d.setBounds(0, 0, d.intrinsicWidth, d.intrinsicHeight)
+        foot.setCompoundDrawables(null, d, null, null)
+        foot.visibility = View.VISIBLE
+        footSpinner = d
+        d.start()
+    }
+
     private fun load() {
         if (loading) return
         loading = true
-        setFoot("Loading\u2026", false)
+        showLoading()
         val args = JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)
             .put("p_offset", days.size).put("p_limit", pageSize)
         Api.call("web_history", args) { r ->
@@ -136,7 +160,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             if (j == null) { setFoot(Api.netMessage(r.error) + " Tap to try again.", true); return@call }
             if (!j.optBoolean("ok")) {
                 val code = j.optString("code")
-                if (code == "WRONG_PIN" || code == "LOCKED" || code == "BANNED" || code == "NOT_FOUND") {
+                if (AccountGate.handle(activity as? MainActivity, j)) return@call
+                if (code == "WRONG_PIN" || code == "NOT_FOUND") {
                     Ui.toast(v, Api.loginMessage(j))
                     (activity as? MainActivity)?.onLoggedOut()
                 } else {

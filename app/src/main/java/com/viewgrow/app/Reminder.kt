@@ -61,7 +61,7 @@ object Reminder {
 
     fun fire(ctx: Context) {
         Store.init(ctx)
-        if (!Store.loggedIn || Store.syncPaused) return
+        if (!Store.loggedIn || Store.syncPaused || Store.banned) return
         // A sync may have worked since the clock started (for example if the app was force-stopped).
         val last = maxOf(Store.lastBgSyncAt, Store.lastSyncAt)
         if (last > System.currentTimeMillis() - TimeUnit.DAYS.toMillis(DAYS)) return

@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
                 padHero(v)
                 when (f) {
                     is WelcomeFragment -> chrome(false, R.color.green_dark)
-                    is SignUpFragment, is LogInFragment, is TextPageFragment, is PermissionsFragment -> chrome(false, R.color.surface)
+                    is SignUpFragment, is LogInFragment, is TextPageFragment, is PermissionsFragment, is StopFragment -> chrome(false, R.color.surface)
                     is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
                 }
             }
@@ -101,7 +101,9 @@ class MainActivity : AppCompatActivity() {
         })
 
         if (savedInstanceState == null) {
-            if (Store.loggedIn) { SyncScheduler.schedule(this); showTab(0) } else showWelcome()
+            if (Store.banned) showBanned()
+            else if (Store.loggedIn) { SyncScheduler.schedule(this); showTab(0) }
+            else showWelcome()
         } else {
             current = savedInstanceState.getInt("current", -1)
             highlight()
@@ -113,9 +115,23 @@ class MainActivity : AppCompatActivity() {
         outState.putInt("current", current)
     }
 
+    // A ban can arrive while the app is in the background (the automatic sync hears it first).
+    // Coming back, the Banned screen takes over.
+    override fun onResume() {
+        super.onResume()
+        val stop = supportFragmentManager.findFragmentById(R.id.container) as? StopFragment
+        if (Store.banned && (stop == null || !stop.isBanned)) showBanned()
+    }
+
     // Back: close an opened screen first. Then any tab goes to Home. Back on Home leaves the app
     // without closing it. Back on Welcome closes it.
     private fun onBack() {
+        // Banned: nowhere to go back to, so leave the app. Blocked: back to Welcome.
+        val stop = supportFragmentManager.findFragmentById(R.id.container) as? StopFragment
+        if (stop != null) {
+            if (stop.isBanned) moveTaskToBack(true) else showWelcome()
+            return
+        }
         when {
             supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
             current > 0 -> showTab(0)
@@ -132,6 +148,20 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction().replace(R.id.container, WelcomeFragment()).commit()
     }
 
+    // Full-screen Banned page (StopFragment). Replaces whatever is showing, with nothing to go back to.
+    fun showBanned() {
+        current = -1
+        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        supportFragmentManager.beginTransaction().replace(R.id.container, StopFragment.banned()).commit()
+    }
+
+    // Full-screen Blocked page: the password is locked. "Back to log in" opens Log in above Welcome.
+    fun showBlocked(phone: String) {
+        current = -1
+        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        supportFragmentManager.beginTransaction().replace(R.id.container, StopFragment.blocked(phone)).commit()
+    }
+
     fun showSignUp() = openAbove(SignUpFragment())
 
     fun showLogIn() = openAbove(LogInFragment())
@@ -142,7 +172,41 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction().replace(R.id.container, f).addToBackStack(null).commit()
     }
 
+    // History and Profile are for verified members only. The last answer from the database decides:
+    // "NOT_VERIFIED" keeps the member on Home with a short message. No answer yet does not block.
+    private fun notVerified(): Boolean = Status.last?.optString("state") == "NOT_VERIFIED"
+
+    // The pop-up a member who is not verified gets when tapping History or Profile.
+    private fun showVerifyPopup() {
+        val v = layoutInflater.inflate(R.layout.dialog_verify, null)
+        val link = Remote.adminLink("Hi, I just registered on ViewGrow. My name is ${Store.name}.")
+        val dialog = android.app.Dialog(this, R.style.Theme_ViewGrow_Dialog)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        Fonts.apply(v)
+        dialog.setContentView(v)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(resources.displayMetrics.widthPixels - Ui.dp(this, 44), android.view.WindowManager.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setGravity(android.view.Gravity.CENTER)
+        val admin = v.findViewById<TextView>(R.id.verify_admin)
+        if (link == null) admin.visibility = View.GONE
+        admin.setOnClickListener {
+            dialog.dismiss()
+            try {
+                startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(link)))
+            } catch (e: android.content.ActivityNotFoundException) {
+                Ui.toast(nav, "Could not open the link.")
+            }
+        }
+        v.findViewById<TextView>(R.id.verify_close).setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
     fun showTab(index: Int) {
+        if (index > 0 && notVerified()) {
+            if (current != 0) showTab(0)
+            showVerifyPopup()
+            return
+        }
         current = index
         supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val screen: Fragment = when (index) {
@@ -183,13 +247,14 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction().replace(R.id.container, PermissionsFragment()).commit()
     }
 
-    fun onLoggedOut() {
+    // goWelcome = false when another full screen (Blocked) is about to take over.
+    fun onLoggedOut(goWelcome: Boolean = true) {
         Store.logOut()
         SyncScheduler.cancel(this)
         Status.last = null
         HistoryLog.clear(this)
         Release.clear()
-        showWelcome()
+        if (goWelcome) showWelcome()
     }
 
     // ---- Look of the window around the screen ----

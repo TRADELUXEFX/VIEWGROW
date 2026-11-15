@@ -192,14 +192,14 @@ object Ui {
 
 // A white ring that turns. Drawn here so it needs no extra library, and it keeps turning
 // by itself until stop() is called or the screen it belongs to is gone.
-class Spinner(ctx: Context) : Drawable() {
-    private val size = Ui.dp(ctx, 18)
-    private val stroke = Ui.dp(ctx, 2).toFloat() + 0.5f
+class Spinner(ctx: Context, tint: Int = Color.WHITE, sizeDp: Int = 18, strokeDp: Int = 2) : Drawable() {
+    private val size = Ui.dp(ctx, sizeDp)
+    private val stroke = Ui.dp(ctx, strokeDp).toFloat() + 0.5f
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
         strokeWidth = stroke
-        color = Color.WHITE
+        color = tint
     }
     private val box = RectF()
     private var angle = 0f

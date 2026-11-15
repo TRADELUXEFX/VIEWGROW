@@ -79,7 +79,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             refresh()
         }
 
-        view.findViewById<View>(R.id.help_btn).setOnClickListener { HelpPopup.show(requireContext(), HelpPopup.PROFILE) }
         view.findViewById<View>(R.id.row_battery).setOnClickListener { openBatterySettings() }
         view.findViewById<View>(R.id.row_terms).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.TERMS) }
         view.findViewById<View>(R.id.row_privacy).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.PRIVACY) }

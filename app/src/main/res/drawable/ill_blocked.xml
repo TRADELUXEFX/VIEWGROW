@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Blocked screen picture: an amber padlock. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="160dp"
+    android:viewportWidth="200"
+    android:viewportHeight="160">
+    <path android:fillColor="@color/amber_bg" android:pathData="M100,80m-62,0a62,62 0,1 1,124 0a62,62 0,1 1,-124 0" />
+    <path android:fillColor="#F2D49A" android:pathData="M34,40m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path android:fillColor="#F2D49A" android:pathData="M168,112m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+    <path android:fillColor="#F2D49A" android:pathData="M158,36m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path android:strokeColor="#A86A12" android:strokeWidth="9" android:strokeLineCap="round" android:fillColor="#00000000" android:pathData="M78,76L78,60C78,34 122,34 122,60L122,76" />
+    <path android:fillColor="#A86A12" android:pathData="M64,74L136,74Q144,74 144,82L144,128Q144,136 136,136L64,136Q56,136 56,128L56,82Q56,74 64,74Z" />
+    <path android:fillColor="#D9962B" android:pathData="M64,74L136,74Q144,74 144,82L144,124Q144,130 136,130L64,130Q56,130 56,124L56,82Q56,74 64,74Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M100,94m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="6" android:strokeLineCap="round" android:pathData="M100,98L100,115" />
+</vector>

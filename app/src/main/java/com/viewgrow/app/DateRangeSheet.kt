@@ -2,6 +2,11 @@ package com.viewgrow.app
 
 import android.app.Dialog
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.drawable.Drawable
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -172,7 +177,12 @@ class DateRangeSheet(
             )
         )
         when {
-            end -> tv.setBackgroundResource(R.drawable.bg_day_on)
+            // A picked day is a true circle (the cell is wider than it is tall, so a plain oval looked
+            // stretched). In a range, the tint runs behind the inner half of each end so it joins the circle.
+            end -> tv.background = DayEnd(
+                color(R.color.btn_fill), color(R.color.range_tint),
+                bandRight = lo != hi && iso == lo, bandLeft = lo != hi && iso == hi
+            )
             inside -> tv.setBackgroundColor(color(R.color.range_tint))
         }
         if (!future) tv.setOnClickListener { onDayTapped(iso) }
@@ -202,4 +212,25 @@ class DateRangeSheet(
     }
 
     private fun color(id: Int): Int = ContextCompat.getColor(ctx, id)
+}
+
+// A picked day: a green circle as wide as the cell is tall, centred, with the range tint behind one half.
+private class DayEnd(
+    fill: Int, tint: Int, private val bandLeft: Boolean, private val bandRight: Boolean
+) : Drawable() {
+    private val circle = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = fill }
+    private val band = Paint().apply { color = tint }
+
+    override fun draw(c: Canvas) {
+        val b = bounds
+        val cx = b.exactCenterX()
+        if (bandLeft) c.drawRect(b.left.toFloat(), b.top.toFloat(), cx, b.bottom.toFloat(), band)
+        if (bandRight) c.drawRect(cx, b.top.toFloat(), b.right.toFloat(), b.bottom.toFloat(), band)
+        c.drawCircle(cx, b.exactCenterY(), minOf(b.width(), b.height()) / 2f, circle)
+    }
+
+    override fun setAlpha(alpha: Int) { circle.alpha = alpha; band.alpha = alpha }
+    override fun setColorFilter(cf: ColorFilter?) { circle.colorFilter = cf; band.colorFilter = cf }
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 }

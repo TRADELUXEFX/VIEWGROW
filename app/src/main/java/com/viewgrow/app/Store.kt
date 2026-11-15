@@ -77,6 +77,20 @@ object Store {
         return System.currentTimeMillis() - since > hours * 3600000L
     }
 
+    // Banned by the admin. Kept on the phone (also after the app is closed) so the Banned screen shows at
+    // once, and so syncing stays off. Only a "not banned" answer from the database lifts it (Ban.kt).
+    var banned: Boolean
+        get() = p.getBoolean("banned", false)
+        set(v) { p.edit().putBoolean("banned", v).apply() }
+
+    var banReason: String
+        get() = p.getString("ban_reason", "") ?: ""
+        set(v) { p.edit().putString("ban_reason", v).apply() }
+
+    fun clearBan() {
+        p.edit().remove("banned").remove("ban_reason").apply()
+    }
+
     val loggedIn: Boolean get() = phone.isNotEmpty() && password.isNotEmpty()
 
     fun logIn(phone: String, password: String, name: String) {

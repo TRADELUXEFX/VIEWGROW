@@ -29,21 +29,6 @@
                 android:text="History"
                 android:textColor="@color/white"
                 android:textSize="26sp" />
-            <TextView
-        android:id="@+id/help_btn"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:layout_marginStart="10dp"
-        android:background="@drawable/bg_help_icon"
-        android:clickable="true"
-        android:contentDescription="Help"
-        android:focusable="true"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:tag="bold"
-        android:text="?"
-        android:textColor="@color/white"
-        android:textSize="14sp" />
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"
@@ -65,6 +50,7 @@
                 android:textColor="@color/white"
                 android:textSize="13sp" />
             <LinearLayout
+                android:id="@+id/hist_total_pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_badge_glass"
