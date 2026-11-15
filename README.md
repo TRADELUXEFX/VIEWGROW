@@ -60,6 +60,8 @@ Settings, Profile shows the app version.
 
 22. Done: text size. The 1.3x cap on the phone's Font size is lifted to 2.0x (the most Android allows), so every phone's own setting is respected. To make that safe, buttons in pop-ups, the History toggle, and the Home and FAQ buttons now grow with their text (minimum height instead of a fixed height). Screens already scroll, and names and numbers shrink to fit. Test once with the phone's Font size on the largest setting. Display size is still capped at the phone's default (`MAX_DISPLAY_DENSITY_RATIO` in `ScaleGuard.kt`).
 
+23. Done: more clean-up. Removed History search helpers that no screen used (`HistoryLog.matches`), `DayText.short`, `Ui.initial`, and the unused date range and day count in `HistoryLog.people`.
+
 ## Working rules for whoever edits this repo
 - **Always send the FULL updated zip** (every file of the app, paths starting at the repo root), never only the changed files. A partial zip leaves stale files in the repo and breaks the build (this happened with `dialog_duration.xml`).
 - When a file is removed from the app, list it in `DELETE_FILES.txt` at the zip root too, because uploading a zip never deletes anything by itself.

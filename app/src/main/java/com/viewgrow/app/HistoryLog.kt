@@ -12,8 +12,8 @@ import java.util.Locale
 object HistoryLog {
     class Entry(val name: String, val number: String)
 
-    // One person across all the days this phone has a record of: how many days they were saved and the latest one.
-    class Person(val name: String, val number: String, val days: Int, val last: String)
+    // One person across all the days this phone has a record of, with the latest day they were saved.
+    class Person(val name: String, val number: String, val last: String)
 
     private const val FILE = "viewgrow_history"
     private const val KEY = "days"
@@ -61,17 +61,14 @@ object HistoryLog {
         return out
     }
 
-    // Every different person saved on this phone, newest first. from and to (yyyy-MM-dd) limit the days
-    // looked at; null means no limit. Someone saved on several days is listed once.
-    fun people(ctx: Context, from: String?, to: String?): List<Person> {
-        class Acc(var name: String, var number: String, var days: Int, var last: String)
+    // Every different person saved on this phone, newest first. Someone saved on several days is listed once.
+    fun people(ctx: Context): List<Person> {
+        class Acc(var name: String, var number: String, var last: String)
         val all = read(ctx)
         val map = LinkedHashMap<String, Acc>()
         val keys = all.keys()
         while (keys.hasNext()) {
             val day = keys.next()
-            if (from != null && day < from) continue
-            if (to != null && day > to) continue
             val arr = all.optJSONArray(day) ?: continue
             for (i in 0 until arr.length()) {
                 val o = arr.optJSONObject(i) ?: continue
@@ -81,27 +78,15 @@ object HistoryLog {
                 val name = o.optString("n")
                 val a = map[k]
                 if (a == null) {
-                    map[k] = Acc(name, number, 1, day)
+                    map[k] = Acc(name, number, day)
                 } else {
-                    a.days++
                     if (a.name.isBlank() && name.isNotBlank()) a.name = name
                     if (day > a.last) { a.last = day; a.number = number }
                 }
             }
         }
-        return map.values.map { Person(it.name, it.number, it.days, it.last) }
+        return map.values.map { Person(it.name, it.number, it.last) }
             .sortedWith(compareByDescending<Person> { it.last }.thenBy { it.name.lowercase() })
-    }
-
-    // True when someone saved on that day has a name or number containing the search.
-    fun matches(ctx: Context, day: String, query: String): Boolean = entries(ctx, day).any { matches(it, query) }
-
-    fun matches(e: Entry, query: String): Boolean {
-        val q = query.trim()
-        if (q.isEmpty()) return true
-        if (e.name.contains(q, ignoreCase = true)) return true
-        val digits = q.filter { it.isDigit() }
-        return digits.isNotEmpty() && e.number.filter { it.isDigit() }.contains(digits)
     }
 
     fun clear(ctx: Context) {
@@ -159,12 +144,6 @@ object DayText {
         val n = d.get(Calendar.DAY_OF_MONTH)
         val suffix = if (n in 11..13) "th" else when (n % 10) { 1 -> "st"; 2 -> "nd"; 3 -> "rd"; else -> "th" }
         return n.toString() + suffix + " " + monthShort[d.get(Calendar.MONTH)]
-    }
-
-    // 9 Nov
-    fun short(iso: String?): String {
-        val d = if (iso == null) null else parse(iso)
-        return if (d == null) "" else d.get(Calendar.DAY_OF_MONTH).toString() + " " + monthShort[d.get(Calendar.MONTH)]
     }
 
     // "Today", "Yesterday", or nothing.

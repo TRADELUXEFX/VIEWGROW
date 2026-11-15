@@ -163,12 +163,6 @@ object Ui {
         )
     }
 
-    // First letter of the name, for the round avatar.
-    fun initial(name: String): String {
-        val c = name.trim().firstOrNull() ?: return "V"
-        return c.uppercaseChar().toString()
-    }
-
     // Fills the green header on Home and Profile: initial, name, number and the light/dark button.
     fun bindUserHeader(root: View) {
         val name = Store.name

@@ -232,7 +232,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
 
     // People: everyone saved on this phone, once each, with a chat button.
     private fun renderPeople(list: LinearLayout, inflater: LayoutInflater) {
-        val people = HistoryLog.people(list.context, null, null)
+        val people = HistoryLog.people(list.context)
         for (p in people) {
             val row = inflater.inflate(R.layout.item_history_contact, list, false)
             row.findViewById<TextView>(R.id.c_name).text = if (p.name.isBlank()) HistoryLog.display(p.number) else p.name
