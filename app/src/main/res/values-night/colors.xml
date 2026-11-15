@@ -2,7 +2,7 @@
 <!-- Dark mode palette. Keeps the same names as values/colors.xml. -->
 <resources>
     <color name="white">#FFFFFF</color>
-    <color name="splash_bg">#F6F6F6</color>
+    <color name="splash_bg">#111B21</color>
     <color name="green">#1FAA59</color>
     <color name="green_dark">#158245</color>
     <color name="tint">#1B3A2C</color>
