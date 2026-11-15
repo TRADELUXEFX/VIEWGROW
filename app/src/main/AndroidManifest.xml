@@ -8,22 +8,11 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Lets the permissions screen ask for "run in the background" (battery) in one tap. -->
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <!-- Sync adapter: the "ViewGrow" account Android's own scheduler uses to wake the automatic sync. -->
-    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
-    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
     <queries>
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
-        <!-- Battery pop-up ("Allow ViewGrow to always run in the background" / Unrestricted) and the battery list. -->
-        <intent>
-            <action android:name="android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-        </intent>
-        <intent>
-            <action android:name="android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS" />
-        </intent>
+        <!-- Opens the app's own settings page when a permission was turned off. -->
         <intent>
             <action android:name="android.settings.APPLICATION_DETAILS_SETTINGS" />
         </intent>
@@ -48,27 +37,5 @@
             </intent-filter>
         </activity>
 
-        <!-- Sync adapter (an extra trigger for the automatic sync). The account service only lets the
-             "ViewGrow" account exist; the sync service is what Android wakes. See SyncAdapter.kt. -->
-        <service
-            android:name=".ViewGrowAccountService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator" />
-        </service>
-        <service
-            android:name=".ViewGrowSyncService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.content.SyncAdapter" />
-            </intent-filter>
-            <meta-data
-                android:name="android.content.SyncAdapter"
-                android:resource="@xml/syncadapter" />
-        </service>
     </application>
 </manifest>

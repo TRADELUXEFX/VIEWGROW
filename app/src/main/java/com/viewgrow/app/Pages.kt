@@ -30,20 +30,20 @@ The admin may suspend or ban an account for leaking contacts, fake reshares, abu
 No guarantees
 We cannot promise a number of status views. ViewGrow may change, pause or stop at any time.
 
-Deleting contacts
-Profile, Delete My Contacts removes the contacts ViewGrow saved to your phone. It does not give them back to you or reset your count.
+Deleting contacts and your account
+Profile, Delete My Contacts removes the contacts ViewGrow saved to your phone. It does not give them back to you or reset your count. Profile, Delete my account deletes your account and its data for good. Your number stays on a deleted list, so it cannot log in or sign up again unless the admin removes it. After that you sign up again with a new account and a new contact limit.
 
 Changes and help
 These terms may change. If you keep using the app after a change, you accept it. For help, message the admin on WhatsApp or email teamlimitlessaffliate@gmail.com."""
 
     private const val PRIVACY_TEXT = """What we keep
-When you sign up we keep your name, your WhatsApp number and your password. We also keep the days you were verified and how many contacts you received. Your connection address is used to limit abuse, such as too many sign-ups from one place.
+When you sign up we keep your name, your WhatsApp number and your password. We also keep the days you were verified, how many contacts you received, your contact limit, and your Google Play purchases of contact packs (product, order number and date; Google Play handles your payment details, we never see your card). Your connection address (IP address) is used to limit abuse, such as too many sign-ups from one place.
 
 On your phone
 The app keeps your number, name and password on your phone so you stay logged in. Log out removes the password and name from the app.
 
 Your phone contacts
-The app asks for permission to read and write contacts. It reads only the numbers already in your phone, to avoid saving the same contact twice. It never uploads your phone contacts. The contacts it saves stay on your phone, tagged VGC.
+The app asks for permission to read and write contacts. It writes the contacts you receive to your phone. It reads the numbers already in your phone only on the phone itself, to avoid saving the same contact twice and to find the contacts ViewGrow added when you tap Delete My Contacts. It never uploads, shares or sells your own phone contacts. The contacts it saves stay on your phone, tagged VGC. If you say no to the permission, the app still opens, but it cannot save contacts.
 
 The contacts you receive
 Other members' numbers are shared with you because they agreed to this when they signed up. In the same way, your name and number may be given to other verified members. Keep the contacts you receive private.
@@ -55,7 +55,9 @@ Who can see your data
 The admin can see account details to run the service. We do not sell your data. Your data is stored with our database provider, Supabase.
 
 Your choices
-You can log out, delete the contacts ViewGrow saved (Profile, Delete My Contacts), or turn off permissions in your phone's settings. To delete your account, message the admin on WhatsApp from your registered number, or email teamlimitlessaffliate@gmail.com with your registered number.
+You can log out, delete the contacts ViewGrow saved (Profile, Delete My Contacts), or turn off permissions in your phone's settings.
+
+Delete your account: in the app, go to Profile, Delete my account. When you confirm, ViewGrow removes the contacts it saved to your phone, logs you out and deletes your account, including your name, password, contact history and purchase records. You cannot get the account back. We keep only your phone number on a deleted-accounts list, so the number cannot log in or sign up again; this stops people deleting and coming back to reset their limit. You can ask the admin to remove your number from that list. You can also delete your account at viewgrow.site/delete-account, or by emailing teamlimitlessaffliate@gmail.com from your registered number. Some records may be kept where the law requires it (for example, payment records held by Google Play).
 
 Changes
 This policy may change. The latest version is always in the app and at viewgrow.site/privacy. Questions? Email teamlimitlessaffliate@gmail.com."""

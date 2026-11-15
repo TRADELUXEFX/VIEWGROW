@@ -70,7 +70,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
             Faq("Are my contacts shared with anyone?",
                 text = "The contacts stay on your phone, tagged VGC. ViewGrow does not upload your phone\u2019s contacts."),
             Faq("How do I delete my account?",
-                text = "Message the admin on WhatsApp from your registered number, or email teamlimitlessaffliate@gmail.com with your registered number, and say you want your account deleted."),
+                text = "Go to Profile, then Delete my account, and confirm. Your account is deleted and you cannot get it back. Your number stays on a deleted list, so it cannot log in or sign up again; to use it again, message the admin. If you cannot log in, message the admin on WhatsApp or email teamlimitlessaffliate@gmail.com from your registered number."),
             Faq("How do I delete the contacts ViewGrow saved?",
                 text = "Go to Profile and tap Delete My Contacts. This removes only the contacts ViewGrow saved to your phone.")
         )

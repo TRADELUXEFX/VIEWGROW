@@ -139,7 +139,7 @@ object Notifier {
     }
 }
 
-// One automatic run, used by both triggers: the timer below and the sync adapter (SyncAdapter.kt).
+// One automatic run, run by the timer below (WorkManager).
 // Returns true when it finished cleanly (nothing to save counts), false when the database could not
 // be reached (try again soon), and null when it was skipped or did not finish.
 // A clean run is remembered, which is what clears the "Auto-sync looks stopped" banner on Home.
@@ -149,7 +149,7 @@ object BackgroundSync {
         // Put the "Get new status viewers today" notification back if it was swiped away.
         ReshareReminder.show(ctx)
         if (!Store.loggedIn || Store.syncPaused || Store.banned) return null
-        // Contacts, Battery or Notifications off: warn (once), then carry on if Contacts is still allowed.
+        // Contacts or Notifications off: warn (once), then carry on if Contacts is still allowed.
         PermissionWatch.check(ctx)
         if (!ContactsSaver.hasPermission(ctx)) return null
         val st = Api.request("web_status", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password))
@@ -195,7 +195,6 @@ object SyncScheduler {
         val app = ctx.applicationContext
         Store.init(app)
         if (!Store.loggedIn || Store.syncPaused || Store.banned) { cancel(app); return }
-        SyncAdapterSetup.enable(app)
         Reminder.ensure(app)
         WeeklySummary.ensure(app)
         val hours = if (Store.syncHours in intArrayOf(1, 6, 12, 24)) Store.syncHours else 24
@@ -207,7 +206,6 @@ object SyncScheduler {
 
     fun cancel(ctx: Context) {
         WorkManager.getInstance(ctx.applicationContext).cancelUniqueWork(NAME)
-        SyncAdapterSetup.disable(ctx.applicationContext)
         Reminder.cancel(ctx.applicationContext)
         WeeklySummary.cancel(ctx.applicationContext)
         PermissionWatch.cancel(ctx.applicationContext)

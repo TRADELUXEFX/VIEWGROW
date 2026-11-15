@@ -2,16 +2,12 @@ package com.viewgrow.app
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
-import android.provider.Settings
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -21,12 +17,11 @@ import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.button.MaterialButton
 
-private enum class PermStep { CONTACTS, NOTIFICATIONS, BATTERY, DONE }
+private enum class PermStep { CONTACTS, NOTIFICATIONS, DONE }
 
 // Shown right after Sign up or Log in, before Home. One thing per screen, in this order:
 //   Step 1: Contacts (so ViewGrow can save your contacts)
 //   Step 2: Notifications (Android 13 and up only)
-//   Step 3: Battery (so the automatic sync is not stopped by battery saver)
 // A step that is already allowed is skipped, and when nothing is left the app goes straight to Home.
 // Saying no never blocks anyone: the app always moves on to the next step.
 class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
@@ -36,15 +31,9 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
             Build.VERSION.SDK_INT >= 33 &&
                 ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
 
-        private fun batteryRestricted(ctx: Context): Boolean {
-            val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-            return !pm.isIgnoringBatteryOptimizations(ctx.packageName)
-        }
-
         private fun needed(ctx: Context, s: PermStep): Boolean = when (s) {
             PermStep.CONTACTS -> !ContactsSaver.hasPermission(ctx)
             PermStep.NOTIFICATIONS -> notificationsAsked(ctx)
-            PermStep.BATTERY -> batteryRestricted(ctx)
             PermStep.DONE -> true
         }
 
@@ -61,9 +50,6 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
     }
     private val notificationsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         advance(PermStep.NOTIFICATIONS)
-    }
-    private val batteryAsk = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        advance(PermStep.BATTERY)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -106,29 +92,24 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
         val button: String
         when (step) {
             PermStep.CONTACTS -> {
-                v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 3"
+                v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 2"
                 icon = R.drawable.ic_contacts
                 title = "Save your contacts"
-                text = "Allow Contacts to save your contacts to your phone."
+                text = "ViewGrow saves the contacts you receive to your phone. You will see exactly what it does with your contacts before Android asks."
                 button = "Allow Contacts"
             }
             PermStep.NOTIFICATIONS -> {
-                v.findViewById<TextView>(R.id.step_counter).text = "STEP 2 OF 3"
+                v.findViewById<TextView>(R.id.step_counter).text = "STEP 2 OF 2"
                 icon = R.drawable.ic_bell
                 title = "Stay notified"
                 text = "Get notified when new contacts are saved."
                 button = "Allow Notifications"
             }
-            else -> {
-                v.findViewById<TextView>(R.id.step_counter).text = "STEP 3 OF 3"
-                icon = R.drawable.ic_sync
-                title = "Keep syncing"
-                text = "Allow background sync so contacts save even when the app is closed."
-                button = "Allow Background Sync"
-            }
+            else -> return
         }
         // Step dashes: the first N are filled on step N.
-        val n = when (step) { PermStep.CONTACTS -> 1; PermStep.NOTIFICATIONS -> 2; else -> 3 }
+        val n = if (step == PermStep.CONTACTS) 1 else 2
+        v.findViewById<View>(R.id.dash_3).visibility = View.GONE
         listOf(R.id.dash_1, R.id.dash_2, R.id.dash_3).forEachIndexed { i, id ->
             v.findViewById<View>(id).setBackgroundResource(if (i < n) R.drawable.bg_dash_on else R.drawable.bg_dash_off)
         }
@@ -145,25 +126,16 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
     private fun ask() {
         val ctx = context ?: return
         when (step) {
-            PermStep.CONTACTS -> contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
+            PermStep.CONTACTS ->
+                // Prominent disclosure first; Android's own box only appears after Agree.
+                ContactsDisclosure.show(ctx, onDecline = { advance(PermStep.CONTACTS) }) {
+                    contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
+                }
             PermStep.NOTIFICATIONS -> {
                 if (Build.VERSION.SDK_INT >= 33) notificationsAsk.launch(Manifest.permission.POST_NOTIFICATIONS)
                 else advance(PermStep.NOTIFICATIONS)
             }
-            PermStep.BATTERY -> try {
-                batteryAsk.launch(
-                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                        .setData(Uri.parse("package:" + ctx.packageName))
-                )
-            } catch (e: Exception) {
-                // The phone refused the pop-up: try the battery list, and never block the person.
-                try {
-                    batteryAsk.launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-                } catch (e2: Exception) {
-                    advance(PermStep.BATTERY)
-                }
-            }
-            PermStep.DONE -> advance(PermStep.BATTERY)
+            PermStep.DONE -> advance(PermStep.NOTIFICATIONS)
         }
     }
 }

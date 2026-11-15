@@ -129,7 +129,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             if (!j.optBoolean("ok")) {
                 val code = j.optString("code")
                 if (AccountGate.handle(activity as? MainActivity, j)) return@call
-                if (code == "WRONG_PIN" || code == "NOT_FOUND") {
+                if (code == "WRONG_PIN" || code == "NOT_FOUND" || code == "DELETION_PENDING" || code == "ACCOUNT_DELETED") {
                     Ui.toast(v, Api.loginMessage(j))
                     (activity as? MainActivity)?.onLoggedOut()
                 } else {

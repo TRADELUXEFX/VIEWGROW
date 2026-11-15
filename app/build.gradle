@@ -9,12 +9,12 @@ def runNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '0').toInteger()
 
 android {
     namespace 'com.viewgrow.app'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.viewgrow.app"
         minSdk 24
-        targetSdk 34
+        targetSdk 36
         // Goes up by one on every GitHub build, so each APK installs over the last one.
         versionCode 1 + runNumber
         versionName "1.0.${runNumber}"
@@ -33,7 +33,8 @@ android {
 
     buildTypes {
         release {
-            // Release key when the secrets are set, debug key until then (testing only).
+            // Release key when the secrets are set. Without them the APK is signed with the debug key so test
+            // builds still install, but the Play bundle (bundleRelease) refuses to build, see the check below.
             signingConfig hasReleaseKs ? signingConfigs.release : signingConfigs.debug
             minifyEnabled true
             shrinkResources true
@@ -51,8 +52,21 @@ android {
     }
 
     lint {
-        checkReleaseBuilds false
+        // Lint runs on release builds and its report is kept, but a warning does not stop the build.
+        checkReleaseBuilds true
         abortOnError false
+    }
+
+    // Google Play only accepts an Android App Bundle signed with your own upload key.
+    bundle {
+        language { enableSplit = false }
+    }
+}
+
+// Never make a Play bundle with the debug key: Play Console would reject it.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(':app:bundleRelease') && !hasReleaseKs) {
+        throw new GradleException('bundleRelease needs the upload key: set KEYSTORE_FILE, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD.')
     }
 }
 
@@ -67,6 +81,6 @@ dependencies {
     implementation 'androidx.work:work-runtime-ktx:2.9.1'
     // Terms, Privacy and Contact us open the website inside the app.
     implementation 'androidx.browser:browser:1.8.0'
-    // Google Play Billing: the contact packs are bought through Google Play.
-    implementation 'com.android.billingclient:billing:7.0.0'
+    // Google Play Billing: the contact packs are bought through Google Play. Play requires 8.0.0 or newer.
+    implementation 'com.android.billingclient:billing:8.0.0'
 }

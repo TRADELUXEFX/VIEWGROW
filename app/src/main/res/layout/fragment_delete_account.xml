@@ -51,17 +51,26 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="4dp"
-                android:text="The admin deletes accounts, so there is nothing to confirm inside the app. Tap the button below and send the message. The admin will delete your account for you.\n\nContacts already saved on your phone stay there. To remove them first, use Delete My Contacts on the Profile screen.\n\nIf you sign up again later, you start with a new account and a new contact limit."
+                android:text="You can delete your ViewGrow account here.\n\nWhen you delete it: the contacts ViewGrow saved to this phone are removed, you are logged out, and your account is deleted. You cannot get this account back. Your own phone contacts are never touched.\n\nYour number is kept on a deleted list (nothing else), so it cannot log in or sign up again. To use it again, message the admin."
                 android:textColor="@color/text"
                 android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_delete_now"
+                style="@style/AppButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:backgroundTint="@color/red_dark"
+                android:text="Delete my account" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_delete_request"
                 style="@style/AppButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="26dp"
-                android:text="Message admin on WhatsApp" />
+                android:layout_marginTop="12dp"
+                android:text="Can\'t log in? Message admin on WhatsApp" />
 
             <TextView
                 android:id="@+id/link_web"

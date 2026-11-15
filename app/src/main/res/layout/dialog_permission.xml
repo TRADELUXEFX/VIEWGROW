@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- "A permission is off" pop-up: shown inside the app when it opens (or returns from Settings) and
-     Contacts, Notifications or Battery is off. The rows are added in code (MainActivity). -->
+     Contacts or Notifications is off. The rows are added in code (MainActivity). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

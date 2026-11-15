@@ -83,6 +83,8 @@ object Api {
             code == "INVALID_PHONE" -> "Enter a valid Nigerian number."
             code == "NOT_FOUND" -> "This number is not registered yet. Tap Sign up below."
             code == "BANNED" -> "This account has been banned."
+            code == "ACCOUNT_DELETED" -> "This account was deleted. To use this number again, message the admin to reactivate it."
+            code == "DELETION_PENDING" -> "This account has a deletion request and cannot be used. If this was a mistake, message the admin."
             code == "LOCKED" -> "This password is locked after too many wrong tries. Message the admin from your registered number to get a new one."
             else -> "Could not check. Please try again."
         }

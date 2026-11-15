@@ -146,7 +146,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val code = j.optString("code")
             // Banned and Blocked get their own full screens.
             if (AccountGate.handle(activity as? MainActivity, j)) return
-            if (code == "WRONG_PIN" || code == "NOT_FOUND" || code == "INVALID_PHONE") {
+            if (code == "WRONG_PIN" || code == "NOT_FOUND" || code == "INVALID_PHONE" || code == "DELETION_PENDING" || code == "ACCOUNT_DELETED") {
                 Ui.toast(v, Api.loginMessage(j))
                 (activity as? MainActivity)?.onLoggedOut()
             } else if (status == null) {
@@ -205,12 +205,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val limit = if (j.isNull("limit")) "\u2014" else j.optInt("limit").toString()
         setStats(v, total, limit, state == "LIMIT_REACHED")
 
-        // The automatic sync looks dead on a phone brand that blocks background apps.
-        if (OemAutostart.needsPrompt()) {
-            body.addView(HomeViews.autostartCard(ctx) { activity?.let { OemAutostart.openSettings(it) } })
-        }
-
-        // A permission turned off in the phone (Contacts, Notifications, Battery): say so on Home.
+        // A permission turned off in the phone (Contacts, Notifications): say so on Home.
         val off = PermissionWatch.missing(ctx)
         permShown = off.joinToString()
         if (off.isNotEmpty() && verified) {

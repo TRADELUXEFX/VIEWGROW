@@ -11,6 +11,12 @@ object Store {
 
     fun init(ctx: Context) {
         p = ctx.applicationContext.getSharedPreferences("viewgrow", Context.MODE_PRIVATE)
+        // Older versions kept the password as plain text: encrypt it once and remove the plain copy.
+        val legacy = p.getString("password", null)
+        if (legacy != null) {
+            val enc = if (legacy.isNotEmpty()) SecretBox.encrypt(legacy) else null
+            p.edit().remove("password").apply { if (enc != null) putString("password_enc", enc) }.apply()
+        }
     }
 
     // The number as typed or as the database returned it. Kept after log out, to fill the Log in box.
@@ -18,9 +24,13 @@ object Store {
         get() = p.getString("phone", "") ?: ""
         set(v) { p.edit().putString("phone", v).apply() }
 
+    // Kept encrypted (SecretBox). If the phone's Keystore cannot be used nothing is kept and the member logs in again.
     var password: String
-        get() = p.getString("password", "") ?: ""
-        set(v) { p.edit().putString("password", v).apply() }
+        get() = SecretBox.decrypt(p.getString("password_enc", "") ?: "")
+        set(v) {
+            val enc = if (v.isEmpty()) null else SecretBox.encrypt(v)
+            p.edit().apply { if (enc != null) putString("password_enc", enc) else remove("password_enc") }.apply()
+        }
 
     var name: String
         get() = p.getString("name", "") ?: ""
@@ -71,21 +81,6 @@ object Store {
         get() = p.getLong("last_bg_sync_at", 0L)
         set(v) { p.edit().putLong("last_bg_sync_at", v).apply() }
 
-    // The "Sync every" hours the sync adapter's schedule was last set to (0 = no adapter account).
-    var adapterHours: Int
-        get() = p.getInt("adapter_hours", 0)
-        set(v) { p.edit().putInt("adapter_hours", v).apply() }
-
-    // True when the automatic sync looks dead: the last automatic sync (or, if none has ever run,
-    // the first sync on this phone) is older than twice the chosen interval, and never less than 30
-    // hours, because Android may run background jobs late. A phone that has never synced is false.
-    fun isSyncStalled(): Boolean {
-        val since = if (lastBgSyncAt != 0L) lastBgSyncAt else firstSyncAt
-        if (since == 0L) return false
-        val hours = maxOf(30, 2 * (if (syncHours in intArrayOf(1, 6, 12, 24)) syncHours else 24))
-        return System.currentTimeMillis() - since > hours * 3600000L
-    }
-
     // Banned by the admin. Kept on the phone (also after the app is closed) so the Banned screen shows at
     // once, and so syncing stays off. Only a "not banned" answer from the database lifts it (Ban.kt).
     var banned: Boolean
@@ -100,7 +95,7 @@ object Store {
         p.edit().remove("banned").remove("ban_reason").apply()
     }
 
-    // What the "permission is off" notification last warned about (for example "Contacts, Battery"),
+    // What the "permission is off" notification last warned about (for example "Contacts"),
     // empty when nothing is off. The same list is not warned twice; a new item turning off warns again.
     var permAlerted: String
         get() = p.getString("perm_alerted", "") ?: ""
@@ -126,12 +121,18 @@ object Store {
     val loggedIn: Boolean get() = phone.isNotEmpty() && password.isNotEmpty()
 
     fun logIn(phone: String, password: String, name: String) {
-        p.edit().putString("phone", phone).putString("password", password).putString("name", name).apply()
+        p.edit().putString("phone", phone).putString("name", name).apply()
+        this.password = password
+    }
+
+    // Account deleted: forget everything the app kept, including the number.
+    fun clearAll() {
+        p.edit().clear().apply()
     }
 
     // Forgets the password and name. The number stays so the Log in box is filled next time.
     fun logOut() {
-        p.edit().remove("password").remove("name").remove("last_sync_at").remove("last_sync_count")
+        p.edit().remove("password").remove("password_enc").remove("name").remove("last_sync_at").remove("last_sync_count")
             .remove("first_sync_at").remove("last_bg_sync_at").remove("perm_alerted")
             .remove("last_total").remove("last_limit").remove("limit_alerted").apply()
     }

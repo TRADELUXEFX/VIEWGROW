@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -14,7 +13,7 @@ import androidx.core.content.ContextCompat
 // Tells the member when a permission is off. Android closes the app the moment a permission is
 // switched off in Settings, so the app cannot hear it happen. It looks at two moments only:
 //   1. When the app is opened or returns from Settings: Home shows a red box naming what is off.
-//   2. When an automatic sync runs and finds Contacts or Battery off: one notification.
+//   2. When an automatic sync runs and finds Contacts off: one notification.
 // There is no timer. The notification shows once per "off" period and is removed when it is back.
 object PermissionWatch {
     private const val CHANNEL = "permissions"
@@ -27,8 +26,6 @@ object PermissionWatch {
         val out = ArrayList<String>()
         if (!ContactsSaver.hasPermission(ctx)) out.add("Contacts")
         if (!NotificationManagerCompat.from(ctx).areNotificationsEnabled()) out.add("Notifications")
-        val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-        if (!pm.isIgnoringBatteryOptimizations(ctx.packageName)) out.add("Battery")
         return out
     }
 
@@ -47,7 +44,7 @@ object PermissionWatch {
         ctx.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
     }
 
-    // Background check (from an automatic sync): notifies once if Contacts or Battery is off while
+    // Background check (from an automatic sync): notifies once if Contacts is off while
     // logged in and syncing is on. If Notifications is off nothing can be shown; Home has the box.
     fun check(ctx: Context) {
         val app = ctx.applicationContext

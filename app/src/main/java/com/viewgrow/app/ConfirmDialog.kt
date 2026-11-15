@@ -18,6 +18,7 @@ object ConfirmDialog {
         confirmLabel: String,
         cancelLabel: String = "Cancel",
         danger: Boolean = true,
+        onCancel: () -> Unit = {},
         onConfirm: () -> Unit
     ) {
         val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_confirm, null)
@@ -34,7 +35,11 @@ object ConfirmDialog {
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.window?.setLayout(ctx.resources.displayMetrics.widthPixels - Ui.dp(ctx, 44), WindowManager.LayoutParams.WRAP_CONTENT)
         dialog.window?.setGravity(android.view.Gravity.CENTER)
-        v.findViewById<TextView>(R.id.confirm_cancel).setOnClickListener { dialog.dismiss() }
+        v.findViewById<TextView>(R.id.confirm_cancel).setOnClickListener {
+            dialog.dismiss()
+            onCancel()
+        }
+        dialog.setOnCancelListener { onCancel() }
         ok.setOnClickListener {
             dialog.dismiss()
             onConfirm()

@@ -5,7 +5,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
 import android.content.res.ColorStateList
@@ -218,11 +217,12 @@ class MainActivity : AppCompatActivity() {
     fun fixPermission() {
         val off = PermissionWatch.missing(this)
         when (off.firstOrNull()) {
-            "Contacts" -> contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
+            "Contacts" -> ContactsDisclosure.show(this) {
+                contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
+            }
             "Notifications" ->
                 if (android.os.Build.VERSION.SDK_INT >= 33) notificationsAsk.launch(Manifest.permission.POST_NOTIFICATIONS)
                 else openNotificationSettings()
-            "Battery" -> openBatterySettings()
         }
     }
 
@@ -242,30 +242,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // The one-tap popup to stop battery optimisation, or the battery list if there is no popup.
-    private fun openBatterySettings() {
-        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-            try {
-                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
-                return
-            } catch (e: Exception) {
-                // Fall through to the list.
-            }
-        }
-        try {
-            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-        } catch (e: ActivityNotFoundException) {
-            openAppSettings()
-        }
-    }
-
     // ---- "A permission is off" pop-up ----
 
     private var permDialog: android.app.Dialog? = null
     private var permPopupAt = 0L
 
-    // Inside the app: when it opens or returns from Settings and Contacts, Notifications or Battery is
+    // Inside the app: when it opens or returns from Settings and Contacts or Notifications is
     // off, a pop-up names what is off. Only on Home, History and Profile (not during sign up or the
     // permission steps), never twice in a row
     // within 10 seconds (the phone's own permission box also brings the app back to the front).
@@ -286,7 +268,7 @@ class MainActivity : AppCompatActivity() {
             val why = when (name) {
                 "Contacts" -> "to save your contacts"
                 "Notifications" -> "to tell you when contacts are saved"
-                else -> "so syncing keeps running in the background"
+                else -> "so ViewGrow can tell you what happened"
             }
             val row = TextView(this)
             row.textSize = 14f
@@ -487,7 +469,7 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // After Sign up or Log in: ask for what is still missing (contacts, notifications, battery),
+    // After Sign up or Log in: ask for what is still missing (contacts, notifications),
     // then Home. When everything is already allowed it goes straight to Home.
     fun onLoggedIn() {
         SyncScheduler.schedule(this)

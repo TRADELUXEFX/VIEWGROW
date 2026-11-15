@@ -92,10 +92,10 @@ object BillingManager {
                     .setProductType(BillingClient.ProductType.INAPP)
                     .build()
             }
-            c.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(products).build()) { r, list ->
+            c.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(products).build()) { r, result ->
                 val out = HashMap<Int, String>()
                 if (r.responseCode == BillingClient.BillingResponseCode.OK) {
-                    for (d in list) {
+                    for (d in result.productDetailsList) {
                         details[d.productId] = d
                         val price = d.oneTimePurchaseOfferDetails?.formattedPrice ?: continue
                         val size = PRODUCT_IDS.entries.firstOrNull { it.value == d.productId }?.key ?: continue

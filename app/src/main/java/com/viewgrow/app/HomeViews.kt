@@ -89,17 +89,6 @@ object HomeViews {
     }
 
     // "Auto-sync looks stopped" with a button to the phone's auto-start screen.
-    fun autostartCard(ctx: Context, onFix: () -> Unit): View {
-        val box = LinearLayout(ctx)
-        box.orientation = LinearLayout.VERTICAL
-        box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        box.addView(notice(ctx, WARN, "Auto-sync looks stopped.", "Your phone may be blocking background sync. Allow auto-start so contacts save by themselves."))
-        val fix = button(ctx, box, "Fix auto-start", null)
-        fix.setOnClickListener { onFix() }
-        box.addView(fix)
-        return box
-    }
-
     // Shown while contacts are being saved. Not a button: syncing starts by itself when Home opens.
     fun savingRow(ctx: Context, spin: Spinner): View {
         val row = LinearLayout(ctx)
