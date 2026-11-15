@@ -127,6 +127,11 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
                 button = "Allow Background Sync"
             }
         }
+        // Step dashes: the first N are filled on step N.
+        val n = when (step) { PermStep.CONTACTS -> 1; PermStep.NOTIFICATIONS -> 2; else -> 3 }
+        listOf(R.id.dash_1, R.id.dash_2, R.id.dash_3).forEachIndexed { i, id ->
+            v.findViewById<View>(id).setBackgroundResource(if (i < n) R.drawable.bg_dash_on else R.drawable.bg_dash_off)
+        }
         v.findViewById<TextView>(R.id.step_title).text = title
         v.findViewById<TextView>(R.id.step_text).text = text
         val img = v.findViewById<ImageView>(R.id.step_icon)

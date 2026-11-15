@@ -16,7 +16,7 @@ import com.google.android.material.button.MaterialButton
 
 // The "Increase my contact limit" pop-up. Opened from the button on Home, from the red bar and the limit reached card,
 // and from the Help page.
-// Steps: pick one pack, see the new limit and the price, press Buy. Google Play then takes over and shows its own
+// A short green box says what the limit is and what paying does. Then: pick one pack, see the new limit and the price, press Buy. Google Play then takes over and shows its own
 // payment sheet. Prices show as a placeholder until Google Play billing is switched on, and the buy button
 // does not charge anyone yet (see README, items 17 and 18).
 object UpgradeSheet {
@@ -51,24 +51,16 @@ object UpgradeSheet {
             bar.visibility = View.GONE
         }
 
-        // Three short facts.
-        val facts = v.findViewById<LinearLayout>(R.id.up_facts)
-        val lines = listOf(
-            "One-time payment, not a subscription",
-            "Paid through Google Play, in naira",
-            "Adds room only. The admin still decides which contacts you get"
-        )
-        for ((i, t) in lines.withIndex()) {
-            val tv = TextView(ctx)
-            tv.text = t
-            tv.textSize = 12f
-            tv.setTextColor(ContextCompat.getColor(ctx, R.color.text))
-            tv.compoundDrawablePadding = Ui.dp(ctx, 8)
-            tv.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_check_green, 0, 0, 0)
-            tv.gravity = android.view.Gravity.CENTER_VERTICAL
-            if (i > 0) tv.setPadding(0, Ui.dp(ctx, 6), 0, 0)
-            facts.addView(tv)
-        }
+        // Plain-words summary: what the limit is, and what paying does.
+        v.findViewById<TextView>(R.id.up_explain_1).text =
+            "Your contact limit is the most contacts your account can receive and save to your phone. " +
+            "When you reach it, no new contacts are added to your phone."
+        val second = android.text.SpannableStringBuilder(
+            "Paying raises your limit so you can receive more contacts. The admin still decides which contacts you get.")
+        val w = second.indexOf("which")
+        second.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), w, w + 5,
+            android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        v.findViewById<TextView>(R.id.up_explain_2).text = second
 
         val buy = v.findViewById<MaterialButton>(R.id.up_buy)
         var picked = 1 // the middle pack starts picked
@@ -95,7 +87,7 @@ object UpgradeSheet {
             val row = LayoutInflater.from(ctx).inflate(R.layout.item_upgrade_pack, rows, false)
             row.findViewById<TextView>(R.id.pack_name).text = "+" + "%,d".format(n) + " contacts"
             row.findViewById<TextView>(R.id.pack_sub).text =
-                if (limit > 0) "Limit becomes " + "%,d".format(limit + n)
+                if (limit > 0) "Your limit goes from " + "%,d".format(limit) + " to " + "%,d".format(limit + n)
                 else "Adds " + "%,d".format(n) + " to your limit"
             row.findViewById<TextView>(R.id.pack_price).text = PRICE_PLACEHOLDER
             row.setOnClickListener { picked = i; paint() }
@@ -107,6 +99,8 @@ object UpgradeSheet {
 
         val dialog = BottomSheetDialog(ctx)
         dialog.setContentView(v)
+        // The pop-up draws its own curved top, so the sheet frame behind it must not show square corners.
+        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
         dialog.behavior.skipCollapsed = true
         dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         buy.setOnClickListener {

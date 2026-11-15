@@ -53,4 +53,9 @@
     <color name="ban_end">#B3413D</color>
     <color name="lock_start">#D9962B</color>
     <color name="lock_end">#A86A12</color>
+    <!-- History: a day with no contacts (red card). -->
+    <color name="red_border">#F0C9C7</color>
+    <color name="red_tag">#F4CFCD</color>
+    <!-- Step dashes on the green permissions header: not reached yet (same in light and dark mode). -->
+    <color name="dash_off">#59FFFFFF</color>
 </resources>

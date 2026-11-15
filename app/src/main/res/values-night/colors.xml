@@ -43,4 +43,7 @@
     <color name="glass">#26FFFFFF</color>
     <color name="glass_line">#40FFFFFF</color>
     <color name="white_soft">#D9FFFFFF</color>
+    <!-- History: a day with no contacts (red card). -->
+    <color name="red_border">#5A3330</color>
+    <color name="red_tag">#4D2B28</color>
 </resources>

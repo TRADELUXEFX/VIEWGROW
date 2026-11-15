@@ -64,7 +64,7 @@ object HomeViews {
         val box = LinearLayout(ctx)
         box.orientation = LinearLayout.VERTICAL
         box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        box.addView(notice(ctx, RED, "Almost at your limit.", "You have used $total of $limit contacts. Upgrade so new contacts keep coming."))
+        box.addView(notice(ctx, RED, "Almost at your limit.", "You have used $total of $limit contacts. Upgrade so new contacts keep being added to your phone."))
         val b = button(ctx, box, "Increase my contact limit", null)
         b.setOnClickListener { onUpgrade() }
         box.addView(b)
@@ -136,26 +136,6 @@ object HomeViews {
         return c
     }
 
-    // Small line under the limit reached button: opens the Help page for anyone who paid and saw no change.
-    fun paidHelpLink(ctx: Context, onClick: () -> Unit): View {
-        val t = TextView(ctx)
-        val lead = "Paid but nothing changed? "
-        val link = "Get help"
-        val sp = android.text.SpannableString(lead + link)
-        sp.setSpan(android.text.style.ForegroundColorSpan(color(ctx, R.color.green_text)), lead.length, sp.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        sp.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), lead.length, sp.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        t.text = sp
-        t.textSize = 12f
-        t.gravity = Gravity.CENTER
-        t.setTextColor(color(ctx, R.color.text2))
-        t.isClickable = true
-        t.isFocusable = true
-        t.setPadding(0, Ui.dp(ctx, 4), 0, Ui.dp(ctx, 4))
-        t.layoutParams = below(ctx, 8)
-        t.setOnClickListener { onClick() }
-        return t
-    }
-
     // "Contact limit reached" with the line under it.
     fun limitCard(ctx: Context): View {
         val c = card(ctx)
@@ -168,7 +148,7 @@ object HomeViews {
         title.gravity = Gravity.CENTER
         title.setTextColor(color(ctx, R.color.dark))
         val sub = TextView(ctx)
-        sub.text = "You will not get new contacts until you increase your limit."
+        sub.text = "You will not get new contacts added to your phone until you increase your limit."
         sub.textSize = 12.5f
         sub.gravity = Gravity.CENTER
         sub.setLineSpacing(Ui.dp(ctx, 4).toFloat(), 1f)

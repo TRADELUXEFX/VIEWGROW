@@ -31,6 +31,40 @@
             android:tag="extrabold"
             android:textColor="@color/white"
             android:textSize="26sp" />
+        <!-- Step dashes: stretch across the header; the first N are filled on step N. -->
+        <LinearLayout
+            android:id="@+id/step_dashes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginEnd="20dp"
+            android:orientation="horizontal">
+        <View
+            android:id="@+id/dash_1"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_dash_off" />
+        <View
+            android:id="@+id/dash_2"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_dash_off" />
+        <View
+            android:id="@+id/dash_3"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_dash_off" />
+        </LinearLayout>
     </LinearLayout>
 
     <ScrollView

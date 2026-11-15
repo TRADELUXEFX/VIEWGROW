@@ -273,7 +273,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 val b = HomeViews.button(ctx, body, "Increase my contact limit", null)
                 b.setOnClickListener { UpgradeSheet.show(ctx, total, limitN) }
                 body.addView(b)
-                body.addView(HomeViews.paidHelpLink(ctx) { (activity as? MainActivity)?.showFaq() })
             }
             "PREPARING" -> {
                 // Verified, waiting for the release. The countdown already says when. Before the first contacts, say what happens next.

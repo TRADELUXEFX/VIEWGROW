@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/surface"
+    android:background="@drawable/bg_sheet_top"
     android:fillViewport="true">
 
     <LinearLayout
@@ -19,23 +19,50 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:tag="extrabold"
             android:text="Increase my contact limit"
             android:textColor="@color/dark"
             android:textSize="18sp" />
 
+        <!-- Plain-words summary of what the limit is and what paying does. -->
+        <LinearLayout
+            android:id="@+id/up_explain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_field"
+            android:orientation="vertical"
+            android:padding="13dp">
+            <TextView
+                android:id="@+id/up_explain_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.2"
+                android:textColor="@color/text"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/up_explain_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="7dp"
+                android:lineSpacingMultiplier="1.2"
+                android:textColor="@color/text"
+                android:textSize="12sp" />
+        </LinearLayout>
+
         <!-- How much of the limit is used. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Used"
+                android:text="Used so far"
                 android:textColor="@color/text2"
                 android:textSize="12sp" />
             <TextView
@@ -60,7 +87,7 @@
             style="@style/SectionLabel"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="2dp"
-            android:text="CHOOSE A PACK" />
+            android:text="CHOOSE HOW MUCH ROOM TO ADD" />
 
         <LinearLayout
             android:id="@+id/up_packs"
@@ -68,20 +95,25 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
 
-        <!-- Three short facts. -->
-        <LinearLayout
-            android:id="@+id/up_facts"
+        <!-- One-time payment reassurance. -->
+        <TextView
+            android:id="@+id/up_onetime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:orientation="vertical" />
+            android:drawableStart="@drawable/ic_check_green"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:text="One-time payment, not a subscription"
+            android:textColor="@color/text"
+            android:textSize="12sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/up_buy"
             style="@style/AppButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             app:icon="@drawable/ic_google_play"
             app:iconGravity="textStart"
             app:iconPadding="8dp"
