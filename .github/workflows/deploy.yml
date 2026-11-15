@@ -226,12 +226,23 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+      - name: Check both files were built
+        if: steps.chk.outputs.has_app == 'true'
+        run: |
+          ls -l app/build/outputs/apk/release/app-release.apk
+          ls -l app/build/outputs/bundle/release/app-release.aab
       - name: Upload APK artifact
         if: steps.chk.outputs.has_app == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: app/build/outputs/apk/release/app-release.apk
+      - name: Upload Play bundle artifact
+        if: steps.chk.outputs.has_app == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
       - name: Upload APK and Play bundle to Releases
         if: steps.chk.outputs.has_app == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
