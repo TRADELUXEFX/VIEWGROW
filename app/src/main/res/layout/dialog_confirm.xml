@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Confirm pop-up: same card as the Duration pop-up. Texts are set in code. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/confirm_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:tag="extrabold"
+        android:textColor="@color/dark"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/confirm_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="20dp"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/text2"
+        android:textSize="13.5sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/confirm_cancel"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_outline"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:tag="semibold"
+            android:text="Cancel"
+            android:textColor="@color/green_text"
+            android:textSize="14sp" />
+        <TextView
+            android:id="@+id/confirm_ok"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_pill_red"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:tag="semibold"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+</LinearLayout>

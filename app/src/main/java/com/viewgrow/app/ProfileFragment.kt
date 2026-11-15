@@ -14,7 +14,6 @@ import android.provider.Settings
 import android.view.View
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -149,6 +148,17 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     // Opens the phone's battery optimisation list, where ViewGrow can be set to "Not optimised".
     private fun openBatterySettings() {
+        val ctx = context ?: return
+        val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+        // Not allowed yet: the one-tap popup. Already allowed (or no popup on this phone): the battery list.
+        if (!pm.isIgnoringBatteryOptimizations(ctx.packageName)) {
+            try {
+                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + ctx.packageName)))
+                return
+            } catch (e: Exception) {
+                // Fall through to the list.
+            }
+        }
         try {
             startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
         } catch (e: ActivityNotFoundException) {
@@ -164,12 +174,12 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             view?.let { Ui.toast(it, "Turn on the Contacts permission first.") }
             return
         }
-        AlertDialog.Builder(ctx)
-            .setTitle("Delete my contacts?")
-            .setMessage("This removes every contact ViewGrow saved to your phone. Your own ViewGrow contact stays. They will not come back unless the admin approves a new download.")
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Delete") { _, _ -> deleteNow() }
-            .show()
+        ConfirmDialog.show(
+            ctx,
+            "Delete my contacts?",
+            "This removes every contact ViewGrow saved to your phone. Your own ViewGrow contact stays. They will not come back unless the admin approves a new download.",
+            "Delete"
+        ) { deleteNow() }
     }
 
     private fun deleteNow() {
