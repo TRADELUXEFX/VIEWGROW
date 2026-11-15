@@ -9,12 +9,11 @@ name: Deploy ViewGrow
 #   6. This workflow runs: if there's a zip in incoming/, it extracts it
 #      (an extra wrapper folder inside the zip is removed automatically),
 #      commits the result, and deletes the zip. Either way (zip or plain
-#      code push) it then builds the APK from whatever is currently in
-#      the repo and publishes a release.
+#      code push) it then builds the APK and the Play .aab from whatever is
+#      currently in the repo, and publishes both as a release.
 #
-# This replaces the old two-workflow setup (build.yml + deploy-from-zip.yml)
-# with a single workflow so there's only ever one build per push, whether
-# that push is a zip upload or a normal commit.
+# Download the Play Store file directly from Releases: open the newest
+# release (v1.0.N) on the repo's main page and tap app-release.aab.
 on:
   push:
     branches: [ main ]
@@ -217,26 +216,29 @@ jobs:
           else
             echo "::warning::KEYSTORE_BASE64 secret not set - APK will be signed with the debug key."
           fi
-      - name: Build APK
+      - name: Build APK and Play bundle
         if: steps.chk.outputs.has_app == 'true'
-        run: gradle assembleRelease
+        run: gradle assembleRelease bundleRelease
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
       - name: Upload APK artifact
         if: steps.chk.outputs.has_app == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: app/build/outputs/apk/release/app-release.apk
-      - name: Upload APK to Releases
+      - name: Upload APK and Play bundle to Releases
         if: steps.chk.outputs.has_app == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/app-release.apk
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/bundle/release/app-release.aab
           tag_name: v1.0.${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
