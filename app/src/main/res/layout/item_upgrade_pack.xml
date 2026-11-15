@@ -46,6 +46,14 @@
                     android:textColor="@color/dark"
                     android:textSize="14sp" />
             </LinearLayout>
+            <!-- "Your limit goes from 500 to 3,500". Filled in code; hidden when the limit is not known. -->
+            <TextView
+                android:id="@+id/pack_sub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/text2"
+                android:textSize="11sp" />
         </LinearLayout>
 
         <TextView

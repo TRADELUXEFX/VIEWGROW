@@ -5,9 +5,9 @@
     <color name="splash_bg">#111B21</color>
     <color name="green">#1FAA59</color>
     <color name="green_dark">#158245</color>
-    <color name="tint">#1B3A2C</color>
-    <color name="border">#2A3B33</color>
-    <color name="field">#1A2A23</color>
+    <color name="tint">#153326</color>
+    <color name="border">#1F3329</color>
+    <color name="field">#12201A</color>
     <color name="text">#C9D3CE</color>
     <color name="text2">#9AA8A1</color>
     <color name="muted">#8F9C96</color>
@@ -46,4 +46,8 @@
     <color name="welcome_lime">#DEFFA0</color>
     <color name="welcome_line">#2A4A3A</color>
     <color name="welcome_btn_stroke">#2F5A45</color>
+
+    <color name="explain_bg">#0B1410</color>
+    <color name="explain_border">#1B2B23</color>
+    <color name="explain_text">#D5DED9</color>
 </resources>

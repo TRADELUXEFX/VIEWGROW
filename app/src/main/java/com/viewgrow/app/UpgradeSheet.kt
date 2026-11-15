@@ -2,6 +2,7 @@ package com.viewgrow.app
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.res.Configuration
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
@@ -9,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -26,6 +28,18 @@ object UpgradeSheet {
     private const val LOADING = "\u2026"
     private const val NO_PRICE = "\u2014"
 
+    // The paywall always looks like the other mode: the app in dark mode shows it light, the app in light mode shows it dark.
+    // Only the pop-up is flipped; every other screen keeps the member's choice. The original context is still used to find the
+    // activity and to talk to Google Play, because this wrapper only changes how colours are looked up.
+    private fun opposite(ctx: Context): Context {
+        val night = if (AppTheme.isDark(ctx)) Configuration.UI_MODE_NIGHT_NO else Configuration.UI_MODE_NIGHT_YES
+        val cfg = Configuration(ctx.resources.configuration)
+        cfg.uiMode = (cfg.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or night
+        val wrapped = ContextThemeWrapper(ctx, R.style.Theme_ViewGrow)
+        wrapped.applyOverrideConfiguration(cfg)
+        return wrapped
+    }
+
     private fun activityOf(ctx: Context): MainActivity? {
         var c: Context? = ctx
         while (c is ContextWrapper) {
@@ -36,7 +50,8 @@ object UpgradeSheet {
     }
 
     fun show(ctx: Context, total: Int, limit: Int) {
-        val v = LayoutInflater.from(ctx).inflate(R.layout.sheet_upgrade, null)
+        val ui = opposite(ctx) // colours, sizes and layouts of the pop-up come from this one
+        val v = LayoutInflater.from(ui).inflate(R.layout.sheet_upgrade, null)
 
         // How much of the limit is used.
         val used = v.findViewById<TextView>(R.id.up_used)
@@ -45,9 +60,9 @@ object UpgradeSheet {
             used.text = "%,d of %,d contacts".format(total, limit)
             bar.progress = (total * 100L / limit).toInt().coerceIn(0, 100)
             if (total >= limit) {
-                bar.progressDrawable = ContextCompat.getDrawable(ctx, R.drawable.bg_progress_red)
+                bar.progressDrawable = ContextCompat.getDrawable(ui, R.drawable.bg_progress_red)
                 bar.progress = 100
-                used.setTextColor(ContextCompat.getColor(ctx, R.color.red_dark))
+                used.setTextColor(ContextCompat.getColor(ui, R.color.red_dark))
             }
         } else {
             used.text = "%,d contacts".format(total)
@@ -85,13 +100,15 @@ object UpgradeSheet {
         }
 
         for ((i, n) in packs.withIndex()) {
-            val row = LayoutInflater.from(ctx).inflate(R.layout.item_upgrade_pack, rows, false)
+            val row = LayoutInflater.from(ui).inflate(R.layout.item_upgrade_pack, rows, false)
             row.findViewById<TextView>(R.id.pack_name).text = "+" + "%,d".format(n) + " contacts"
+            val sub = row.findViewById<TextView>(R.id.pack_sub)
+            if (limit > 0) sub.text = "Your limit goes from %,d to %,d".format(limit, limit + n) else sub.visibility = View.GONE
             if (i == RECOMMENDED) {
                 // The tab sits half outside the top edge of the card, so the card is pushed down to make room.
                 row.findViewById<View>(R.id.pack_badge).visibility = View.VISIBLE
                 row.findViewById<View>(R.id.pack_card).let { c ->
-                    (c.layoutParams as android.widget.FrameLayout.LayoutParams).topMargin = Ui.dp(ctx, 9)
+                    (c.layoutParams as android.widget.FrameLayout.LayoutParams).topMargin = Ui.dp(ui, 9)
                 }
             }
             row.setOnClickListener { picked = i; paint() }
@@ -101,7 +118,7 @@ object UpgradeSheet {
         paint()
         Fonts.apply(v)
 
-        val dialog = BottomSheetDialog(ctx)
+        val dialog = BottomSheetDialog(ui)
         dialog.setContentView(v)
         // The pop-up draws its own curved top, so the sheet frame behind it must not show square corners.
         // The sheet frame paints its own rounded background when it is first laid out, which is what showed as grey edges

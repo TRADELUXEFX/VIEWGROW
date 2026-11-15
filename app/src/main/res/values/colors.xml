@@ -6,9 +6,9 @@
     <color name="splash_bg">#111B21</color>
     <color name="green">#1FAA59</color>
     <color name="green_dark">#158245</color>
-    <color name="tint">#E1F5EB</color>
-    <color name="border">#DCEEE1</color>
-    <color name="field">#F6FBF1</color>
+    <color name="tint">#CDEBD8</color>
+    <color name="border">#B8DEC6</color>
+    <color name="field">#E6F4EA</color>
     <color name="text">#555555</color>
     <color name="text2">#7A8580</color>
     <color name="muted">#8A928C</color>
@@ -59,4 +59,9 @@
     <color name="welcome_lime">#DEFFA0</color>
     <color name="welcome_line">#B0DEC4</color>
     <color name="welcome_btn_stroke">#A8D6BA</color>
+
+    <!-- Explainer box on the Increase my contact limit pop-up: a clearer green than a normal card. -->
+    <color name="explain_bg">#C2E6D0</color>
+    <color name="explain_border">#9FD1B3</color>
+    <color name="explain_text">#2F3A35</color>
 </resources>

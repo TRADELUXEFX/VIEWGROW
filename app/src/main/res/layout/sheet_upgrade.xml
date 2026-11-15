@@ -25,11 +25,36 @@
             android:textColor="@color/dark"
             android:textSize="18sp" />
 
+        <!-- What the limit is and why paying helps. Same words as the preview (screen 12). -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_explain"
+            android:orientation="vertical"
+            android:padding="14dp">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="3dp"
+                android:text="Your contact limit is the most amount of WhatsApp contacts your ViewGrow account can receive and save to your phone. Once it is full, no more can be added."
+                android:textColor="@color/explain_text"
+                android:textSize="12sp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="3dp"
+                android:text="Paying raises your limit, so more contacts can be saved on your phone, which increases your status viewers, potentially through reshares."
+                android:textColor="@color/explain_text"
+                android:textSize="12sp" />
+        </LinearLayout>
+
         <!-- How much of the limit is used. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="16dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
             <TextView
