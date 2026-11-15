@@ -146,7 +146,7 @@ object Notifier {
 object BackgroundSync {
     fun run(ctx: Context): Boolean? {
         Store.init(ctx)
-        // Put the "Reshare the admin's status" notification back if it was swiped away.
+        // Put the "Get new status viewers today" notification back if it was swiped away.
         ReshareReminder.show(ctx)
         if (!Store.loggedIn || Store.syncPaused || Store.banned) return null
         // Contacts, Battery or Notifications off: warn (once), then carry on if Contacts is still allowed.

@@ -36,8 +36,7 @@ object HelpPopup {
         listOf(
             HelpRow(R.drawable.ic_history, "Days", "Tap a day to see its names and numbers."),
             HelpRow(R.drawable.ic_person, "People", "Everyone saved on this phone, newest first."),
-            HelpRow(R.drawable.ic_chat, "Chat button", "Opens a WhatsApp chat with that person."),
-            HelpRow(R.drawable.ic_chevron_down, "Duration", "Pick a period, or choose your own dates.")
+            HelpRow(R.drawable.ic_chat, "Chat button", "Opens a WhatsApp chat with that person.")
         ),
         "History is kept on this phone, so it clears when you log out."
     )
@@ -48,10 +47,9 @@ object HelpPopup {
         listOf(
             HelpRow(R.drawable.ic_sync, "Sync every", "How often the phone checks for new contacts."),
             HelpRow(R.drawable.ic_download, "Pause syncing", "Stops automatic saving until you turn it back on."),
-            HelpRow(R.drawable.ic_bell, "Permissions", "Contacts, Notifications and Battery keep automatic saving working."),
             HelpRow(R.drawable.ic_person, "Delete My Contacts", "Removes the contacts ViewGrow saved. They do not come back unless the admin approves a new download.")
         ),
-        "If contacts stop saving by themselves, check that Battery says Unrestricted."
+        "If contacts stop saving by themselves, look for a red box on Home and tap Fix now."
     )
 
     fun show(ctx: Context, topic: HelpTopic) {

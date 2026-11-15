@@ -7,7 +7,7 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.TextView
 
-// A confirm pop-up in the app's own look (same rounded card and Poppins as the Duration pop-up),
+// A confirm pop-up in the app's own look (same rounded card and Poppins as the other pop-ups),
 // instead of Android's plain grey box. danger = true makes the confirm button red, for things that
 // cannot be undone (Delete). danger = false keeps it green (Agree and continue).
 object ConfirmDialog {

@@ -1,6 +1,14 @@
 package com.viewgrow.app
 
+import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.NotificationManagerCompat
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
@@ -135,7 +143,98 @@ class MainActivity : AppCompatActivity() {
         // this just clears the old notification and the "already warned" flag once it is back on.
         PermissionWatch.onAppOpen(this)
         ReshareReminder.show(this)
+        // Packs paid for but not yet confirmed with the database are tried again here.
+        BillingManager.listen(
+            { msg -> android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show() },
+            { refreshAfterPurchase() }
+        )
+        BillingManager.retryOpenPurchases(this)
+        // Opened from the "permission is off" notification: go straight to the fix, no pop-up first.
+        if (intent?.getBooleanExtra(PermissionWatch.EXTRA_FIX, false) == true) {
+            intent.removeExtra(PermissionWatch.EXTRA_FIX)
+            if (Store.loggedIn && !Store.banned && PermissionWatch.missing(this).isNotEmpty()) {
+                permPopupAt = System.currentTimeMillis()
+                fixPermission()
+                return
+            }
+        }
         maybeShowPermissionPopup()
+    }
+
+    // The limit went up: Home asks the database again so the new limit shows at once.
+    fun refreshAfterPurchase() {
+        Status.last = null
+        if (current == 0) {
+            current = -1
+            showTab(0)
+        }
+    }
+
+    // The notification can open the app that is already running.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
+    // ---- Fix a permission that is off (used by the Home box and the pop-up) ----
+
+    private val contactsAsk = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        if (!ContactsSaver.hasPermission(this) &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.WRITE_CONTACTS)
+        ) openAppSettings()
+    }
+
+    private val notificationsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (!granted && android.os.Build.VERSION.SDK_INT >= 33 &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+        ) openAppSettings()
+    }
+
+    // Takes the first thing that is off and asks for it, or opens the phone's own settings for it.
+    // When the member comes back, Home looks again and the box goes away if it is fixed.
+    fun fixPermission() {
+        val off = PermissionWatch.missing(this)
+        when (off.firstOrNull()) {
+            "Contacts" -> contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
+            "Notifications" ->
+                if (android.os.Build.VERSION.SDK_INT >= 33) notificationsAsk.launch(Manifest.permission.POST_NOTIFICATIONS)
+                else openNotificationSettings()
+            "Battery" -> openBatterySettings()
+        }
+    }
+
+    private fun openAppSettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
+        } catch (e: ActivityNotFoundException) {
+            // No settings screen to open.
+        }
+    }
+
+    private fun openNotificationSettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
+        } catch (e: ActivityNotFoundException) {
+            openAppSettings()
+        }
+    }
+
+    // The one-tap popup to stop battery optimisation, or the battery list if there is no popup.
+    private fun openBatterySettings() {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            try {
+                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+                return
+            } catch (e: Exception) {
+                // Fall through to the list.
+            }
+        }
+        try {
+            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        } catch (e: ActivityNotFoundException) {
+            openAppSettings()
+        }
     }
 
     // ---- "A permission is off" pop-up ----
@@ -145,11 +244,11 @@ class MainActivity : AppCompatActivity() {
 
     // Inside the app: when it opens or returns from Settings and Contacts, Notifications or Battery is
     // off, a pop-up names what is off. Only on Home, History and Profile (not during sign up or the
-    // permission steps, not on Profile where the member is already fixing it), never twice in a row
+    // permission steps), never twice in a row
     // within 10 seconds (the phone's own permission box also brings the app back to the front).
     private fun maybeShowPermissionPopup() {
         if (permDialog?.isShowing == true) return
-        if (current < 0 || current == 2 || !Store.loggedIn || Store.banned || notVerified()) return
+        if (current < 0 || !Store.loggedIn || Store.banned || notVerified()) return
         if (System.currentTimeMillis() - permPopupAt < 10000L) return
         val off = PermissionWatch.missing(this)
         if (off.isEmpty()) return
@@ -186,7 +285,7 @@ class MainActivity : AppCompatActivity() {
         dialog.window?.setGravity(android.view.Gravity.CENTER)
         v.findViewById<TextView>(R.id.perm_fix).setOnClickListener {
             dialog.dismiss()
-            showTab(2)
+            fixPermission()
         }
         v.findViewById<TextView>(R.id.perm_later).setOnClickListener { dialog.dismiss() }
         permDialog = dialog

@@ -9,38 +9,21 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 
-// Profile: how often the phone checks for contacts, the permissions it needs, the legal pages,
+// Profile: how often the phone checks for contacts, the legal pages,
 // Log out, and Delete My Contacts.
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private val hours = intArrayOf(1, 6, 12, 24)
     private val segIds = intArrayOf(R.id.seg_1, R.id.seg_6, R.id.seg_12, R.id.seg_24)
     private val main = Handler(Looper.getMainLooper())
-
-    private val contactsAsk = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        refresh()
-        val ctx = context
-        if (ctx != null && !ContactsSaver.hasPermission(ctx) &&
-            !shouldShowRequestPermissionRationale(Manifest.permission.WRITE_CONTACTS)
-        ) openAppSettings()
-    }
-
-    private val notificationsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        refresh()
-        if (!granted && Build.VERSION.SDK_INT >= 33 &&
-            !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
-        ) openAppSettings()
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val ctx = view.context
@@ -66,20 +49,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             refresh()
         }
 
-        // The two permission switches show what the phone says. Tapping asks, or opens the phone's settings.
-        view.findViewById<SwitchCompat>(R.id.sw_contacts).setOnClickListener {
-            if (ContactsSaver.hasPermission(ctx)) openAppSettings()
-            else contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
-            refresh()
-        }
-        view.findViewById<SwitchCompat>(R.id.sw_notif).setOnClickListener {
-            if (NotificationManagerCompat.from(ctx).areNotificationsEnabled()) openNotificationSettings()
-            else if (Build.VERSION.SDK_INT >= 33) notificationsAsk.launch(Manifest.permission.POST_NOTIFICATIONS)
-            else openNotificationSettings()
-            refresh()
-        }
-
-        view.findViewById<View>(R.id.row_battery).setOnClickListener { openBatterySettings() }
         view.findViewById<View>(R.id.row_help).setOnClickListener { (activity as? MainActivity)?.showFaq() }
         view.findViewById<View>(R.id.row_terms).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.TERMS) }
         view.findViewById<View>(R.id.row_privacy).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.PRIVACY) }
@@ -102,21 +71,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         v.findViewById<SwitchCompat>(R.id.sw_pause).isChecked = Store.syncPaused
         // While syncing is paused the interval does nothing, so its card is dimmed.
         v.findViewById<View>(R.id.row_interval).alpha = if (Store.syncPaused) 0.5f else 1f
-        v.findViewById<SwitchCompat>(R.id.sw_contacts).isChecked = ContactsSaver.hasPermission(ctx)
-        v.findViewById<SwitchCompat>(R.id.sw_notif).isChecked = NotificationManagerCompat.from(ctx).areNotificationsEnabled()
-
-        val chip = v.findViewById<TextView>(R.id.battery_chip)
-        val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-        if (pm.isIgnoringBatteryOptimizations(ctx.packageName)) {
-            chip.text = "OK"
-            chip.setBackgroundResource(R.drawable.bg_tag_green)
-            chip.setTextColor(ContextCompat.getColor(ctx, R.color.green_text))
-        } else {
-            chip.text = "Fix"
-            chip.setBackgroundResource(R.drawable.bg_badge_warn)
-            chip.setTextColor(ContextCompat.getColor(ctx, R.color.amber_text))
-        }
-        Fonts.apply(chip)
 
         val selected = if (Store.syncHours in hours) Store.syncHours else 24
         for (i in hours.indices) {
@@ -138,41 +92,12 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         }
     }
 
-    private fun openNotificationSettings() {
-        val ctx = context ?: return
-        try {
-            startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName))
-        } catch (e: ActivityNotFoundException) {
-            openAppSettings()
-        }
-    }
-
-    // Opens the phone's battery optimisation list, where ViewGrow can be set to "Not optimised".
-    private fun openBatterySettings() {
-        val ctx = context ?: return
-        val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-        // Not allowed yet: the one-tap popup. Already allowed (or no popup on this phone): the battery list.
-        if (!pm.isIgnoringBatteryOptimizations(ctx.packageName)) {
-            try {
-                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + ctx.packageName)))
-                return
-            } catch (e: Exception) {
-                // Fall through to the list.
-            }
-        }
-        try {
-            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-        } catch (e: ActivityNotFoundException) {
-            openAppSettings()
-        }
-    }
-
     // ---- Delete My Contacts ----
 
     private fun confirmDelete() {
         val ctx = context ?: return
         if (!ContactsSaver.hasPermission(ctx)) {
-            view?.let { Ui.toast(it, "Turn on the Contacts permission first.") }
+            view?.let { Ui.toast(it, "Contacts permission is off. Fix it on the Home screen first.") }
             return
         }
         ConfirmDialog.show(

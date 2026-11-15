@@ -13,18 +13,13 @@ import org.json.JSONObject
 
 // History: one card per day the member was verified, with the number of contacts, newest first.
 // A day with no contacts shows as a red +0 card ("You did not reshare"); see withMissedDays.
-// Tap a day to open it (HistoryDayFragment) and see the people. The Duration chip and the Days | People
-// toggle sit in the green header. Days comes from the database (web_history), 20 days at a time.
+// Tap a day to open it (HistoryDayFragment) and see the people. The Days | People
+// toggle sits in the green header. Days comes from the database (web_history), 20 days at a time.
 // People lists everyone this phone saved (HistoryLog), once each, newest first, with a chat button.
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
     companion object {
-        // Kept while the app runs, so the chosen duration is still there when coming back to this tab.
-        // preset is null when the dates were picked on the calendar. No dates means All time.
-        private var preset: String? = "All time"
-        private var from: String? = null
-        private var to: String? = null
-        // 0 = Days, 1 = People. Kept while the app runs, like the duration.
+        // 0 = Days, 1 = People. Kept while the app runs.
         private var mode = 0
     }
 
@@ -37,20 +32,10 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Fonts.apply(view)
-        // Daily, Weekly and Monthly follow today's date each time the tab opens.
-        preset?.let { p ->
-            if (p != "All time") {
-                val r = DurationDialog.rangeFor(p)
-                from = r.first
-                to = r.second
-            }
-        }
         view.findViewById<TextView>(R.id.hist_foot).setOnClickListener { if (footTaps) load() }
-        view.findViewById<TextView>(R.id.hist_chip).setOnClickListener { openDuration() }
         view.findViewById<TextView>(R.id.tog_days).setOnClickListener { setMode(0) }
         view.findViewById<TextView>(R.id.tog_people).setOnClickListener { setMode(1) }
         showToggle()
-        showChip()
         if (mode == 1) render()
         fillTotal()
         if (Status.last == null) {
@@ -98,28 +83,6 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             if (on) t.setBackgroundResource(R.drawable.bg_tog_on) else t.background = null
             t.setTextColor(androidx.core.content.ContextCompat.getColor(ctx, if (on) R.color.tog_on_text else R.color.white))
         }
-    }
-
-    private fun showChip() {
-        view?.findViewById<TextView>(R.id.hist_chip)?.text = DurationDialog.chipText(preset, from, to)
-    }
-
-    private fun openDuration() {
-        DurationDialog.show(requireContext(), preset, from, to) { p, f, t ->
-            preset = p
-            from = f
-            to = t
-            showChip()
-            render()
-            loadMoreIfNeeded()
-        }
-    }
-
-    // A date range looks through every day, so the rest of the days are read too.
-    private fun needAll() = from != null
-
-    private fun loadMoreIfNeeded() {
-        if (needAll() && loadedOnce && days.size < totalDays) load()
     }
 
     private var footSpinner: Spinner? = null
@@ -171,27 +134,16 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 return@call
             }
             val items = j.optJSONArray("items")
-            var added = 0
             if (items != null) {
                 for (i in 0 until items.length()) {
                     val o = items.optJSONObject(i) ?: continue
                     days.add(Pair(o.optString("day"), o.optInt("count")))
-                    added++
                 }
             }
             totalDays = j.optInt("total_days", days.size)
             loadedOnce = true
             render()
-            if (needAll() && added > 0 && days.size < totalDays) load()
         }
-    }
-
-    private fun inRange(iso: String): Boolean {
-        val f = from
-        val t = to
-        if (f != null && iso < f) return false
-        if (t != null && iso > t) return false
-        return true
     }
 
     private fun dayBefore(iso: String): String {
@@ -228,7 +180,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         val ctx = v.context
         val inflater = LayoutInflater.from(ctx)
         if (mode == 1) { renderPeople(list, inflater); return }
-        val shown = withMissedDays().filter { inRange(it.first) }
+        val shown = withMissedDays()
         for ((iso, count) in shown) {
             if (count <= 0) {
                 // A day with no contacts: red card, not tappable.
@@ -258,15 +210,14 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             loading -> {}
             !loadedOnce -> {}
             totalDays == 0 -> setFoot("No verified days yet.", false)
-            shown.isEmpty() && allLoaded -> setFoot("No days match.", false)
-            !needAll() && !allLoaded -> setFoot("Load more", true)
+            !allLoaded -> setFoot("Load more", true)
             else -> setFoot("", false)
         }
     }
 
-    // People: everyone saved on this phone in the chosen duration, once each, with a chat button.
+    // People: everyone saved on this phone, once each, with a chat button.
     private fun renderPeople(list: LinearLayout, inflater: LayoutInflater) {
-        val people = HistoryLog.people(list.context, from, to)
+        val people = HistoryLog.people(list.context, null, null)
         for (p in people) {
             val row = inflater.inflate(R.layout.item_history_contact, list, false)
             row.findViewById<TextView>(R.id.c_name).text = if (p.name.isBlank()) HistoryLog.display(p.number) else p.name
@@ -280,11 +231,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             Fonts.apply(row)
             list.addView(row)
         }
-        when {
-            people.isNotEmpty() -> setFoot("", false)
-            needAll() -> setFoot("No people on this phone in that duration.", false)
-            else -> setFoot("No one saved on this phone yet.", false)
-        }
+        if (people.isNotEmpty()) setFoot("", false) else setFoot("No one saved on this phone yet.", false)
     }
 
     // Opens the WhatsApp chat (wa.me), in WhatsApp or WhatsApp Business, whichever the phone has.

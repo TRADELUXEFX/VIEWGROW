@@ -215,7 +215,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val off = PermissionWatch.missing(ctx)
         permShown = off.joinToString()
         if (off.isNotEmpty() && verified) {
-            body.addView(HomeViews.permissionCard(ctx, off) { (activity as? MainActivity)?.showTab(2) })
+            body.addView(HomeViews.permissionCard(ctx, off) { (activity as? MainActivity)?.fixPermission() })
         }
 
         // 90% of the contact limit or more: the red bar. The limit reached card below takes over at 100%.

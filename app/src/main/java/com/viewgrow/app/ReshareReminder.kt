@@ -40,11 +40,12 @@ object ReshareReminder {
             Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
         val open = PendingIntent.getActivity(app, 1, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val text = "Tap to message the admin on WhatsApp and get the status to reshare."
+        // One short tip, easy to read at a glance.
+        val text = "Tap to message the admin, then reshare his status to get new status viewers."
         val n = NotificationCompat.Builder(app, CHANNEL)
             .setSmallIcon(R.drawable.ic_notif)
             .setColor(ContextCompat.getColor(app, R.color.green))
-            .setContentTitle("Reshare the admin\u2019s status")
+            .setContentTitle("Get new status viewers today")
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setOngoing(true)

@@ -19,6 +19,8 @@ import androidx.core.content.ContextCompat
 object PermissionWatch {
     private const val CHANNEL = "permissions"
     private const val NOTIFICATION_ID = 1003
+    // Set on the notification's tap: the app opens and goes straight to fixing the permission.
+    const val EXTRA_FIX = "fix_permission"
 
     // Names of the permissions that are off right now (empty when all is well).
     fun missing(ctx: Context): List<String> {
@@ -63,12 +65,12 @@ object PermissionWatch {
         }
         val open = PendingIntent.getActivity(
             app, 0,
-            Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            Intent(app, MainActivity::class.java).putExtra(EXTRA_FIX, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val title = if (off.size == 1) "${off[0]} is off" else "Some permissions are off"
         val message = off.joinToString(", ") + (if (off.size == 1) " is" else " are") +
-            " off, so ViewGrow may stop saving your contacts. Tap to fix in Profile."
+            " off, so ViewGrow may stop saving your contacts. Tap to fix it."
         val n = NotificationCompat.Builder(app, CHANNEL)
             .setSmallIcon(R.drawable.ic_notif)
             .setColor(ContextCompat.getColor(app, R.color.green))

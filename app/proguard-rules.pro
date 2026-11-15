@@ -11,3 +11,6 @@
 -keep class * extends androidx.work.ListenableWorker {
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
+
+# Google Play Billing keeps its own rules in the library.
+-keep class com.android.billingclient.** { *; }

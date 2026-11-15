@@ -126,62 +126,6 @@
                     style="@style/SettingSwitch" />
             </LinearLayout>
 
-            <TextView style="@style/SectionLabel" android:text="PERMISSIONS" />
-
-            <LinearLayout style="@style/SettingRow">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView style="@style/SettingTitle" android:text="Contacts permission" />
-                    <TextView style="@style/SettingSub" android:text="Needed to save contacts to your phone." />
-                </LinearLayout>
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/sw_contacts"
-                    style="@style/SettingSwitch" />
-            </LinearLayout>
-
-            <LinearLayout style="@style/SettingRow">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView style="@style/SettingTitle" android:text="Notifications" />
-                    <TextView style="@style/SettingSub" android:text="Know when contacts are saved." />
-                </LinearLayout>
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/sw_notif"
-                    style="@style/SettingSwitch" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/row_battery"
-                style="@style/SettingRow"
-                android:clickable="true"
-                android:focusable="true">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView style="@style/SettingTitle" android:text="Battery optimisation" />
-                    <TextView style="@style/SettingSub" android:text="Keeps syncing alive in the background." />
-                </LinearLayout>
-                <TextView
-                    android:id="@+id/battery_chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:paddingStart="9dp"
-                    android:paddingTop="3dp"
-                    android:paddingEnd="9dp"
-                    android:paddingBottom="3dp"
-                    android:tag="semibold"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
             <TextView style="@style/SectionLabel" android:text="SUPPORT" />
 
             <LinearLayout

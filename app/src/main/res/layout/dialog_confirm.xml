@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Confirm pop-up: same card as the Duration pop-up. Texts are set in code. -->
+<!-- Confirm pop-up: same card as the other pop-ups. Texts are set in code. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

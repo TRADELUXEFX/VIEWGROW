@@ -37,7 +37,7 @@ object HomeViews {
         val lead = if (off.size == 1) "${off[0]} is off." else "Some permissions are off."
         val rest = if (off.size == 1) "Turn it on so ViewGrow keeps working." else off.joinToString(", ") + ". Turn them on so ViewGrow keeps working."
         box.addView(notice(ctx, RED, lead, rest))
-        val fix = button(ctx, box, "Fix in Profile", null)
+        val fix = button(ctx, box, "Fix now", null)
         fix.setOnClickListener { onFix() }
         box.addView(fix)
         return box

@@ -32,7 +32,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
             Faq("Why didn\u2019t I get contacts today?",
                 steps = listOf(
                     "Check that Home says Verified. If it does not, reshare the admin\u2019s status and message the admin.",
-                    "Check that Contacts is turned on in Profile.",
+                    "Check that no red permission box is showing on Home. If it is, tap Fix now.",
                     "Check that Pause syncing is off in Profile."),
                 note = "Still nothing? There may be no new contacts for you yet. Try again at the next release."),
             Faq("How do I get verified?",
