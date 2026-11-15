@@ -276,7 +276,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 body.addView(HomeViews.paidHelpLink(ctx) { (activity as? MainActivity)?.showFaq() })
             }
             "PREPARING" -> {
-                // Verified, waiting for the release. The countdown already says when, so nothing else shows.
+                // Verified, waiting for the release. The countdown already says when. Before the first contacts, say what happens next.
+                if ((j.optJSONArray("recent")?.length() ?: 0) == 0) {
+                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No contacts yet.", "Your first contacts arrive after the next release."))
+                }
             }
             "ALREADY_TODAY", "NOTHING_NEW", "NO_POOL" -> {
                 if (recentSync) {
@@ -298,7 +301,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val recent = j.optJSONArray("recent")
         if (state != "NOT_VERIFIED" && recent != null && recent.length() > 0) {
             val days = j.optInt("days", recent.length())
-            body.addView(HomeViews.recentCard(ctx, recent, days) { (activity as? MainActivity)?.showTab(1) })
+            body.addView(HomeViews.recentCard(ctx, recent, days,
+                { (activity as? MainActivity)?.showTab(1) },
+                { day, count -> (activity as? MainActivity)?.showHistoryDay(day, count) }))
         }
         Fonts.apply(body)
     }
@@ -308,20 +313,21 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // 312/500 with the /500 smaller, and the gauge on the right. The gauge turns red at 90% and over.
     private fun setStats(v: View, total: Int, limit: String, atLimit: Boolean) {
         val ctx = v.context
-        val text = "$total/$limit"
-        val s = SpannableString(text)
+        val label = "$total/$limit"
+        val s = SpannableString(label)
         val cut = total.toString().length
-        s.setSpan(RelativeSizeSpan(0.55f), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.muted)), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        s.setSpan(RelativeSizeSpan(0.55f), cut, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.muted)), cut, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         v.findViewById<TextView>(R.id.stat_received).text = s
         val lim = limit.toIntOrNull() ?: 0
         val pct = if (lim > 0) minOf(100, total * 100 / lim) else 0
-        val hot = atLimit || pct >= 90
-        val color = ContextCompat.getColor(ctx, if (hot) R.color.red_dark else R.color.green)
+        // Green, then amber from 75%, then red from 90%, so the limit never comes as a surprise.
+        val level = if (atLimit || pct >= 90) 2 else if (pct >= 75) 1 else 0
+        val color = ContextCompat.getColor(ctx, intArrayOf(R.color.green, R.color.amber, R.color.red_dark)[level])
         v.findViewById<GaugeView>(R.id.gauge).set(pct / 100f, color)
         v.findViewById<TextView>(R.id.gauge_pct).apply {
-            text = "$pct%"
-            setTextColor(ContextCompat.getColor(ctx, if (hot) R.color.red_dark else R.color.green_text))
+            this.text = "$pct%"
+            setTextColor(ContextCompat.getColor(ctx, intArrayOf(R.color.green_text, R.color.amber, R.color.red_dark)[level]))
         }
     }
 

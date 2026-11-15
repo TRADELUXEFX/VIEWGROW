@@ -30,7 +30,7 @@ class HistoryDayFragment : Fragment(R.layout.fragment_history_day) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val day = arguments?.getString("day").orEmpty()
         val count = arguments?.getInt("count", 0) ?: 0
-        view.findViewById<TextView>(R.id.day_title).text = DayText.label(day)
+        view.findViewById<TextView>(R.id.day_title).text = DayText.ordinal(day)
         view.findViewById<TextView>(R.id.day_count).text = if (count == 1) "1 contact" else "$count contacts"
         view.findViewById<ImageView>(R.id.back).setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()

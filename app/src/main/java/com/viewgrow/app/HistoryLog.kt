@@ -153,6 +153,14 @@ object DayText {
             monthShort[d.get(Calendar.MONTH)] + " " + d.get(Calendar.YEAR)
     }
 
+    // 9th Nov: the title of an opened day (no weekday, no year, so a bigger contacts badge never squeezes it).
+    fun ordinal(iso: String): String {
+        val d = parse(iso) ?: return iso
+        val n = d.get(Calendar.DAY_OF_MONTH)
+        val suffix = if (n in 11..13) "th" else when (n % 10) { 1 -> "st"; 2 -> "nd"; 3 -> "rd"; else -> "th" }
+        return n.toString() + suffix + " " + monthShort[d.get(Calendar.MONTH)]
+    }
+
     // 9 Nov
     fun short(iso: String?): String {
         val d = if (iso == null) null else parse(iso)

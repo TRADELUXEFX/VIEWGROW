@@ -37,6 +37,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center"
                 android:singleLine="true"
                 android:tag="extrabold"
                 android:textColor="@color/white"

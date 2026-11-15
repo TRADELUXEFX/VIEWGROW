@@ -108,13 +108,19 @@
                 android:paddingTop="16dp"
                 android:paddingEnd="18dp"
                 android:paddingBottom="16dp">
-                <TextView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Get new contacts in"
-                    android:textColor="@color/text2"
-                    android:textSize="13.5sp" />
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Get new contacts in"
+                        android:textColor="@color/text2"
+                        android:textSize="13.5sp" />
+
+                </LinearLayout>
                 <TextView
                     android:id="@+id/timer"
                     android:layout_width="wrap_content"

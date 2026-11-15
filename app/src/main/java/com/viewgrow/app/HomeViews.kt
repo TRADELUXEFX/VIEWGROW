@@ -253,7 +253,7 @@ object HomeViews {
     }
 
     // One line of the history: day on the left, +count on the right.
-    fun historyRow(ctx: Context, day: String, count: Int, divider: Boolean): View {
+    fun historyRow(ctx: Context, day: String, count: Int, divider: Boolean, onClick: (() -> Unit)? = null): View {
         val row = LinearLayout(ctx)
         row.orientation = LinearLayout.VERTICAL
         if (divider) {
@@ -278,12 +278,22 @@ object HomeViews {
         n.setTextColor(color(ctx, R.color.green_text))
         inner.addView(d)
         inner.addView(n)
+        if (onClick != null) {
+            val arrow = ImageView(ctx)
+            arrow.setImageResource(R.drawable.ic_chevron_right)
+            arrow.setColorFilter(color(ctx, R.color.text2))
+            arrow.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 16), Ui.dp(ctx, 16)).also { it.marginStart = Ui.dp(ctx, 6) }
+            inner.addView(arrow)
+            row.isClickable = true
+            row.isFocusable = true
+            row.setOnClickListener { onClick() }
+        }
         row.addView(inner)
         return row
     }
 
     // The latest three verified days, with "See all" when there are more.
-    fun recentCard(ctx: Context, recent: JSONArray, totalDays: Int, onSeeAll: () -> Unit): View {
+    fun recentCard(ctx: Context, recent: JSONArray, totalDays: Int, onSeeAll: () -> Unit, onDay: ((String, Int) -> Unit)? = null): View {
         val c = card(ctx)
         c.setPadding(Ui.dp(ctx, 14), Ui.dp(ctx, 12), Ui.dp(ctx, 14), Ui.dp(ctx, 6))
         val head = LinearLayout(ctx)
@@ -311,7 +321,9 @@ object HomeViews {
         val n = minOf(3, recent.length())
         for (i in 0 until n) {
             val o = recent.optJSONObject(i) ?: continue
-            c.addView(historyRow(ctx, o.optString("day"), o.optInt("count"), true))
+            val dayKey = o.optString("day")
+            val cnt = o.optInt("count")
+            c.addView(historyRow(ctx, dayKey, cnt, true, if (onDay != null) ({ onDay(dayKey, cnt) }) else null))
         }
         return c
     }
