@@ -33,7 +33,6 @@
             android:textSize="26sp" />
         <!-- Step dashes: stretch across the header; the first N are filled on step N. -->
         <LinearLayout
-            android:id="@+id/step_dashes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"

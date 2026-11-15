@@ -1,18 +1,10 @@
 package com.viewgrow.app
 
-import android.Manifest
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.view.View
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -78,17 +70,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             val on = hours[i] == selected
             seg.setBackgroundResource(if (on) R.drawable.bg_seg_on else 0)
             seg.setTextColor(ContextCompat.getColor(ctx, if (on) R.color.white else R.color.text2))
-        }
-    }
-
-    // ---- The phone's own settings screens ----
-
-    private fun openAppSettings() {
-        val ctx = context ?: return
-        try {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
-        } catch (e: ActivityNotFoundException) {
-            // No settings screen to open.
         }
     }
 

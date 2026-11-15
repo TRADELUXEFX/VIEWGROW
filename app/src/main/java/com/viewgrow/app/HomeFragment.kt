@@ -10,10 +10,7 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -284,7 +281,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (recentSync) {
                     val n = Store.lastSyncCount
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Contacts saved.", (if (n == 1) "1 new contact is" else "$n new contacts are") + " now in your phone."))
-                    } else if (state == "ALREADY_TODAY") {
+                } else if (state == "ALREADY_TODAY") {
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Already downloaded today.", "You\u2019ve used today\u2019s download. Come back tomorrow, after your reshare is verified."))
                 } else if (state == "NOTHING_NEW") {
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "All caught up.", "You\u2019ve received all your contacts for now. New ones arrive after your next verified reshare."))

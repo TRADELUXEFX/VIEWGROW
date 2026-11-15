@@ -8,7 +8,6 @@ import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.NotificationManagerCompat
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
@@ -290,6 +289,12 @@ class MainActivity : AppCompatActivity() {
         v.findViewById<TextView>(R.id.perm_later).setOnClickListener { dialog.dismiss() }
         permDialog = dialog
         dialog.show()
+    }
+
+    override fun onDestroy() {
+        // The billing helper lives as long as the app, so it must not keep this screen alive.
+        BillingManager.stopListening()
+        super.onDestroy()
     }
 
     override fun onPause() {

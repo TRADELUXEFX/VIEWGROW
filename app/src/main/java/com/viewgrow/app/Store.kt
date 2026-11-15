@@ -45,7 +45,7 @@ object Store {
         get() = p.getLong("last_sync_at", 0L)
         set(v) { p.edit().putLong("last_sync_at", v).apply() }
 
-    // The contacts total and limit Home last showed, so the Help page can open Increase my contact limit with the right numbers.
+    // The contacts total and limit Home last showed, so the FAQ page can open Increase my contact limit with the right numbers.
     var lastTotal: Int
         get() = p.getInt("last_total", 0)
         set(v) { p.edit().putInt("last_total", v).apply() }
@@ -121,6 +121,7 @@ object Store {
     // Forgets the password and name. The number stays so the Log in box is filled next time.
     fun logOut() {
         p.edit().remove("password").remove("name").remove("last_sync_at").remove("last_sync_count")
-            .remove("first_sync_at").remove("last_bg_sync_at").remove("perm_alerted").apply()
+            .remove("first_sync_at").remove("last_bg_sync_at").remove("perm_alerted")
+            .remove("last_total").remove("last_limit").apply()
     }
 }

@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -125,28 +124,10 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
             Ui.showError(error, "That name is taken. Try a different one.")
             return
         }
-        val ctx = view.context
-        val density = ctx.resources.displayMetrics.density
-        for (i in 0 until count) {
-            val suggestion = arr.optString(i)
-            if (suggestion.isEmpty()) continue
-            val chip = TextView(ctx)
-            chip.text = suggestion
-            chip.tag = "semibold"
-            chip.textSize = 14f
-            chip.setTextColor(androidx.core.content.ContextCompat.getColor(ctx, R.color.green_text))
-            chip.setBackgroundResource(R.drawable.bg_chip)
-            chip.gravity = android.view.Gravity.CENTER
-            chip.setPadding((14 * density).toInt(), (10 * density).toInt(), (14 * density).toInt(), (10 * density).toInt())
-            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            lp.topMargin = (6 * density).toInt()
-            chip.layoutParams = lp
-            chip.setOnClickListener {
-                name.setText(suggestion)
-                name.setSelection(name.text.length)
-                box.visibility = View.GONE
-            }
-            list.addView(chip)
+        HomeViews.suggestions(view.context, list, arr) { picked ->
+            name.setText(picked)
+            name.setSelection(name.text.length)
+            box.visibility = View.GONE
         }
         Fonts.apply(list)
         box.visibility = View.VISIBLE

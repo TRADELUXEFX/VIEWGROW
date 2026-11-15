@@ -27,7 +27,6 @@
 
         <!-- Plain-words summary of what the limit is and what paying does. -->
         <LinearLayout
-            android:id="@+id/up_explain"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
@@ -97,7 +96,6 @@
 
         <!-- One-time payment reassurance. -->
         <TextView
-            android:id="@+id/up_onetime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"

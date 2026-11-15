@@ -2,7 +2,6 @@ package com.viewgrow.app
 
 import android.app.Activity
 import android.content.Context
-import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -47,6 +46,12 @@ object BillingManager {
     fun listen(messages: (String) -> Unit, limitRaised: () -> Unit) {
         onMessage = messages
         onLimitRaised = limitRaised
+    }
+
+    // Called when the screen goes away, so the app does not hold on to it.
+    fun stopListening() {
+        onMessage = null
+        onLimitRaised = null
     }
 
     private val updates = PurchasesUpdatedListener { result, purchases ->

@@ -19,14 +19,8 @@
     <color name="amber_bg">#FCF3E3</color>
     <color name="amber_text">#8A5A00</color>
     <color name="amber_tag">#F6E2B8</color>
-    <color name="track">#E4E8E6</color>
-    <color name="locked_bg">#F0F2F5</color>
-    <color name="locked_text">#A8B0AC</color>
-    <color name="range_tint">#E3F5EB</color>
     <color name="out_muted">#B9C1BC</color>
     <color name="header_text_soft">#D6F4E2</color>
-    <color name="tag_blue_bg">#E2ECFA</color>
-    <color name="tag_blue_text">#2350A0</color>
     <!-- Card and page surface: white in light mode, dark in dark mode. -->
     <color name="surface">#FFFFFF</color>
     <color name="seg_track">#F0F5F2</color>
@@ -34,7 +28,6 @@
     <color name="green_text">#158245</color>
     <!-- Filled button green. Dark mode uses the deeper green so white text stays readable. -->
     <color name="btn_fill">#1FAA59</color>
-    <color name="btn_fill_pressed">#158245</color>
     <!-- Filled red button (Log out). White text on it in both modes. -->
     <color name="btn_red">#C9403B</color>
     <!-- Text on the green header and nav bar. Same in light and dark mode. -->

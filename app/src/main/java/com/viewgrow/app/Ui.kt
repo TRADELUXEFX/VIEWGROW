@@ -58,16 +58,7 @@ object Fonts {
         return cache.getOrPut(res) { ResourcesCompat.getFont(ctx, res) }
     }
 
-    private fun face(v: View, weight: String?): Typeface? {
-        val res = when (weight) {
-            "medium" -> R.font.poppins_medium
-            "semibold" -> R.font.poppins_semibold
-            "bold" -> R.font.poppins_bold
-            "extrabold" -> R.font.poppins_extrabold
-            else -> R.font.poppins_regular
-        }
-        return cache.getOrPut(res) { ResourcesCompat.getFont(v.context, res) }
-    }
+    private fun face(v: View, weight: String?): Typeface? = typeface(v.context, weight ?: "")
 }
 
 // Draws part of a text in another typeface (a bold lead-in inside a notice).
