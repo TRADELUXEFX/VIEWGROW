@@ -1,6 +1,8 @@
 package com.viewgrow.app
 
+import android.content.Context
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -37,6 +39,22 @@ class MainActivity : AppCompatActivity() {
     // Height of the phone's status bar. Green headers grow by this much and run behind it.
     private var topInset = 0
 
+    // The phone's Font size and Display size can only stretch the app so far (see ScaleGuard).
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(ScaleGuard.wrap(newBase))
+    }
+
+    // AppCompat puts the system configuration back on top of ours. Keep our scale, but let it keep its
+    // own light/dark mode (uiMode), so the moon button still works.
+    override fun applyOverrideConfiguration(overrideConfiguration: Configuration?) {
+        if (overrideConfiguration != null) {
+            val uiMode = overrideConfiguration.uiMode
+            overrideConfiguration.setTo(baseContext.resources.configuration)
+            overrideConfiguration.uiMode = uiMode
+        }
+        super.applyOverrideConfiguration(overrideConfiguration)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         Store.init(applicationContext)
         AppTheme.apply(this)
@@ -69,7 +87,7 @@ class MainActivity : AppCompatActivity() {
                 padHero(v)
                 when (f) {
                     is WelcomeFragment -> chrome(false, R.color.green_dark)
-                    is SignUpFragment, is LogInFragment, is TextPageFragment -> chrome(false, R.color.surface)
+                    is SignUpFragment, is LogInFragment, is TextPageFragment, is PermissionsFragment -> chrome(false, R.color.surface)
                     is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
                 }
             }
@@ -98,6 +116,7 @@ class MainActivity : AppCompatActivity() {
     // without closing it. Back on Welcome closes it.
     private fun onBack() {
         when {
+            supportFragmentManager.findFragmentById(R.id.container) is PermissionsFragment -> showTab(0)
             supportFragmentManager.backStackEntryCount > 0 -> supportFragmentManager.popBackStack()
             current > 0 -> showTab(0)
             current == 0 -> moveTaskToBack(true)
@@ -153,8 +172,19 @@ class MainActivity : AppCompatActivity() {
 
     fun onLoggedIn() {
         SyncScheduler.schedule(this)
-        showTab(0)
+        // First time here (or a new phone): walk through Contacts, Notifications and Battery.
+        // Nothing missing means straight to Home.
+        if (PermissionsFragment.needsAny(this)) showPermissions() else showTab(0)
     }
+
+    private fun showPermissions() {
+        current = -1
+        supportFragmentManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        supportFragmentManager.beginTransaction().replace(R.id.container, PermissionsFragment()).commit()
+    }
+
+    // Called by the permissions screen when every step is done or skipped.
+    fun onPermissionsDone() = showTab(0)
 
     fun onLoggedOut() {
         Store.logOut()

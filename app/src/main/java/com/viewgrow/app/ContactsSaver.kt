@@ -54,16 +54,41 @@ object ContactsSaver {
     // The last 10 digits, so 0801 234 5678 and +234 801 234 5678 count as the same number.
     private fun key(number: String): String = number.filter { it.isDigit() }.takeLast(10)
 
+    // Contacts that still exist. A contact deleted in the phone's Contacts app can linger, flagged as
+    // deleted, for a while and its number can still show up in phone-number queries. Without this check
+    // the sync would think that number is still saved and never put it back. Null if the phone could not
+    // answer, in which case nothing is filtered out.
+    private fun liveRawIds(ctx: Context): Set<Long>? {
+        return try {
+            val ids = HashSet<Long>()
+            val c = ctx.contentResolver.query(
+                ContactsContract.RawContacts.CONTENT_URI,
+                arrayOf(ContactsContract.RawContacts._ID),
+                ContactsContract.RawContacts.DELETED + " = 0",
+                null, null
+            ) ?: return null
+            c.use { while (it.moveToNext()) ids.add(it.getLong(0)) }
+            ids
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     private fun existingKeys(ctx: Context): HashSet<String> {
         val set = HashSet<String>()
         try {
+            val live = liveRawIds(ctx)
             ctx.contentResolver.query(
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                arrayOf(ContactsContract.CommonDataKinds.Phone.NUMBER),
+                arrayOf(
+                    ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID,
+                    ContactsContract.CommonDataKinds.Phone.NUMBER
+                ),
                 null, null, null
             )?.use { c ->
                 while (c.moveToNext()) {
-                    val k = key(c.getString(0) ?: "")
+                    if (live != null && c.getLong(0) !in live) continue
+                    val k = key(c.getString(1) ?: "")
                     if (k.isNotEmpty()) set.add(k)
                 }
             }

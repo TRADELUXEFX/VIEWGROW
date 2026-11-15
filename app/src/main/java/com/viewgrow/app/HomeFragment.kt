@@ -225,6 +225,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val days = j.optInt("days", recent.length())
             body.addView(HomeViews.recentCard(ctx, recent, days) { (activity as? MainActivity)?.showTab(1) })
         }
+        // Some phone brands stop the background timer. If it has not run for a long while, say so and
+        // open the phone's own auto-start screen. It goes away by itself once a background sync runs.
+        if (verified && Store.loggedIn && !Store.syncPaused && OemAutostart.needsPrompt()) {
+            val warn = HomeViews.notice(
+                ctx, HomeViews.WARN, "Auto-sync looks stopped.",
+                "Your phone may be blocking ViewGrow in the background. Tap here to fix it."
+            )
+            warn.setOnClickListener { activity?.let { OemAutostart.openSettings(it) } }
+            body.addView(warn, 0)
+        }
         Fonts.apply(body)
     }
 
