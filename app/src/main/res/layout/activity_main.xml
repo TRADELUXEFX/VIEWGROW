@@ -104,17 +104,18 @@
     <!-- Chat button: floats on the right above the bottom bar on Home, History and Profile. Opens the admin on WhatsApp. -->
     <ImageView
         android:id="@+id/fab_chat"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="18dp"
         android:layout_marginBottom="84dp"
         android:background="@drawable/bg_fab"
         android:clickable="true"
         android:contentDescription="Chat with the admin"
-        android:elevation="6dp"
+        android:elevation="12dp"
         android:focusable="true"
         android:padding="16dp"
-        android:src="@drawable/ic_chat"
+        android:src="@drawable/ic_chat_bubble"
+        android:tint="@color/white"
         android:visibility="gone" />
 </FrameLayout>

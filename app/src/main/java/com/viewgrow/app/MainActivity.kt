@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
         window.statusBarColor = Color.TRANSPARENT
         root = findViewById(R.id.root)
         nav = findViewById(R.id.nav)
-        // Floating chat button: opens the admin on WhatsApp.
+        // Floating chat button (same bubble as VGContact): opens the admin on WhatsApp.
         fab = findViewById(R.id.fab_chat)
         fab.setOnClickListener {
             if (!Remote.openAdmin(this, "Hi, I need help with ViewGrow. My name is ${Store.name}.")) {

@@ -42,19 +42,76 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
-            <!-- Countdown to the next release -->
+            <!-- Contacts received: the number on the left, the limit gauge on the right. -->
+            <LinearLayout
+                android:id="@+id/stats_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="18dp"
+                android:paddingTop="18dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="18dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Contacts received"
+                        android:textColor="@color/text2"
+                        android:textSize="13.5sp" />
+                    <TextView
+                        android:id="@+id/stat_received"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:tag="extrabold"
+                        android:text="0"
+                        android:textColor="@color/dark"
+                        android:textSize="36sp" />
+                </LinearLayout>
+                <FrameLayout
+                    android:layout_width="96dp"
+                    android:layout_height="58dp">
+                    <com.viewgrow.app.GaugeView
+                        android:id="@+id/gauge"
+                        android:layout_width="96dp"
+                        android:layout_height="96dp" />
+                    <TextView
+                        android:id="@+id/gauge_pct"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:gravity="center"
+                        android:tag="bold"
+                        android:text="0%"
+                        android:textColor="@color/green_text"
+                        android:textSize="11sp" />
+                </FrameLayout>
+            </LinearLayout>
+
+            <!-- Countdown to the next release: words on the left, the time on the right. -->
             <LinearLayout
                 android:id="@+id/countdown"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_countdown"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp">
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="18dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="16dp">
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Get new contacts in"
                     android:textColor="@color/text2"
                     android:textSize="13.5sp" />
@@ -62,44 +119,10 @@
                     android:id="@+id/timer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
                     android:tag="extrabold"
                     android:text="--:--:--"
                     android:textColor="@color/green_text"
-                    android:textSize="40sp" />
-            </LinearLayout>
-
-            <!-- Contacts received -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_card"
-                android:orientation="horizontal"
-                android:paddingTop="14dp"
-                android:paddingBottom="14dp">
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Contacts received"
-                        android:textColor="@color/text2"
-                        android:textSize="12sp" />
-                    <TextView
-                        android:id="@+id/stat_received"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:tag="bold"
-                        android:text="0"
-                        android:textColor="@color/dark"
-                        android:textSize="26sp" />
-                </LinearLayout>
+                    android:textSize="24sp" />
             </LinearLayout>
 
             <!-- Everything that depends on the state is added here by HomeFragment -->

@@ -5,47 +5,42 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.View
-import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
 
-// Half-circle gauge for the Home "Contacts received" card: how much of the limit is used.
-// Green normally, red when the limit is reached. The percentage sits under the arc.
-class GaugeView @JvmOverloads constructor(ctx: Context, attrs: AttributeSet? = null) : View(ctx, attrs) {
+// The half-circle on Home: a grey track with a coloured arc on top showing how much of the contact limit is used.
+class GaugeView @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null
+) : View(context, attrs) {
 
-    private val d = resources.displayMetrics.density
-    private val stroke = 10f * d
+    private val stroke = resources.displayMetrics.density * 11f
     private val track = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
         strokeWidth = stroke
-        color = ContextCompat.getColor(ctx, R.color.track)
+        strokeCap = Paint.Cap.ROUND
+        color = context.getColor(R.color.border)
     }
-    private val fill = Paint(track)
-    private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textAlign = Paint.Align.CENTER
-        typeface = ResourcesCompat.getFont(ctx, R.font.poppins_bold)
-        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 13f, resources.displayMetrics)
+    private val arc = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = stroke
+        strokeCap = Paint.Cap.ROUND
+        color = context.getColor(R.color.green)
     }
     private val box = RectF()
-    private var frac = 0f
-    private var label = "0%"
 
-    fun set(fraction: Float, atLimit: Boolean) {
-        frac = fraction.coerceIn(0f, 1f)
-        label = "${(frac * 100).toInt()}%"
-        fill.color = ContextCompat.getColor(context, if (atLimit) R.color.red_dark else R.color.green)
-        text.color = ContextCompat.getColor(context, if (atLimit) R.color.red_dark else R.color.green_text)
+    private var fraction = 0f
+
+    fun set(fraction: Float, color: Int) {
+        this.fraction = fraction.coerceIn(0f, 1f)
+        arc.color = color
         invalidate()
     }
 
-    override fun onDraw(c: Canvas) {
+    override fun onDraw(canvas: Canvas) {
         val half = stroke / 2f
-        val radius = (width - stroke) / 2f
-        box.set(half, half, width - half, half + 2f * radius)
-        c.drawArc(box, 180f, 180f, false, track)
-        if (frac > 0f) c.drawArc(box, 180f, 180f * frac, false, fill)
-        c.drawText(label, width / 2f, height - 3f * d, text)
+        val d = width - stroke
+        box.set(half, half, half + d, half + d)
+        canvas.drawArc(box, 180f, 180f, false, track)
+        if (fraction > 0f) canvas.drawArc(box, 180f, 180f * fraction, false, arc)
     }
 }

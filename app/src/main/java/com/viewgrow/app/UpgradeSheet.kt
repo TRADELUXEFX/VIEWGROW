@@ -14,7 +14,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 
-// The "Increase my limit" pop-up. Opened from the button on Home, from the red bar and the limit reached card,
+// The "Increase my contact limit" pop-up. Opened from the button on Home, from the red bar and the limit reached card,
 // and from the Help page.
 // Steps: pick one pack, see the new limit and the price, press Buy. Google Play then takes over and shows its own
 // payment sheet. Prices show as a placeholder until Google Play billing is switched on, and the buy button

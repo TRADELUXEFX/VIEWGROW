@@ -198,6 +198,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // Not verified: no countdown. The "Not verified yet" box takes its place at the top.
         v.findViewById<View>(R.id.countdown).visibility = if (verified) View.VISIBLE else View.GONE
         setBadge(v, verified)
+        // The warning box sits above the contacts card for members who are not verified yet.
+        (v.findViewById<View>(R.id.stats_card).layoutParams as LinearLayout.LayoutParams).topMargin =
+            if (verified) 0 else Ui.dp(v.context, 12)
 
         val total = if (j.isNull("total")) 0 else j.optInt("total")
         val limit = if (j.isNull("limit")) "\u2014" else j.optInt("limit").toString()
@@ -222,13 +225,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         Store.lastLimit = limitN
         val nearLimit = verified && state != "LIMIT_REACHED" && limitN > 0 && total * 10 >= limitN * 9
         if (nearLimit) {
-            // The red bar has its own big button, so the outline "Increase my limit" button is not shown as well.
+            // The red bar has its own big button, so the outline "Increase my contact limit" button is not shown as well.
             body.addView(HomeViews.nearLimitCard(ctx, total, limitN) {
                 UpgradeSheet.show(ctx, total, limitN)
             })
         }
 
-        // "Increase my limit": always there for verified members, even well under the limit.
+        // "Increase my contact limit": always there for verified members, even well under the limit.
         // Not shown when the red bar or the limit reached card already has the big button.
         if (verified && !nearLimit && state != "LIMIT_REACHED") {
             body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
@@ -267,7 +270,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             "LIMIT_REACHED" -> {
                 // The same Google Play pop-up as everywhere else, so nobody is sent to WhatsApp to pay.
                 body.addView(HomeViews.limitCard(ctx))
-                val b = HomeViews.button(ctx, body, "Increase my limit", null)
+                val b = HomeViews.button(ctx, body, "Increase my contact limit", null)
                 b.setOnClickListener { UpgradeSheet.show(ctx, total, limitN) }
                 body.addView(b)
                 body.addView(HomeViews.paidHelpLink(ctx) { (activity as? MainActivity)?.showFaq() })
@@ -302,7 +305,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun setBadge(v: View, verified: Boolean) = Ui.setBadge(v, verified)
 
-    // 312/500 with the /500 smaller. The total goes red when the limit is reached.
+    // 312/500 with the /500 smaller, and the gauge on the right. The gauge turns red at 90% and over.
     private fun setStats(v: View, total: Int, limit: String, atLimit: Boolean) {
         val ctx = v.context
         val text = "$total/$limit"
@@ -310,8 +313,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val cut = total.toString().length
         s.setSpan(RelativeSizeSpan(0.55f), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.muted)), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        if (atLimit) s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.red_dark)), 0, cut, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         v.findViewById<TextView>(R.id.stat_received).text = s
+        val lim = limit.toIntOrNull() ?: 0
+        val pct = if (lim > 0) minOf(100, total * 100 / lim) else 0
+        val hot = atLimit || pct >= 90
+        val color = ContextCompat.getColor(ctx, if (hot) R.color.red_dark else R.color.green)
+        v.findViewById<GaugeView>(R.id.gauge).set(pct / 100f, color)
+        v.findViewById<TextView>(R.id.gauge_pct).apply {
+            text = "$pct%"
+            setTextColor(ContextCompat.getColor(ctx, if (hot) R.color.red_dark else R.color.green_text))
+        }
     }
 
     // ---- WhatsApp ----

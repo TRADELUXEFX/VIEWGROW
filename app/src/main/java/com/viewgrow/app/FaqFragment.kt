@@ -13,7 +13,7 @@ import androidx.fragment.app.Fragment
 // Frequently asked questions, opened from Profile > Support. Only questions here: chatting with the admin is the floating
 // chat button on Home, History and Profile. Questions sit under three headings.
 // Tap a question to open its answer; only one is open at a time. How-to answers are numbered steps, and some
-// have a button that does the next thing (open Increase my limit, or message the admin).
+// have a button that does the next thing (open Increase my contact limit, or message the admin).
 class FaqFragment : Fragment(R.layout.fragment_faq) {
 
     private class Faq(
@@ -48,7 +48,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
                 text = "The most contacts your account can receive. Home shows how many you have used out of your limit, for example 312/500."),
             Faq("How do I increase my limit?",
                 steps = listOf(
-                    "Tap Increase my limit on Home.",
+                    "Tap Increase my contact limit on Home.",
                     "Pick +1,000, +3,000 or +5,000.",
                     "Pay with Google Play, in naira. Your limit goes up once Google confirms the payment."),
                 action = "upgrade"),
@@ -186,7 +186,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
         return row
     }
 
-    // A button inside an answer. "upgrade" opens Increase my limit; "admin_paid" opens WhatsApp with a message ready.
+    // A button inside an answer. "upgrade" opens Increase my contact limit; "admin_paid" opens WhatsApp with a message ready.
     private fun actionButton(kind: String): View {
         val ctx = requireContext()
         val t = TextView(ctx)
@@ -199,7 +199,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
         t.isFocusable = true
         t.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(ctx, 44)).also { it.topMargin = Ui.dp(ctx, 14) }
         if (kind == "upgrade") {
-            t.text = "Open Increase my limit"
+            t.text = "Open Increase my contact limit"
             t.setOnClickListener { UpgradeSheet.show(ctx, Store.lastTotal, Store.lastLimit) }
         } else {
             t.text = "Message admin with my order"

@@ -43,11 +43,11 @@ object HomeViews {
         return box
     }
 
-    // "Increase my limit" button on Home. Always there for verified members.
+    // "Increase my contact limit" button on Home. Always there for verified members.
     fun upgradeButton(ctx: Context, onClick: () -> Unit): View {
         val t = TextView(ctx)
         t.tag = "semibold"
-        t.text = "Increase my limit"
+        t.text = "Increase my contact limit"
         t.gravity = Gravity.CENTER
         t.textSize = 13f
         t.setTextColor(color(ctx, R.color.green_text))
@@ -65,7 +65,7 @@ object HomeViews {
         box.orientation = LinearLayout.VERTICAL
         box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         box.addView(notice(ctx, RED, "Almost at your limit.", "You have used $total of $limit contacts. Upgrade so new contacts keep coming."))
-        val b = button(ctx, box, "Increase my limit", null)
+        val b = button(ctx, box, "Increase my contact limit", null)
         b.setOnClickListener { onUpgrade() }
         box.addView(b)
         return box

@@ -17,7 +17,7 @@ Settings, Profile shows the app version.
 
 ## Progress
 1. Done: project base, Welcome, Sign up, Log in, bottom bar, light and dark mode.
-2. Done: Home (countdown, all states, sync to phone tagged VGC, background timer, "contacts saved" message).
+2. Done: Home (contacts card with gauge, countdown row, all states, sync to phone tagged VGC, background timer, "contacts saved" message).
 3. Done: History (20 per page), Profile (sync every 1h/6h/12h/24h, pause, permissions, battery, Delete My Contacts), Terms and Privacy pages.
 4. Done: History redesigned like VG Reshare: day cards with an arrow, Duration chip in the green header, tap a day to see names and numbers with a WhatsApp chat button. The phone keeps its own record of each sync (HistoryLog), because the database only sends counts per day.
 5. Done: History has a Days | People toggle in the green header. People lists everyone this phone saved (from HistoryLog), once each, newest first, with the same chat button as a day. The Duration chip limits People too.
