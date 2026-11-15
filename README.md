@@ -19,8 +19,8 @@ Settings, Profile shows the app version.
 1. Done: project base, Welcome, Sign up, Log in, bottom bar, light and dark mode.
 2. Done: Home (contacts card with gauge, countdown row, all states, sync to phone tagged VGC, background timer, "contacts saved" message).
 3. Done: History (20 per page), Profile (sync every 1h/6h/12h/24h, pause, Delete My Contacts), Terms and Privacy pages.
-4. Done: History redesigned like VG Reshare: day cards with an arrow, Duration chip in the green header, tap a day to see names and numbers with a WhatsApp chat button. The phone keeps its own record of each sync (HistoryLog), because the database only sends counts per day.
-5. Done: History has a Days | People toggle in the green header. People lists everyone this phone saved (from HistoryLog), once each, newest first, with the same chat button as a day. The Duration chip limits People too.
+4. Done: History redesigned like VG Reshare: day cards with an arrow, tap a day to see names and numbers with a WhatsApp chat button. The phone keeps its own record of each sync (HistoryLog), because the database only sends counts per day.
+5. Done: History has a Days | People toggle in the green header. People lists everyone this phone saved (from HistoryLog), once each, newest first, with the same chat button as a day.
 6. Done: Profile, Sync. Add new contacts every has no title (the SYNC label says it), only the tip line; the chosen time is filled green, and the card is dimmed while syncing is paused.
 7. Done: removed the "One last thing" name card from Home. Every account has a name, and Sign up already requires one.
 8. Done: Delete My Contacts pop-up has its own dialog theme (no grey Android box). Battery pop-up entries added to the manifest, with a fallback to the battery list.
@@ -53,3 +53,10 @@ Settings, Profile shows the app version.
 
 
 19. Done: Google Play billing in the app (`BillingManager.kt`). The prices on the "Increase my contact limit" pop-up now come from Google Play, in the member's own currency (they show "..." while loading and a dash, with Buy switched off, if Google Play cannot be reached). The +3,000 pack carries a "Recommended" badge and starts picked. Buy opens Google Play's own payment sheet; after paying, the app sends the purchase to the database function `web_verify_purchase`, and only an ok answer consumes the purchase and refreshes Home. A paid purchase that could not be confirmed is tried again whenever the app opens. Still to do outside the app, see `incoming/PLAY_BILLING_SETUP.md`: the three products and naira prices in the Play Console, and the `web_verify_purchase` database function that checks each purchase with Google.
+
+20. Done: History shows a third kind of day, amber: the member reshared but nobody joined (+0, "You reshared \u00B7 No one joined"). Not tappable. The preview image is now `viewgrow-app-preview-v12.png`: no Duration chip or pop-up, Profile without permission switches.
+
+## Working rules for whoever edits this repo
+- **Always send the FULL updated zip** (every file of the app, paths starting at the repo root), never only the changed files. A partial zip leaves stale files in the repo and breaks the build (this happened with `dialog_duration.xml`).
+- When a file is removed from the app, list it in `DELETE_FILES.txt` at the zip root too, because uploading a zip never deletes anything by itself.
+- Update the preview PNG whenever screens change.

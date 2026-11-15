@@ -24,6 +24,7 @@ Put `DELETE_FILES.txt` at the zip root, one repo path per line. Single files onl
 Protected paths (`.git`, `.github`, `incoming`, root and app `build.gradle`, `settings.gradle`, `gradle.properties`, anything with `..`) are skipped.
 
 ## Rules
+- **Every change is sent as the FULL updated zip** (the whole app, not only changed files), with `DELETE_FILES.txt` for any file that was removed. Uploading a zip never deletes files by itself.
 - Bump `versionCode` in `app/build.gradle` whenever app code changes.
 - `.github/workflows/` inside a zip is always ignored. Edit that file on github.com.
 - SQL: pasted in chat AND saved in `supabase/migrations/`; the system guide is updated in the same zip.

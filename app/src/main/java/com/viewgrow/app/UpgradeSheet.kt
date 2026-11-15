@@ -76,7 +76,7 @@ object UpgradeSheet {
         fun paint() {
             for ((i, row) in views.withIndex()) {
                 val on = i == picked
-                row.setBackgroundResource(if (on) R.drawable.bg_option_on else R.drawable.bg_row_card)
+                row.findViewById<View>(R.id.pack_card).setBackgroundResource(if (on) R.drawable.bg_option_on else R.drawable.bg_row_card)
                 val dot = row.findViewById<ImageView>(R.id.pack_dot)
                 if (on) {
                     dot.setBackgroundResource(R.drawable.bg_green_circle)
@@ -101,7 +101,13 @@ object UpgradeSheet {
             row.findViewById<TextView>(R.id.pack_sub).text =
                 if (limit > 0) "Your limit goes from " + "%,d".format(limit) + " to " + "%,d".format(limit + n)
                 else "Adds " + "%,d".format(n) + " to your limit"
-            row.findViewById<View>(R.id.pack_badge).visibility = if (i == RECOMMENDED) View.VISIBLE else View.GONE
+            if (i == RECOMMENDED) {
+                // The tab sits half outside the top edge of the card, so the card is pushed down to make room.
+                row.findViewById<View>(R.id.pack_badge).visibility = View.VISIBLE
+                row.findViewById<View>(R.id.pack_card).let { c ->
+                    (c.layoutParams as android.widget.FrameLayout.LayoutParams).topMargin = Ui.dp(ctx, 9)
+                }
+            }
             row.setOnClickListener { picked = i; paint() }
             rows.addView(row)
             views.add(row)

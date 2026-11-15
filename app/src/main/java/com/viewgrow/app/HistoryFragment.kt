@@ -12,7 +12,10 @@ import androidx.fragment.app.Fragment
 import org.json.JSONObject
 
 // History: one card per day the member was verified, with the number of contacts, newest first.
-// A day with no contacts shows as a red +0 card ("You did not reshare"); see withMissedDays.
+// Three kinds of day. Green: the member reshared and contacts joined (+36). Amber: the member reshared but
+// nobody joined that day (+0, "You reshared · No one joined"); the database sends that day with a count of 0.
+// Red: the member did not reshare at all (+0, "You did not reshare"); the day is missing from the database,
+// so withMissedDays fills it in.
 // Tap a day to open it (HistoryDayFragment) and see the people. The Days | People
 // toggle sits in the green header. Days comes from the database (web_history), 20 days at a time.
 // People lists everyone this phone saved (HistoryLog), once each, newest first, with a chat button.
@@ -24,6 +27,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
     }
 
     private val pageSize = 20
+    private val MISSED = -1 // a filled-in day with no reshare at all
     private val days = ArrayList<Pair<String, Int>>()
     private var totalDays = 0
     private var loading = false
@@ -163,7 +167,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             var gap = dayBefore(newer)
             var n = 0
             while (gap > d.first && n < 90) {
-                out.add(Pair(gap, 0))
+                out.add(Pair(gap, MISSED))
                 gap = dayBefore(gap)
                 n++
             }
@@ -182,8 +186,19 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         if (mode == 1) { renderPeople(list, inflater); return }
         val shown = withMissedDays()
         for ((iso, count) in shown) {
-            if (count <= 0) {
-                // A day with no contacts: red card, not tappable.
+            if (count == 0) {
+                // The member reshared (the database has the day) but nobody joined: amber card, not tappable.
+                val quiet = inflater.inflate(R.layout.item_history_quiet, list, false)
+                quiet.findViewById<TextView>(R.id.h_date).text = DayText.label(iso)
+                val r = DayText.relative(iso)
+                quiet.findViewById<TextView>(R.id.h_sub).text =
+                    if (r.isEmpty()) "You reshared \u00B7 No one joined" else "$r \u00B7 You reshared \u00B7 No one joined"
+                Fonts.apply(quiet)
+                list.addView(quiet)
+                continue
+            }
+            if (count < 0) {
+                // A day the member did not reshare: red card, not tappable.
                 val miss = inflater.inflate(R.layout.item_history_missed, list, false)
                 miss.findViewById<TextView>(R.id.h_date).text = DayText.label(iso)
                 val r = DayText.relative(iso)
