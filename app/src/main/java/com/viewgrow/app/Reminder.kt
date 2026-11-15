@@ -19,7 +19,7 @@ import androidx.work.WorkerParameters
 import java.util.concurrent.TimeUnit
 
 // A gentle reminder when nothing has synced for a few days. (Idea from VG Contact.)
-// A one-off timer is restarted every time a sync finishes cleanly (button, timer or sync adapter).
+// A one-off timer is restarted every time a sync finishes cleanly (Home, timer or sync adapter).
 // Only syncing counts, not opening the app. It fires after DAYS days without one, and says so only
 // if the phone really has not synced. If Contacts permission is off it says that instead.
 // It does nothing while logged out or paused.

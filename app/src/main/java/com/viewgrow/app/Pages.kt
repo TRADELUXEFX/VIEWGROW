@@ -16,7 +16,7 @@ Your account
 You sign up with your WhatsApp number and a password of 6 to 30 letters or numbers. Keep your password private. You are responsible for what happens on your account. One account per number.
 
 How contacts work
-To get contacts you reshare the admin's status and get verified. Contacts are released on the schedule the admin sets, and you save them to your phone with the Sync button or the automatic timer. The ViewGrow database decides who receives which contacts. Each account has a contact limit. You can ask the admin to raise it, and any price is agreed with the admin before you pay.
+To get contacts you reshare the admin's status and get verified. Contacts are released on the schedule the admin sets, and you save them to your phone when you open the app or with the automatic timer. The ViewGrow database decides who receives which contacts. Each account has a contact limit. You can ask the admin to raise it, and any price is agreed with the admin before you pay.
 
 Keep contacts private
 The contacts you receive are for you only. Do not share, sell, post or leak them or the files they come in. An account that leaks contacts will be banned.

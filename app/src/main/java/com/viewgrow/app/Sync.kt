@@ -92,7 +92,7 @@ object Sync {
         val cj = c.json
         if (cj == null || !cj.optBoolean("ok")) {
             // The contacts are in the phone. Syncing again gives the same file, and nothing is saved twice.
-            return SyncResult(false, 0, "Saved, but could not confirm. Tap Sync again.")
+            return SyncResult(false, 0, "Saved, but could not confirm. Please open the app again.")
         }
 
         val count = pj.optInt("count", maxOf(0, cards.size - 1))

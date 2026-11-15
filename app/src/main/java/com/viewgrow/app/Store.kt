@@ -52,7 +52,7 @@ object Store {
     // Health of the automatic sync, for the "Auto-sync looks stopped" banner on Home.
     // firstSyncAt: the first time contacts were saved on this phone (the starting point until an
     // automatic sync has worked). lastBgSyncAt: the last time an AUTOMATIC sync finished cleanly.
-    // The Sync button never touches lastBgSyncAt, because it works even when the phone blocks
+    // A sync started from Home never touches lastBgSyncAt, because it works even when the phone blocks
     // background running.
     var firstSyncAt: Long
         get() = p.getLong("first_sync_at", 0L)

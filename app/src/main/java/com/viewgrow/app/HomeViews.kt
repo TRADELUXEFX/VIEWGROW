@@ -57,6 +57,29 @@ object HomeViews {
         return box
     }
 
+    // Shown while contacts are being saved. Not a button: syncing starts by itself when Home opens.
+    fun savingRow(ctx: Context, spin: Spinner): View {
+        val row = LinearLayout(ctx)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER_VERTICAL
+        row.setBackgroundResource(R.drawable.bg_notice_green)
+        row.setPadding(Ui.dp(ctx, 14), Ui.dp(ctx, 12), Ui.dp(ctx, 14), Ui.dp(ctx, 12))
+        row.layoutParams = below(ctx, 12)
+        val img = ImageView(ctx)
+        img.setImageDrawable(spin)
+        img.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        row.addView(img, LinearLayout.LayoutParams(Ui.dp(ctx, 16), Ui.dp(ctx, 16)))
+        val tv = TextView(ctx)
+        tv.tag = "semibold"
+        tv.text = "Saving your contacts\u2026"
+        tv.textSize = 12.5f
+        tv.setTextColor(color(ctx, R.color.green_text))
+        val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        lp.leftMargin = Ui.dp(ctx, 10)
+        row.addView(tv, lp)
+        return row
+    }
+
     fun button(ctx: Context, parent: ViewGroup, label: String, icon: Int?): MaterialButton {
         val b = LayoutInflater.from(ctx).inflate(R.layout.part_button, parent, false) as MaterialButton
         b.text = label

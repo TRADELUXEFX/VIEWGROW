@@ -105,7 +105,7 @@ object Ui {
         }
     }
 
-    // Puts the spinning ring in front of the button text (also used by the Sync button).
+    // Puts the spinning ring in front of the button text (also used by buttons that are busy).
     fun showSpinner(btn: MaterialButton) {
         val d = Spinner(btn.context)
         btn.iconTint = null

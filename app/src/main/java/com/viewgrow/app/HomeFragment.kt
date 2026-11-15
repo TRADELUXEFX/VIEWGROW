@@ -1,14 +1,11 @@
 package com.viewgrow.app
 
-import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -20,12 +17,11 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import org.json.JSONObject
 
-// Home: countdown, the two numbers, and whatever the database says you can do now.
+// Home: countdown, the contacts number, and whatever the database says is happening now.
 // The database decides the state (web_status). This screen only shows it.
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
@@ -34,10 +30,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private var syncing = false
     private var generation = 0
     private var lastLoad = 0L
-
-    private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        onPermissionResult()
-    }
+    private var lastAuto = 0L
+    private var syncError: String? = null
+    private var savingSpinner: Spinner? = null
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -95,6 +90,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onDestroyView()
         ring?.stop()
         ring = null
+        savingSpinner?.stop()
+        savingSpinner = null
         ui.removeCallbacksAndMessages(null)
     }
 
@@ -158,6 +155,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             Ui.bindUserHeader(v)
         }
         render()
+        maybeAutoSync()
     }
 
     private fun showProblem(message: String) {
@@ -182,6 +180,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val ctx = v.context
         val body = v.findViewById<LinearLayout>(R.id.body)
         body.removeAllViews()
+        savingSpinner?.stop()
+        savingSpinner = null
         val top = v.findViewById<LinearLayout>(R.id.top_slot)
         top.removeAllViews()
 
@@ -193,8 +193,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         val total = if (j.isNull("total")) 0 else j.optInt("total")
         val limit = if (j.isNull("limit")) "\u2014" else j.optInt("limit").toString()
-        val available = if (state == "READY") j.optInt("count") else 0
-        setStats(v, total, limit, available, state == "LIMIT_REACHED")
+        setStats(v, total, limit, state == "LIMIT_REACHED")
 
         // The automatic sync looks dead on a phone brand that blocks background apps.
         if (OemAutostart.needsPrompt()) {
@@ -220,14 +219,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
             }
             "READY" -> {
-                if (j.optBoolean("full")) {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Re-download approved.", "You\u2019ll get every contact you\u2019ve earned."))
+                // Contacts save by themselves when Home opens. This only shows the progress, or why it failed.
+                val err = syncError
+                if (syncing) {
+                    val sp = Spinner(ctx, ContextCompat.getColor(ctx, R.color.green_text), 16, 2)
+                    savingSpinner = sp
+                    body.addView(HomeViews.savingRow(ctx, sp))
+                    sp.start()
+                } else if (err != null) {
+                    body.addView(HomeViews.notice(ctx, HomeViews.WARN, "Couldn\u2019t save contacts.", err))
                 }
-                val b = HomeViews.button(ctx, body, if (syncing) "Syncing" else "Sync Contacts to Phone", if (syncing) null else R.drawable.ic_sync)
-                if (syncing) Ui.showSpinner(b)
-                b.setOnClickListener { onSyncTap() }
-                b.isClickable = !syncing
-                body.addView(b)
             }
             "LIMIT_REACHED" -> {
                 body.addView(HomeViews.limitCard(ctx))
@@ -239,7 +240,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
             }
             "PREPARING" -> {
-                body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Reshare verified.", "Your contacts will be ready " + Release.whenText() + ". Check back then."))
+                // Verified, waiting for the release. The countdown already says when, so nothing else shows.
             }
             "ALREADY_TODAY", "NOTHING_NEW", "NO_POOL" -> {
                 if (recentSync) {
@@ -269,7 +270,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun setBadge(v: View, verified: Boolean) = Ui.setBadge(v, verified)
 
     // 312/500 with the /500 smaller. The total goes red when the limit is reached.
-    private fun setStats(v: View, total: Int, limit: String, available: Int, atLimit: Boolean) {
+    private fun setStats(v: View, total: Int, limit: String, atLimit: Boolean) {
         val ctx = v.context
         val text = "$total/$limit"
         val s = SpannableString(text)
@@ -278,7 +279,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.muted)), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         if (atLimit) s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.red_dark)), 0, cut, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         v.findViewById<TextView>(R.id.stat_received).text = s
-        v.findViewById<TextView>(R.id.stat_available).text = available.toString()
     }
 
     // ---- WhatsApp ----
@@ -294,38 +294,27 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     // ---- Saving contacts to the phone ----
 
-    private fun onSyncTap() {
-        if (syncing) return
+    // Home saves the contacts by itself as soon as the database says they are ready.
+    // Paused means paused: nothing is saved on open either.
+    private fun maybeAutoSync() {
         val ctx = context ?: return
+        if (syncing || status?.optString("state") != "READY") return
+        if (Store.syncPaused || Store.banned) return
+        val now = System.currentTimeMillis()
+        if (now - lastAuto < 20000L) return
         if (!ContactsSaver.hasPermission(ctx)) {
-            val wanted = arrayListOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)
-            if (Build.VERSION.SDK_INT >= 33) wanted.add(Manifest.permission.POST_NOTIFICATIONS)
-            permissions.launch(wanted.toTypedArray())
+            syncError = "Allow Contacts in Profile so ViewGrow can save your contacts."
+            render()
             return
         }
+        lastAuto = now
         startSync()
-    }
-
-    private fun onPermissionResult() {
-        val ctx = context ?: return
-        if (ContactsSaver.hasPermission(ctx)) {
-            startSync()
-            return
-        }
-        view?.let { Ui.toast(it, "Allow Contacts so ViewGrow can save your contacts.") }
-        // Denied for good: the only way left is the phone's own settings.
-        if (!shouldShowRequestPermissionRationale(Manifest.permission.WRITE_CONTACTS)) {
-            try {
-                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null)))
-            } catch (e: ActivityNotFoundException) {
-                // No settings screen to open.
-            }
-        }
     }
 
     private fun startSync() {
         val ctx = context ?: return
         syncing = true
+        syncError = null
         render()
         Sync.start(ctx) { res ->
             syncing = false
@@ -335,9 +324,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 return@start
             }
             if (res.ok) {
+                syncError = null
                 reload()
             } else {
-                Ui.toast(requireView(), res.message)
+                // Another sync (the timer) already running is not an error worth showing.
+                syncError = if (res.message.startsWith("Already syncing")) null else res.message
                 render()
             }
         }
