@@ -183,6 +183,19 @@
                     android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/row_contact"
+                style="@style/SettingRow"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView style="@style/SettingTitle" android:layout_width="0dp" android:layout_weight="1" android:text="Contact us" />
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_chevron_right" />
+            </LinearLayout>
+
             <!-- Log out and Delete My Contacts: two buttons, same size and shape. -->
             <TextView
                 android:id="@+id/btn_logout"

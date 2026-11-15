@@ -45,6 +45,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         view.findViewById<View>(R.id.row_help).setOnClickListener { (activity as? MainActivity)?.showFaq() }
         view.findViewById<View>(R.id.row_terms).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.TERMS) }
         view.findViewById<View>(R.id.row_privacy).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.PRIVACY) }
+        view.findViewById<View>(R.id.row_contact).setOnClickListener { (activity as? MainActivity)?.showContact() }
         view.findViewById<View>(R.id.btn_logout).setOnClickListener { (activity as? MainActivity)?.onLoggedOut() }
         view.findViewById<View>(R.id.btn_delete).setOnClickListener { confirmDelete() }
 

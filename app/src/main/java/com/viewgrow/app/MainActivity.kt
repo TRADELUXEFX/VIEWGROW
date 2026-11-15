@@ -425,12 +425,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Terms and Conditions, Privacy Policy. Back returns to the screen it was opened from.
+    // Opens the website page in an in-app browser; the text pages are only the fallback when the phone has no browser.
     fun showPage(kind: Int) {
+        if (Web.open(this, if (kind == Pages.PRIVACY) Web.PRIVACY else Web.TERMS)) return
         supportFragmentManager.beginTransaction()
             .setReorderingAllowed(true)
             .replace(R.id.container, TextPageFragment.newInstance(kind))
             .addToBackStack(null)
             .commit()
+    }
+
+    // Contact us: the website's Contact page, in the in-app browser. Without a browser, the admin's chat opens instead.
+    fun showContact() {
+        if (Web.open(this, Web.CONTACT)) return
+        if (!Remote.openAdmin(this, "Hi, I need help with ViewGrow. My name is ${Store.name}.")) Ui.toast(root, "Could not open the link.")
     }
 
     // Frequently asked questions, opened from Profile. Back returns to Profile.

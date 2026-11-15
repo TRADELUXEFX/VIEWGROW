@@ -65,6 +65,8 @@ dependencies {
     implementation 'androidx.activity:activity-ktx:1.9.1'
     // Background timer: checks for new contacts every 1h, 6h, 12h or 24h, even when the app is closed.
     implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    // Terms, Privacy and Contact us open the website inside the app.
+    implementation 'androidx.browser:browser:1.8.0'
     // Google Play Billing: the contact packs are bought through Google Play.
     implementation 'com.android.billingclient:billing:7.0.0'
 }

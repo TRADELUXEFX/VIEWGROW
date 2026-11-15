@@ -34,7 +34,7 @@ Deleting contacts
 Profile, Delete My Contacts removes the contacts ViewGrow saved to your phone. It does not give them back to you or reset your count.
 
 Changes and help
-These terms may change. If you keep using the app after a change, you accept it. For help, message the admin on WhatsApp."""
+These terms may change. If you keep using the app after a change, you accept it. For help, message the admin on WhatsApp or email teamlimitlessaffliate@gmail.com."""
 
     private const val PRIVACY_TEXT = """What we keep
 When you sign up we keep your name, your WhatsApp number and your password. We also keep the days you were verified and how many contacts you received. Your connection address is used to limit abuse, such as too many sign-ups from one place.
@@ -55,8 +55,8 @@ Who can see your data
 The admin can see account details to run the service. We do not sell your data. Your data is stored with our database provider, Supabase.
 
 Your choices
-You can log out, delete the contacts ViewGrow saved (Profile, Delete My Contacts), or turn off permissions in your phone's settings. To delete your account, message the admin on WhatsApp.
+You can log out, delete the contacts ViewGrow saved (Profile, Delete My Contacts), or turn off permissions in your phone's settings. To delete your account, message the admin on WhatsApp from your registered number, or email teamlimitlessaffliate@gmail.com with your registered number.
 
 Changes
-This policy may change. The latest version is always in the app."""
+This policy may change. The latest version is always in the app and at viewgrow.site/privacy. Questions? Email teamlimitlessaffliate@gmail.com."""
 }
