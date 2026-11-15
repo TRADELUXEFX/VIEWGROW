@@ -6,29 +6,42 @@
     android:background="@color/surface"
     android:orientation="vertical">
 
-    <!-- Plain title header, same as History. -->
+    <!-- Green header: "Profile" on the left, the Log out button on the right. -->
     <LinearLayout
         android:id="@+id/hero"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_hero"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:paddingTop="30dp"
-        android:paddingBottom="30dp">
-        <LinearLayout
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="22dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="26dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:tag="extrabold"
+            android:text="Profile"
+            android:textColor="@color/white"
+            android:textSize="26sp" />
+        <TextView
+            android:id="@+id/btn_logout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:tag="extrabold"
-                android:text="Profile"
-                android:textColor="@color/white"
-                android:textSize="26sp" />
-        </LinearLayout>
+            android:background="@drawable/bg_badge_glass"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingStart="20dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="10dp"
+            android:tag="bold"
+            android:text="Log out"
+            android:textColor="@color/white"
+            android:textSize="13.5sp" />
     </LinearLayout>
 
     <ScrollView
@@ -184,11 +197,11 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/row_contact"
+                android:id="@+id/row_delete_account"
                 style="@style/SettingRow"
                 android:clickable="true"
                 android:focusable="true">
-                <TextView style="@style/SettingTitle" android:layout_width="0dp" android:layout_weight="1" android:text="Contact us" />
+                <TextView style="@style/SettingTitle" android:layout_width="0dp" android:layout_weight="1" android:text="Delete my account" />
                 <ImageView
                     android:layout_width="18dp"
                     android:layout_height="18dp"
@@ -196,28 +209,12 @@
                     android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
-            <!-- Log out and Delete My Contacts: two buttons, same size and shape. -->
-            <TextView
-                android:id="@+id/btn_logout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_logout"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:paddingTop="15dp"
-                android:paddingBottom="15dp"
-                android:tag="bold"
-                android:text="Log out"
-                android:textColor="@color/green_text"
-                android:textSize="13.5sp" />
-
+            <!-- Delete My Contacts. Log out is in the green header. -->
             <TextView
                 android:id="@+id/btn_delete"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
                 android:background="@drawable/bg_delete"
                 android:clickable="true"
                 android:focusable="true"

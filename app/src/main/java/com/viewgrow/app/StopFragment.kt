@@ -183,13 +183,17 @@ class StopFragment : Fragment(R.layout.fragment_stop) {
 
     // The admin button shows only when the admin set a contact on the website.
     private fun applyAdmin(v: View) {
-        val has = Remote.adminLink("x") != null
+        val has = Remote.adminExpected()
         v.findViewById<View>(R.id.btn_admin).visibility = if (has) View.VISIBLE else View.GONE
         if (isBanned) v.findViewById<View>(R.id.stop_caption).visibility = if (has) View.VISIBLE else View.GONE
     }
 
     private fun openAdmin() {
-        val link = Remote.adminLink(message()) ?: return
+        val link = Remote.adminLink(message())
+        if (link == null) {
+            view?.let { Ui.toast(it, "Could not open the link. Check your internet and try again.") }
+            return
+        }
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
         } catch (e: ActivityNotFoundException) {

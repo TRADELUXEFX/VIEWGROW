@@ -46,13 +46,6 @@
                     android:textColor="@color/dark"
                     android:textSize="14sp" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/pack_sub"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/text2"
-                android:textSize="12sp" />
         </LinearLayout>
 
         <TextView

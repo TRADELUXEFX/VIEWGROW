@@ -112,6 +112,12 @@ object Store {
         get() = p.getString("admin_target", "") ?: ""
         set(v) { p.edit().putString("admin_target", v).apply() }
 
+    // Whether the admin has sign-up open, kept from the last time the settings loaded, so the Sign up screen
+    // can show the right thing the moment it opens (no notice popping in late).
+    var signupOpen: Boolean
+        get() = p.getBoolean("signup_open", true)
+        set(v) { p.edit().putBoolean("signup_open", v).apply() }
+
     // The contact limit the "80% used" notification was last shown for (0 = not shown, or the limit went up since).
     var limitAlerted: Int
         get() = p.getInt("limit_alerted", 0)

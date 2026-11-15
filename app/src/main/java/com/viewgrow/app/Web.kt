@@ -9,11 +9,12 @@ import androidx.core.content.ContextCompat
 
 // Opens a ViewGrow website page inside the app (Chrome Custom Tab): a browser window with a green top bar that sits on top
 // of the app. The Back button (or the X) returns to the screen the member came from. The website is the
-// one source of truth for Terms, Privacy and Contact us.
+// one source of truth for Terms, Privacy, Contact us and Delete my account.
 object Web {
     const val TERMS = "https://viewgrow.site/terms/"
     const val PRIVACY = "https://viewgrow.site/privacy/"
     const val CONTACT = "https://viewgrow.site/contact/"
+    const val DELETE_ACCOUNT = "https://viewgrow.site/delete-account/"
 
     // True when the page opened. False when the phone has no browser to open it with.
     fun open(activity: Activity, url: String): Boolean {

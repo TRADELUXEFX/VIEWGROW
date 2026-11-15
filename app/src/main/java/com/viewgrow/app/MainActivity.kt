@@ -11,6 +11,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.os.Build
+import android.view.Gravity
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -47,6 +52,12 @@ class MainActivity : AppCompatActivity() {
     // Height of the phone's status bar. Green headers grow by this much and run behind it.
     private var topInset = 0
 
+    // Height of the phone's navigation strip. The green gradient runs behind it too.
+    private var bottomInset = 0
+
+    // False only on the Banned and Blocked screens, where the strip stays the page colour.
+    private var greenStrip = true
+
     // Every screen goes through ScaleGuard, so the phone's Font size and Display size settings
     // cannot stretch the app past what the layouts were built for.
     override fun attachBaseContext(newBase: Context) {
@@ -73,6 +84,8 @@ class MainActivity : AppCompatActivity() {
         }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        // Load the admin's settings right away, so by the time Log in, Sign up or Home opens they are usually ready.
+        Remote.load { }
 
         // Edge to edge: the green header runs behind the status bar.
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -92,6 +105,8 @@ class MainActivity : AppCompatActivity() {
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val keyboard = insets.getInsets(WindowInsetsCompat.Type.ime())
             topInset = bars.top
+            bottomInset = bars.bottom
+            paintStrip()
             // Keep the bottom bar above the phone's navigation strip and the keyboard.
             v.setPadding(0, 0, 0, maxOf(bars.bottom, keyboard.bottom))
             supportFragmentManager.fragments.forEach { f -> f.view?.let { padHero(it) } }
@@ -103,7 +118,8 @@ class MainActivity : AppCompatActivity() {
                 padHero(v)
                 when (f) {
                     is WelcomeFragment -> chrome(false, R.color.surface)
-                    is SignUpFragment, is LogInFragment, is TextPageFragment, is FaqFragment, is PurchaseHistoryFragment, is PermissionsFragment, is StopFragment -> chrome(false, R.color.surface)
+                    is SignUpFragment, is LogInFragment, is TextPageFragment, is FaqFragment, is DeleteAccountFragment, is PurchaseHistoryFragment, is PermissionsFragment -> chrome(false, R.color.surface)
+                    is StopFragment -> chrome(false, R.color.surface, greenStripOn = false)
                     is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
                 }
                 // The chat button shows on Home, History and Profile only.
@@ -435,10 +451,13 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // Contact us: the website's Contact page, in the in-app browser. Without a browser, the admin's chat opens instead.
-    fun showContact() {
-        if (Web.open(this, Web.CONTACT)) return
-        if (!Remote.openAdmin(this, "Hi, I need help with ViewGrow. My name is ${Store.name}.")) Ui.toast(root, "Could not open the link.")
+    // Delete my account, opened from Profile. Back returns to Profile.
+    fun showDeleteAccount() {
+        supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .replace(R.id.container, DeleteAccountFragment())
+            .addToBackStack(null)
+            .commit()
     }
 
     // Frequently asked questions, opened from Profile. Back returns to Profile.
@@ -495,13 +514,36 @@ class MainActivity : AppCompatActivity() {
     // ---- Look of the window around the screen ----
 
     // Shows or hides the bottom bar, and paints the strip under it (the phone's navigation area).
-    private fun chrome(navVisible: Boolean, colorRes: Int) {
+    // The strip is the same green gradient as the bottom bar and the headers, so the screen has no dark band at the bottom.
+    private fun chrome(navVisible: Boolean, colorRes: Int, greenStripOn: Boolean = true) {
         nav.visibility = if (navVisible) View.VISIBLE else View.GONE
-        val color = ContextCompat.getColor(this, colorRes)
-        root.setBackgroundColor(color)
-        window.navigationBarColor = color
-        val lightStrip = colorRes == R.color.surface && !AppTheme.isDark(this)
+        greenStrip = greenStripOn
+        // The window's own navigation bar is see-through, so what we paint in the root shows behind it.
+        window.navigationBarColor = Color.TRANSPARENT
+        if (Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
+        // White icons on the green strip. On the plain strip (Banned, Blocked) they follow light or dark mode.
+        val lightStrip = !greenStripOn && !AppTheme.isDark(this)
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = lightStrip
+        paintStrip()
+    }
+
+    // Root background: the page colour, with the gradient strip along the bottom edge.
+    // Left to right, like the bottom bar, so the bar and the strip look like one piece.
+    private fun paintStrip() {
+        if (!::root.isInitialized) return
+        val page = ColorDrawable(ContextCompat.getColor(this, R.color.surface))
+        val strip: android.graphics.drawable.Drawable = if (greenStrip) {
+            GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                intArrayOf(ContextCompat.getColor(this, R.color.green), ContextCompat.getColor(this, R.color.green_dark))
+            )
+        } else {
+            ColorDrawable(ContextCompat.getColor(this, R.color.surface))
+        }
+        val layers = LayerDrawable(arrayOf(page, strip))
+        layers.setLayerGravity(1, Gravity.BOTTOM or Gravity.FILL_HORIZONTAL)
+        layers.setLayerHeight(1, bottomInset)
+        root.background = layers
     }
 
     // Gives a screen's green header extra top padding equal to the status bar, so it fills the space behind it.

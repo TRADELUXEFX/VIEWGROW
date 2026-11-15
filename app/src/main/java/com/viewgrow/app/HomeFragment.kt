@@ -43,10 +43,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         Ui.bindUserHeader(view)
         Fonts.apply(view)
         // The admin's contact (for the WhatsApp buttons) comes from the website's settings.
+        val buttonBefore = Remote.adminExpected()
         Remote.load {
             // The admin's contact is now known: refresh the "Reshare" notification so its tap opens WhatsApp.
             context?.let { ReshareReminder.show(it) }
-            if (isAdded && view.parent != null) render()
+            // Draw the screen again only if the admin button actually changed, so nothing flickers.
+            if (isAdded && view.parent != null && Remote.adminExpected() != buttonBefore) render()
         }
         if (status != null) render() else showLoading()
     }
@@ -246,7 +248,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 Fonts.apply(top)
                 body.addView(HomeViews.stepsCard(ctx))
                 val msg = "Hi, I just registered on ViewGrow. My name is $name."
-                if (Remote.adminLink(msg) != null) {
+                if (Remote.adminExpected()) {
                     val b = HomeViews.button(ctx, body, "Message admin on WhatsApp", null)
                     b.setOnClickListener { openAdmin(msg) }
                     body.addView(b)
@@ -330,7 +332,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // ---- WhatsApp ----
 
     private fun openAdmin(text: String) {
-        val link = Remote.adminLink(text) ?: return
+        val link = Remote.adminLink(text)
+        if (link == null) {
+            view?.let { Ui.toast(it, "Could not open the link. Check your internet and try again.") }
+            return
+        }
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
         } catch (e: ActivityNotFoundException) {

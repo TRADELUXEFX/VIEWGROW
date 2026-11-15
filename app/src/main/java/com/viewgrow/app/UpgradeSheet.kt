@@ -16,7 +16,7 @@ import com.google.android.material.button.MaterialButton
 
 // The "Increase my contact limit" pop-up. Opened from the button on Home, from the red bar and the limit reached card,
 // and from the Help page.
-// A short green box says what the limit is and what paying does. Then: pick one pack, see the new limit and the price, press Buy. Google Play then takes over and shows its own
+// Used so far, then: pick one pack, see the price, press Buy. Google Play then takes over and shows its own
 // payment sheet. The prices come from Google Play (BillingManager), never from the app. The middle pack
 // carries the "Recommended" badge and starts picked. While prices load they show "...", and if Google Play
 // cannot be reached they show a dash and Buy is switched off.
@@ -42,7 +42,7 @@ object UpgradeSheet {
         val used = v.findViewById<TextView>(R.id.up_used)
         val bar = v.findViewById<ProgressBar>(R.id.up_bar)
         if (limit > 0) {
-            used.text = "%,d of %,d".format(total, limit)
+            used.text = "%,d of %,d contacts".format(total, limit)
             bar.progress = (total * 100L / limit).toInt().coerceIn(0, 100)
             if (total >= limit) {
                 bar.progressDrawable = ContextCompat.getDrawable(ctx, R.drawable.bg_progress_red)
@@ -53,12 +53,6 @@ object UpgradeSheet {
             used.text = "%,d contacts".format(total)
             bar.visibility = View.GONE
         }
-
-        // Plain-words summary: what the limit is, and what paying does.
-        v.findViewById<TextView>(R.id.up_explain_1).text =
-            "Your contact limit is the most contacts your account can receive and save to your phone. " +
-            "When you reach it, no new contacts are added to your phone."
-        v.findViewById<TextView>(R.id.up_explain_2).text = "Paying raises your limit so you can receive more contacts."
 
         val buy = v.findViewById<MaterialButton>(R.id.up_buy)
         var picked = RECOMMENDED // the recommended (middle) pack starts picked
@@ -93,9 +87,6 @@ object UpgradeSheet {
         for ((i, n) in packs.withIndex()) {
             val row = LayoutInflater.from(ctx).inflate(R.layout.item_upgrade_pack, rows, false)
             row.findViewById<TextView>(R.id.pack_name).text = "+" + "%,d".format(n) + " contacts"
-            row.findViewById<TextView>(R.id.pack_sub).text =
-                if (limit > 0) "Your limit goes from " + "%,d".format(limit) + " to " + "%,d".format(limit + n)
-                else "Adds " + "%,d".format(n) + " to your limit"
             if (i == RECOMMENDED) {
                 // The tab sits half outside the top edge of the card, so the card is pushed down to make room.
                 row.findViewById<View>(R.id.pack_badge).visibility = View.VISIBLE
@@ -113,7 +104,18 @@ object UpgradeSheet {
         val dialog = BottomSheetDialog(ctx)
         dialog.setContentView(v)
         // The pop-up draws its own curved top, so the sheet frame behind it must not show square corners.
-        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        // The sheet frame paints its own rounded background when it is first laid out, which is what showed as grey edges
+        // beside our curves. So it is cleared again right after that first layout.
+        dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let { sheet ->
+            sheet.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            sheet.viewTreeObserver.addOnGlobalLayoutListener(object : android.view.ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    sheet.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    sheet.backgroundTintList = null
+                    if (sheet.viewTreeObserver.isAlive) sheet.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                }
+            })
+        }
         dialog.behavior.skipCollapsed = true
         dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         // Real prices from Google Play, in the member's own currency.

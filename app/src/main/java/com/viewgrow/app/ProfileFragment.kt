@@ -10,7 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 
 // Profile: how often the phone checks for contacts, the legal pages,
-// Log out, and Delete My Contacts.
+// Delete my account, Delete My Contacts. Log out is the button in the green header.
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private val hours = intArrayOf(1, 6, 12, 24)
@@ -45,7 +45,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         view.findViewById<View>(R.id.row_help).setOnClickListener { (activity as? MainActivity)?.showFaq() }
         view.findViewById<View>(R.id.row_terms).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.TERMS) }
         view.findViewById<View>(R.id.row_privacy).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.PRIVACY) }
-        view.findViewById<View>(R.id.row_contact).setOnClickListener { (activity as? MainActivity)?.showContact() }
+        view.findViewById<View>(R.id.row_delete_account).setOnClickListener { (activity as? MainActivity)?.showDeleteAccount() }
         view.findViewById<View>(R.id.btn_logout).setOnClickListener { (activity as? MainActivity)?.onLoggedOut() }
         view.findViewById<View>(R.id.btn_delete).setOnClickListener { confirmDelete() }
 

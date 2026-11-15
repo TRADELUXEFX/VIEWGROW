@@ -9,7 +9,11 @@ import android.net.Uri
 class AdminContact(val channel: String, val value: String, val label: String)
 
 object Remote {
-    var signupOpen = true
+    // Sign-up open or closed: the last answer is kept on the phone, so screens know it from the first moment.
+    val signupOpen: Boolean get() = Store.signupOpen
+
+    // True once the settings have loaded successfully in this run.
+    var loaded = false
         private set
     var contacts: List<AdminContact> = emptyList()
         private set
@@ -20,7 +24,8 @@ object Remote {
         Api.call("web_public_config") { r ->
             val j = r.json
             if (j != null && j.optBoolean("ok")) {
-                signupOpen = j.optBoolean("signup_open", true)
+                Store.signupOpen = j.optBoolean("signup_open", true)
+                loaded = true
                 val arr = j.optJSONArray("contacts")
                 val list = ArrayList<AdminContact>()
                 if (arr != null) {
@@ -48,6 +53,11 @@ object Remote {
         }
         return null
     }
+
+    // Should a "Message the admin" button or link show? Yes when a contact is known. Also yes until the settings
+    // have loaded for the first time, so the button is already there when the screen opens instead of popping in
+    // a moment later. It is hidden only when we know the admin set no contact.
+    fun adminExpected(): Boolean = adminLink("x") != null || !loaded
 
     // A link that opens a chat with the admin, with the message filled in. Null when the admin set no contact.
     // WhatsApp contacts become wa.me links; other options are used only if they are https links.

@@ -47,12 +47,14 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
     private fun showForgot(view: View) {
         val forgot = view.findViewById<TextView>(R.id.forgot)
         val phone = view.findViewById<EditText>(R.id.phone)
-        if (Remote.adminLink("x") == null) { forgot.visibility = View.GONE; return }
+        if (!Remote.adminExpected()) { forgot.visibility = View.GONE; return }
         forgot.visibility = View.VISIBLE
         Ui.linkText(forgot, "Forgot your password? Message the admin", listOf("Message the admin" to {
             val text = "Hi, I forgot my ViewGrow password. Please reset it. My number is " + phone.text.toString().trim()
             val link = Remote.adminLink(text)
-            if (link != null) {
+            if (link == null) {
+                Ui.toast(view, "Could not open the link. Check your internet and try again.")
+            } else {
                 try {
                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
                 } catch (e: ActivityNotFoundException) {

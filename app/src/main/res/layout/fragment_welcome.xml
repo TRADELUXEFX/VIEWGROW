@@ -21,69 +21,6 @@
             android:clipChildren="false"
             android:paddingTop="36dp">
 
-            <View
-                android:layout_width="190dp"
-                android:layout_height="190dp"
-                android:layout_marginStart="-70dp"
-                android:layout_marginTop="-90dp"
-                android:background="@drawable/bg_deco_circle" />
-            <View
-                android:layout_width="170dp"
-                android:layout_height="170dp"
-                android:layout_gravity="end|bottom"
-                android:layout_marginEnd="-60dp"
-                android:layout_marginBottom="-10dp"
-                android:background="@drawable/bg_deco_circle" />
-            <View
-                android:layout_width="140dp"
-                android:layout_height="140dp"
-                android:layout_gravity="end"
-                android:layout_marginTop="-60dp"
-                android:layout_marginEnd="-40dp"
-                android:background="@drawable/bg_deco_ring" />
-            <View
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_gravity="start|bottom"
-                android:layout_marginStart="-30dp"
-                android:layout_marginBottom="30dp"
-                android:background="@drawable/bg_deco_ring" />
-            <View
-                android:layout_width="6dp"
-                android:layout_height="6dp"
-                android:layout_gravity="start"
-                android:layout_marginStart="44dp"
-                android:layout_marginTop="60dp"
-                android:background="@drawable/bg_deco_dot" />
-            <View
-                android:layout_width="8dp"
-                android:layout_height="8dp"
-                android:layout_gravity="end"
-                android:layout_marginTop="40dp"
-                android:layout_marginEnd="56dp"
-                android:background="@drawable/bg_deco_dot" />
-            <View
-                android:layout_width="6dp"
-                android:layout_height="6dp"
-                android:layout_gravity="start"
-                android:layout_marginStart="26dp"
-                android:layout_marginTop="150dp"
-                android:background="@drawable/bg_deco_dot" />
-            <View
-                android:layout_width="6dp"
-                android:layout_height="6dp"
-                android:layout_gravity="end"
-                android:layout_marginTop="150dp"
-                android:layout_marginEnd="34dp"
-                android:background="@drawable/bg_deco_dot" />
-
-            <View
-                android:layout_width="240dp"
-                android:layout_height="240dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="-58dp"
-                android:background="@drawable/bg_logo_glow" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
