@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.ContextCompat
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -77,16 +78,24 @@ object UpgradeSheet {
         val rows = v.findViewById<LinearLayout>(R.id.up_packs)
         val views = ArrayList<View>()
 
+        // Everything paint() needs is looked up once, now, in the pop-up's own mode. Tapping a pack then only swaps these
+        // ready drawables and never asks Android for colours again, so a tap cannot bring the member's mode back in.
+        val cardOn = ContextCompat.getDrawable(ui, R.drawable.bg_option_on)!!.constantState!!
+        val cardOff = ContextCompat.getDrawable(ui, R.drawable.bg_row_card)!!.constantState!!
+        val dotOn = ContextCompat.getDrawable(ui, R.drawable.bg_green_circle)!!.constantState!!
+        val dotOff = ContextCompat.getDrawable(ui, R.drawable.bg_radio_off)!!.constantState!!
+        val tick = ContextCompat.getDrawable(ui, R.drawable.ic_check_white)!!.constantState!!
+
         fun paint() {
             for ((i, row) in views.withIndex()) {
                 val on = i == picked
-                row.findViewById<View>(R.id.pack_card).setBackgroundResource(if (on) R.drawable.bg_option_on else R.drawable.bg_row_card)
+                row.findViewById<View>(R.id.pack_card).background = (if (on) cardOn else cardOff).newDrawable()
                 val dot = row.findViewById<ImageView>(R.id.pack_dot)
                 if (on) {
-                    dot.setBackgroundResource(R.drawable.bg_green_circle)
-                    dot.setImageResource(R.drawable.ic_check_white)
+                    dot.background = dotOn.newDrawable()
+                    dot.setImageDrawable(tick.newDrawable())
                 } else {
-                    dot.setBackgroundResource(R.drawable.bg_radio_off)
+                    dot.background = dotOff.newDrawable()
                     dot.setImageDrawable(null)
                 }
             }
@@ -119,6 +128,13 @@ object UpgradeSheet {
         Fonts.apply(v)
 
         val dialog = BottomSheetDialog(ui)
+        // Keep the pop-up in the opposite mode for its whole life. A dialog is an AppCompat window, and AppCompat quietly
+        // switches the colours of the context it is given back to the member's own mode (dark). That is invisible while the
+        // pop-up first draws, because everything was already inflated light. It shows up on the first tap on a pack, when
+        // paint() looks up the card and tick drawables again and gets the dark ones; it also leaves the bottom strip dark, and
+        // it can spoil the next opening of the pop-up. Telling the dialog its own mode stops that switch.
+        dialog.delegate.localNightMode =
+            if (AppTheme.isDark(ctx)) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
         dialog.setContentView(v)
         // The pop-up draws its own curved top, so the sheet frame behind it must not show square corners.
         // The sheet frame paints its own rounded background when it is first laid out, which is what showed as grey edges
