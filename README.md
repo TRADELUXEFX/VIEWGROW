@@ -68,8 +68,8 @@ Settings, Profile shows the app version.
 - Update the preview PNG whenever screens change.
 
 18. Done: a notification when 80% of the contact limit is used (`LimitAlert` in `Alerts.kt`). The background sync checks the total and limit the database sends. It shows once per limit, tapping it opens the Increase my contact limit pop-up, and it can show again after a pack raises the limit and 80% is reached again. No database change.
-19. Done: a weekly summary notification, Sunday 6pm on the phone: "142 new contacts this week" (`WeeklySummary` in `Alerts.kt`). The count is the phone's own record (`HistoryLog.countSince`). A week with nothing new sends nothing. Profile has a Weekly summary switch. No database change.
+19. Done: a weekly summary notification, Sunday 6pm on the phone: "142 new contacts this week" (`WeeklySummary` in `Alerts.kt`). The count is the phone's own record (`HistoryLog.countSince`). A week with nothing new sends nothing. Always on (no switch). No database change.
 20. Done: Profile, Purchase history (`PurchaseHistoryFragment.kt`, `PurchaseLog.kt`). Each pack is written down on the phone only after the database confirmed it (`BillingManager.verify`), with the date, price and Google Play order number. Packs bought before this version are not listed. No database change.
-21. Done: Profile, Delete my account. Asks to confirm, calls `web_delete_account`, removes the saved contacts from the phone, forgets everything (number included) and goes to Welcome. **Needs database migration 20261115180000** (`supabase/migrations/`): it records the request in `account_deletion_requests`; the admin deletes the member from there.
+21. Decided: no in-app account deletion. Deleting and re-registering would reset a member's limit. Accounts are only removed by the admin.
 22. Fixed: the build failed on `DateRangeSheet.kt`, a leftover file that used pop-up layouts already deleted. It is now in `DELETE_FILES.txt`.
 

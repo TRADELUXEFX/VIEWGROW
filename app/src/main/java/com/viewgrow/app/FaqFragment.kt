@@ -35,6 +35,8 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
                     "Check that no red permission box is showing on Home. If it is, tap Fix now.",
                     "Check that Pause syncing is off in Profile."),
                 note = "Still nothing? There may be no new contacts for you yet. Try again at the next release."),
+            Faq("What decides the contacts I get?",
+                text = "Your reshares. The more you reshare the admin\u2019s status, the more contacts you get."),
             Faq("How do I get verified?",
                 steps = listOf(
                     "Reshare the admin\u2019s status.",
@@ -53,7 +55,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
                     "Pay with Google Play, in naira. Your limit goes up once Google confirms the payment."),
                 action = "upgrade"),
             Faq("Will a bigger limit give me more contacts?",
-                text = "A bigger limit gives your account room for more contacts. It does not change which contacts you get. The admin decides which contacts are released to you."),
+                text = "A bigger limit only gives your account room for more contacts. Your reshares decide how many you get."),
             Faq("I paid but my limit didn\u2019t go up",
                 steps = listOf(
                     "Wait a few minutes, then close and reopen the app.",

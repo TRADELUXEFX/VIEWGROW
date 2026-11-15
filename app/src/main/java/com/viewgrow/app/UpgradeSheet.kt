@@ -58,12 +58,7 @@ object UpgradeSheet {
         v.findViewById<TextView>(R.id.up_explain_1).text =
             "Your contact limit is the most contacts your account can receive and save to your phone. " +
             "When you reach it, no new contacts are added to your phone."
-        val second = android.text.SpannableStringBuilder(
-            "Paying raises your limit so you can receive more contacts. The admin still decides which contacts you get.")
-        val w = second.indexOf("which")
-        second.setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD), w, w + 5,
-            android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        v.findViewById<TextView>(R.id.up_explain_2).text = second
+        v.findViewById<TextView>(R.id.up_explain_2).text = "Paying raises your limit so you can receive more contacts."
 
         val buy = v.findViewById<MaterialButton>(R.id.up_buy)
         var picked = RECOMMENDED // the recommended (middle) pack starts picked

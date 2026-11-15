@@ -451,22 +451,6 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // The database took the request to delete the account. The phone lets go of everything: the contacts
-    // ViewGrow saved, the timers, the notifications, the records kept on the phone and the number itself.
-    fun onAccountDeleted() {
-        val app = applicationContext
-        Thread { Ban.removeContacts(app) }.start()
-        SyncScheduler.cancel(this)
-        ReshareReminder.cancel(this)
-        Store.clearAll()
-        Status.last = null
-        HistoryLog.clear(this)
-        PurchaseLog.clear(this)
-        Release.clear()
-        showWelcome()
-        Ui.toast(root, "Your account deletion request was sent.")
-    }
-
     // A day opened from History. Back returns to the History list.
     fun showHistoryDay(day: String, count: Int) {
         supportFragmentManager.beginTransaction()

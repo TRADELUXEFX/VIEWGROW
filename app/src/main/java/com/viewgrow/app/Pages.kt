@@ -16,7 +16,7 @@ Your account
 You sign up with your WhatsApp number and a password of 6 to 30 letters or numbers. Keep your password private. You are responsible for what happens on your account. One account per number.
 
 How contacts work
-To get contacts you reshare the admin's status and get verified. Contacts are released on the schedule the admin sets, and you save them to your phone when you open the app or with the automatic timer. The ViewGrow database decides who receives which contacts. Each account has a contact limit. You can raise it with a one-time purchase through Google Play. A bigger limit gives you room for more contacts, but the admin still decides which contacts you get.
+To get contacts you reshare the admin's status and get verified. Contacts are released on the schedule the admin sets, and you save them to your phone when you open the app or with the automatic timer. The more you reshare, the more contacts you get. Each account has a contact limit. You can raise it with a one-time purchase through Google Play. A bigger limit gives you room for more contacts, but your reshares decide how many you get.
 
 Keep contacts private
 The contacts you receive are for you only. Do not share, sell, post or leak them or the files they come in. An account that leaks contacts will be banned.
@@ -55,7 +55,7 @@ Who can see your data
 The admin can see account details to run the service. We do not sell your data. Your data is stored with our database provider, Supabase.
 
 Your choices
-You can log out, delete the contacts ViewGrow saved (Profile, Delete My Contacts), or turn off permissions in your phone's settings. To delete your account, open Profile and tap Delete my account. This sends a request to delete your account and its data, and removes the contacts ViewGrow saved to your phone.
+You can log out, delete the contacts ViewGrow saved (Profile, Delete My Contacts), or turn off permissions in your phone's settings. To delete your account, message the admin on WhatsApp.
 
 Changes
 This policy may change. The latest version is always in the app."""

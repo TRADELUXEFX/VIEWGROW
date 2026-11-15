@@ -105,7 +105,7 @@ object LimitAlert {
 
 // Once a week (Sunday evening on the phone's clock): "142 new contacts this week". The number comes from the
 // phone's own record of what each sync saved (HistoryLog), so it needs no database call. A week with no new
-// contacts sends nothing. It can be turned off in Profile (Store.weeklySummary).
+// contacts sends nothing.
 class WeeklySummaryWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): ListenableWorker.Result {
         WeeklySummary.fire(applicationContext)
@@ -132,12 +132,12 @@ object WeeklySummary {
         return next.timeInMillis - now.timeInMillis
     }
 
-    // Starts the weekly clock, or stops it when the member is logged out, paused, banned or turned it off.
+    // Starts the weekly clock, or stops it when the member is logged out, paused, or banned.
     // A clock that is already running is left alone.
     fun ensure(ctx: Context) {
         val app = ctx.applicationContext
         Store.init(app)
-        if (!Store.loggedIn || Store.syncPaused || Store.banned || !Store.weeklySummary) { cancel(app); return }
+        if (!Store.loggedIn || Store.syncPaused || Store.banned) { cancel(app); return }
         val req = PeriodicWorkRequestBuilder<WeeklySummaryWorker>(DAYS.toLong(), TimeUnit.DAYS)
             .setInitialDelay(delayToSunday(), TimeUnit.MILLISECONDS)
             .build()
@@ -153,7 +153,7 @@ object WeeklySummary {
     fun fire(ctx: Context) {
         val app = ctx.applicationContext
         Store.init(app)
-        if (!Store.loggedIn || Store.syncPaused || Store.banned || !Store.weeklySummary) return
+        if (!Store.loggedIn || Store.syncPaused || Store.banned) return
         val n = HistoryLog.countSince(app, DAYS)
         if (n <= 0 || !Alerts.canPost(app)) return
         Alerts.channel(app, CHANNEL, "Weekly summary")
