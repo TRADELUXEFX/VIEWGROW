@@ -1,271 +1,41 @@
-name: Deploy ViewGrow
-
-# How to use this from your phone:
-#   1. Go to your repo on github.com (mobile browser works fine).
-#   2. Navigate into the "incoming" folder.
-#   3. Tap "Add file" -> "Upload files".
-#   4. Upload ANY zip file, any name (deploy.zip, update1.zip, whatever).
-#   5. Commit directly to main.
-#   (To delete files, add a DELETE_FILES.txt to the zip - see the step below.)
-#   6. This workflow runs: if there's a zip in incoming/, it extracts it
-#      (an extra wrapper folder inside the zip is removed automatically),
-#      commits the result, and deletes the zip. Either way (zip or plain
-#      code push) it then builds the APK from whatever is currently in
-#      the repo and publishes a release.
-#
-# This replaces the old two-workflow setup (build.yml + deploy-from-zip.yml)
-# with a single workflow so there's only ever one build per push, whether
-# that push is a zip upload or a normal commit.
+# Builds the Play Store release file (.aab). Run it by hand: Actions tab, "Build Play bundle", "Run workflow".
+# Separate from deploy.yml, so nothing there changes. Result: the file "app-release.aab" in the run's Artifacts.
+name: Build Play bundle
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
-  contents: write
-
-# If you upload a second zip while an earlier run is still building, both
-# could otherwise finish and publish in either order - an older, slower
-# run finishing AFTER a newer one would overwrite the newer release with
-# stale code. This ensures only the latest push for main ever finishes:
-# any older, still-running deploy for the same branch gets cancelled the
-# moment a newer one starts.
-concurrency:
-  group: deploy-main
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  deploy:
+  bundle:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
         with:
-          fetch-depth: 0
-
-      - name: Extract any zip(s) found in incoming/ into repo root
-        id: extract
-        env:
-          REPO_NAME: ${{ github.event.repository.name }}
-        run: |
-          set -e
-          shopt -s nullglob dotglob
-          zips=(incoming/*.zip)
-          if [ ${#zips[@]} -eq 0 ]; then
-            echo "No zip files found in incoming/. Nothing to unpack."
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "found=true" >> "$GITHUB_OUTPUT"
-
-          repo_lc=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]')
-
-          for z in "${zips[@]}"; do
-            echo "Unpacking $z ..."
-            stage=$(mktemp -d)
-            unzip -q -o "$z" -x "__MACOSX/*" "*/.DS_Store" ".DS_Store" -d "$stage"
-
-            # If the zip is wrapped in one extra top-level folder (for example
-            # VGContact-main/app/... instead of app/...), step inside it so the
-            # files land in the right place. Real repo folders (app, supabase,
-            # etc.) and brand-new folders are never treated as wrappers.
-            for pass in 1 2 3; do
-              entries=("$stage"/*)
-              [ ${#entries[@]} -eq 1 ] && [ -d "${entries[0]}" ] || break
-              inner="${entries[0]}"
-              name=$(basename "$inner")
-              name_lc=$(echo "$name" | tr '[:upper:]' '[:lower:]')
-
-              case "$name_lc" in
-                app|supabase|docs|incoming|.github|gradle) break ;;
-              esac
-
-              wrapper=false
-              if [ "$name_lc" = "$repo_lc" ] || [[ "$name_lc" == "$repo_lc"-* ]] || [[ "$name_lc" == *-main ]] || [[ "$name_lc" == *-master ]]; then
-                wrapper=true
-              fi
-              for marker in app supabase docs incoming .github build.gradle settings.gradle gradle.properties; do
-                [ -e "$inner/$marker" ] && wrapper=true
-              done
-
-              [ "$wrapper" = true ] || break
-              echo "Removing wrapper folder: $name/"
-              stage="$inner"
-            done
-
-            # GitHub blocks the default token from changing workflow files.
-            rm -rf "$stage/.github/workflows"
-
-            echo "Files being deployed:"
-            (cd "$stage" && find . -type f | sed 's|^\./||' | head -200)
-
-            cp -a "$stage"/. .
-            rm -f "$z"
-          done
-
-      # Deleting files: put a text file named DELETE_FILES.txt at the root of the zip.
-      # One path per line, relative to the repo root (for example
-      # app/src/main/res/layout/item_file.xml). Blank lines and lines starting with #
-      # are ignored. Only single files are deleted (no folders, no wildcards).
-      # Paths that are unsafe or protected (.git, .github, incoming, root and app
-      # build.gradle, settings.gradle, gradle.properties, anything with "..") are
-      # skipped with a warning. The list file is removed afterwards so it never runs twice.
-      - name: Delete files listed in DELETE_FILES.txt
-        if: steps.extract.outputs.found == 'true'
-        run: |
-          set -e
-          list="DELETE_FILES.txt"
-          if [ ! -f "$list" ]; then
-            echo "No $list in the zip - nothing to delete."
-            exit 0
-          fi
-          deleted=0
-          skipped=0
-          while IFS= read -r line || [ -n "$line" ]; do
-            p=$(printf '%s' "$line" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-            case "$p" in
-              ''|'#'*) continue ;;
-            esac
-            p="${p#./}"
-            case "$p" in
-              /*|*..*|.git|.git/*|.github|.github/*|incoming|incoming/*|build.gradle|app/build.gradle|settings.gradle|gradle.properties|DELETE_FILES.txt)
-                echo "::warning::Skipped (protected or unsafe path): $p"
-                skipped=$((skipped + 1))
-                continue
-                ;;
-            esac
-            if [ -f "$p" ]; then
-              rm -f -- "$p"
-              echo "Deleted: $p"
-              deleted=$((deleted + 1))
-            elif [ -e "$p" ]; then
-              echo "::warning::Skipped (not a regular file): $p"
-              skipped=$((skipped + 1))
-            else
-              echo "Not found (already gone): $p"
-            fi
-          done < "$list"
-          rm -f "$list"
-          echo "Deleted $deleted file(s), skipped $skipped."
-
-      - name: Commit unpacked files
-        if: steps.extract.outputs.found == 'true'
-        id: commit_unpacked
-        run: |
-          git config user.name "deploy-bot"
-          git config user.email "deploy-bot@users.noreply.github.com"
-
-          git add -A
-          if git diff --cached --quiet; then
-            echo "Nothing changed after extracting the zip - continuing anyway."
-          else
-            git commit -m "Deploy: unpack zip(s) from incoming/"
-          fi
-
-          if git push; then
-            echo "Push succeeded."
-          else
-            echo "::error::Push of unpacked files was rejected (see log above)."
-            echo "push_failed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      # If the push above failed (e.g. GitHub rejected a change under
-      # .github/workflows/ because this App lacks the `workflows`
-      # permission), the zip deletion from the extract step never made it
-      # to main - the zip is still sitting in incoming/ on the remote.
-      # This step removes just the zip(s) on their own, leaving every
-      # other unpacked file exactly as it was in the failed commit (still
-      # only local to this failed run, untouched on main) so the next
-      # upload isn't blocked by a leftover zip.
-      - name: Ensure the zip is removed even if the full push failed
-        if: steps.extract.outputs.found == 'true' && steps.commit_unpacked.outputs.push_failed == 'true'
-        run: |
-          set -e
-          git fetch origin main
-          git checkout origin/main -- .
-          shopt -s nullglob
-          zips=(incoming/*.zip)
-          if [ ${#zips[@]} -eq 0 ]; then
-            echo "No zip left on main - nothing to clean up."
-            exit 0
-          fi
-          git rm -f "${zips[@]}"
-          git commit -m "Deploy: remove zip(s) from incoming/ after failed deploy"
-          git push origin HEAD:main
-
-      # If the push of your new code was rejected, everything after this
-      # point would otherwise silently build and release the OLD code
-      # still on main, with no visible error. Stop here instead so a
-      # failed deploy shows up as a failed run, not a fake success.
-      - name: Stop here if the new code never made it to main
-        if: steps.commit_unpacked.outputs.push_failed == 'true'
-        run: |
-          echo "::error::Your uploaded zip could not be pushed to main, so the build was stopped instead of releasing the old, unchanged code. Check the 'Commit unpacked files' step log above."
-          exit 1
-
-      - name: Pull the latest main before building
-        run: |
-          git fetch origin main
-          git reset --hard origin/main
-          echo "Building from commit: $(git rev-parse HEAD)"
-
-      - name: Check the app is in the repo yet
-        id: chk
-        run: |
-          if [ -f app/build.gradle ] && [ -f settings.gradle ]; then
-            echo "has_app=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_app=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::No app/build.gradle or settings.gradle yet, so there is nothing to build. Unpacking worked."
-          fi
-
-      - name: Set up JDK
-        if: steps.chk.outputs.has_app == 'true'
-        uses: actions/setup-java@v5
-        with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
 
-      - name: Setup Gradle
-        if: steps.chk.outputs.has_app == 'true'
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.2'
-
-      - name: Decode release keystore
-        if: steps.chk.outputs.has_app == 'true'
+      - name: Restore release keystore
         run: |
-          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.jks"
-            echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-          else
-            echo "::warning::KEYSTORE_BASE64 secret not set - APK will be signed with the debug key."
-          fi
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.jks"
 
-      - name: Build APK
-        if: steps.chk.outputs.has_app == 'true'
-        run: gradle assembleRelease
+      - name: Build release bundle
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          KEYSTORE_FILE: ${{ runner.temp }}/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          chmod +x gradlew 2>/dev/null || true
+          ./gradlew :app:bundleRelease --no-daemon
 
-      - name: Upload APK artifact
-        if: steps.chk.outputs.has_app == 'true'
+      - name: Upload bundle
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: app/build/outputs/apk/release/app-release.apk
-
-      - name: Upload APK to Releases
-        if: steps.chk.outputs.has_app == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: app/build/outputs/apk/release/app-release.apk
-          tag_name: v1.0.${{ github.run_number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
