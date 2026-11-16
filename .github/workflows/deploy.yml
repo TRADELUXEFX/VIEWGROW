@@ -1,16 +1,38 @@
-# Put this at .github/workflows/deploy.yml (replace the old file).
 name: Build
 on:
   push:
     branches: [main]
   workflow_dispatch:
 jobs:
-  build:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.f.outputs.app }}
+      admin: ${{ steps.f.outputs.admin }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: f
+        with:
+          filters: |
+            shared: &shared
+              - 'build.gradle'
+              - 'settings.gradle'
+              - 'gradle.properties'
+              - '.github/workflows/deploy.yml'
+            app:
+              - *shared
+              - 'app/**'
+            admin:
+              - *shared
+              - 'admin/**'
+
+  member-app:
+    needs: check
+    if: github.event_name == 'workflow_dispatch' || needs.check.outputs.app == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      # The build needs Java 17 and Gradle 8.11.1. Other versions break it (this was the error you saw).
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -18,10 +40,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.11.1
-
       - name: Decode upload key
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"
-
       - name: Build AAB and APK
         env:
           KEYSTORE_FILE: ${{ runner.temp }}/upload.jks
@@ -29,10 +49,38 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: gradle :app:assembleRelease :app:bundleRelease --no-daemon
-
       - uses: actions/upload-artifact@v4
         with:
-          name: viewgrow-release
-          path: |
-            app/build/outputs/bundle/release/*.aab
-            app/build/outputs/apk/release/*.apk
+          name: viewgrow-aab
+          path: app/build/outputs/bundle/release/*.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: viewgrow-apk
+          path: app/build/outputs/apk/release/*.apk
+
+  admin-app:
+    needs: check
+    if: github.event_name == 'workflow_dispatch' || needs.check.outputs.admin == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.11.1
+      - name: Decode upload key
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"
+      - name: Build admin APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/upload.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle :admin:assembleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: viewgrow-admin
+          path: admin/build/outputs/apk/release/*.apk
