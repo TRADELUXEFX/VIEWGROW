@@ -41,11 +41,26 @@ object Ui {
 
     fun toast(ctx: Context, msg: String) = Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
 
-    // The screen sits between the status bar and the navigation bar on every Android version.
-    fun fitInsets(root: View) {
+    // Draw behind the status bar on every Android version (Android 15+ does this anyway), so the green header
+    // can run right up to the top of the screen, like VG Reshare. Status bar icons stay white.
+    fun edgeToEdge(act: Activity) {
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(act.window, false)
+        @Suppress("DEPRECATION")
+        act.window.statusBarColor = android.graphics.Color.TRANSPARENT
+        androidx.core.view.WindowCompat.getInsetsController(act.window, act.window.decorView).isAppearanceLightStatusBars = false
+    }
+
+    // Keeps the screen clear of the navigation bar and the keyboard. With `top` (the green header), the header
+    // reaches under the status bar and only its content is pushed down; without it, the whole screen is.
+    fun fitInsets(root: View, top: View? = null, onTop: ((Int) -> Unit)? = null) {
+        val baseTop = top?.paddingTop ?: 0
         ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
             val s = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
-            v.setPadding(0, s.top, 0, s.bottom)
+            when {
+                top != null -> { v.setPadding(0, 0, 0, s.bottom); top.setPadding(top.paddingLeft, baseTop + s.top, top.paddingRight, top.paddingBottom) }
+                onTop != null -> { v.setPadding(0, 0, 0, s.bottom); onTop(s.top) }
+                else -> v.setPadding(0, s.top, 0, s.bottom)
+            }
             insets
         }
     }
@@ -155,7 +170,7 @@ object Ui {
         body.setPadding(dp(act, 20), dp(act, 18), dp(act, 20), dp(act, 24))
         scroll.addView(body)
         root.addView(scroll)
-        fitInsets(root)
+        fitInsets(root, header)
         return root to body
     }
 

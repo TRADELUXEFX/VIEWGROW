@@ -20,7 +20,7 @@ class SyncActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Store.init(this)
-        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+        Ui.edgeToEdge(this)
         render()
     }
 

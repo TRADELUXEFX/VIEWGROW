@@ -53,6 +53,8 @@ class MainActivity : AppCompatActivity() {
     private val coverTimeout = Runnable { hideCover() }
     // The host of the page the WebView shows. The bridge only answers pages from viewgrow.site.
     @Volatile private var pageHost = ""
+    // Status bar height in dp, for the page's header.
+    @Volatile private var topDp = 24
     private var setupStep = 1
 
     private val contactsAsk = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -64,7 +66,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Store.init(this)
-        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+        Ui.edgeToEdge(this)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val w = web
@@ -173,7 +175,7 @@ class MainActivity : AppCompatActivity() {
         cover?.removeCallbacks(coverTimeout); cover = null
         MemberSync.schedule(this)
         val root = FrameLayout(this)
-        root.setBackgroundColor(Ui.color(this, R.color.green))
+        root.setBackgroundColor(Ui.color(this, R.color.surface))
         val w = WebView(this)
         w.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         w.setBackgroundColor(Ui.color(this, R.color.surface))
@@ -186,6 +188,9 @@ class MainActivity : AppCompatActivity() {
         w.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
                 pageHost = Uri.parse(url ?: "").host ?: ""
+            }
+            override fun onPageFinished(view: WebView, url: String?) {
+                view.evaluateJavascript("window.vgAppTop && window.vgAppTop($topDp)", null)
             }
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: android.webkit.WebResourceError) {
                 // The admin page itself could not load (no internet): show Try again on the cover.
@@ -219,7 +224,11 @@ class MainActivity : AppCompatActivity() {
         root.addView(w)
         val c = buildCover()
         root.addView(c)
-        Ui.fitInsets(root)
+        // The page's green header runs under the status bar; the page is told how tall the status bar is.
+        Ui.fitInsets(root, onTop = { px ->
+            topDp = Math.round(px / resources.displayMetrics.density)
+            web?.evaluateJavascript("window.vgAppTop && window.vgAppTop($topDp)", null)
+        })
         setContentView(root)
         web = w
         cover = c
@@ -319,6 +328,10 @@ class MainActivity : AppCompatActivity() {
         // The page could not reach the server while signing in.
         @JavascriptInterface
         fun offline() { if (ours()) runOnUiThread { coverOffline() } }
+
+        // How tall the status bar is (dp), so the page's green header can sit under it.
+        @JavascriptInterface
+        fun topInset(): Int = if (ours()) topDp else 0
 
         @JavascriptInterface
         fun syncText(): String = if (ours()) MemberSync.lineHtml(this@MainActivity) else ""

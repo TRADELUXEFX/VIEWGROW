@@ -65,7 +65,7 @@ class ShotsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Store.init(this)
-        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+        Ui.edgeToEdge(this)
         if (!Store.signedIn) { finish(); return }
         if (savedInstanceState == null) {
             showMessage("Choose the screenshots of your status viewers list.", busy = false)
