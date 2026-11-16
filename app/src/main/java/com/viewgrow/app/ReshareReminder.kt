@@ -24,6 +24,8 @@ object ReshareReminder {
         val app = ctx.applicationContext
         Store.init(app)
         if (!Store.loggedIn || Store.banned) { cancel(app); return }
+        // The "Today's status is up" alert follows the same rule: on while logged in and not banned (StatusPush.kt).
+        StatusPush.start(app)
         if (!NotificationManagerCompat.from(app).areNotificationsEnabled()) return
         if (Build.VERSION.SDK_INT >= 26) {
             // Low importance: no sound, no pop-up, it just sits in the bar.
@@ -63,6 +65,7 @@ object ReshareReminder {
     }
 
     fun cancel(ctx: Context) {
+        StatusPush.stop(ctx)
         ctx.applicationContext.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
     }
 }

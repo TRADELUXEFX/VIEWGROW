@@ -28,14 +28,16 @@ object Api {
     }
 
     // The contact file can take a while to build on the server, so it gets longer.
-    private fun readTimeout(fn: String): Int = if (fn == "web_prepare_download") 60000 else 15000
+    private fun readTimeout(fn: String): Int = if (fn == "web_prepare_download") 60000 else if (fn == "web_verify_purchase") 30000 else 15000
 
     // Blocking. Only for background threads (the sync worker); screens use call().
     fun request(fn: String, args: JSONObject): ApiResult {
         var conn: HttpURLConnection? = null
         var result = ApiResult(null, "ERROR")
         try {
-            val url = URL(Config.SUPABASE_URL.trimEnd('/') + "/rest/v1/rpc/" + fn)
+            // Purchases are checked with Google by a Supabase Edge Function; everything else is a database function.
+            val path = if (fn == "web_verify_purchase") "/functions/v1/verify-purchase" else "/rest/v1/rpc/$fn"
+            val url = URL(Config.SUPABASE_URL.trimEnd('/') + path)
             val c = url.openConnection() as HttpURLConnection
             conn = c
             c.requestMethod = "POST"
@@ -84,7 +86,6 @@ object Api {
             code == "NOT_FOUND" -> "This number is not registered yet. Tap Sign up below."
             code == "BANNED" -> "This account has been banned."
             code == "ACCOUNT_DELETED" -> "This account was deleted. To use this number again, message the admin to reactivate it."
-            code == "DELETION_PENDING" -> "This account has a deletion request and cannot be used. If this was a mistake, message the admin."
             code == "LOCKED" -> "This password is locked after too many wrong tries. Message the admin from your registered number to get a new one."
             else -> "Could not check. Please try again."
         }

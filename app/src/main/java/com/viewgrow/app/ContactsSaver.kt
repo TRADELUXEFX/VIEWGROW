@@ -9,10 +9,10 @@ import android.provider.ContactsContract
 import androidx.core.content.ContextCompat
 
 // Saves the contacts from the database's file to the phone. Nothing goes to any Google account:
-// they stay on this phone, tagged VGC (company name), and keep the database's own note
+// they stay on this phone, tagged VG (company name), and keep the database's own note
 // "ViewGrow-<your id>", which is how Delete My Contacts finds them later.
 object ContactsSaver {
-    const val TAG = "VGC"
+    const val TAG = "VG"
 
     class Card(val name: String, val number: String, val note: String)
 

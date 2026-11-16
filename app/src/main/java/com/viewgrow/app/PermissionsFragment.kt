@@ -46,6 +46,8 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
 
     // Whatever the answer (Allow or Deny), the app moves on.
     private val contactsAsk = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        // Allowed: save the admin's number now, so the member can see the admin's status straight away.
+        context?.let { AdminContactSaver.save(it) }
         advance(PermStep.CONTACTS)
     }
     private val notificationsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -95,7 +97,7 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 2"
                 icon = R.drawable.ic_contacts
                 title = "Save your contacts"
-                text = "ViewGrow saves the contacts you receive to your phone. You will see exactly what it does with your contacts before Android asks."
+                text = "ViewGrow saves the contacts you receive, and the admin\u2019s number, to your phone. You will see exactly what it does with your contacts before Android asks."
                 button = "Allow Contacts"
             }
             PermStep.NOTIFICATIONS -> {

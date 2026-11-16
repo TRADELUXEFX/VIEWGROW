@@ -88,7 +88,6 @@ object HomeViews {
         return tv
     }
 
-    // "Auto-sync looks stopped" with a button to the phone's auto-start screen.
     // Shown while contacts are being saved. Not a button: syncing starts by itself when Home opens.
     fun savingRow(ctx: Context, spin: Spinner): View {
         val row = LinearLayout(ctx)

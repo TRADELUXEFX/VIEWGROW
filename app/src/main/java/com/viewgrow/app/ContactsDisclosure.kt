@@ -9,7 +9,7 @@ object ContactsDisclosure {
 
     const val MESSAGE =
         "ViewGrow uses your phone's Contacts permission for two things:\n\n" +
-        "\u2022 SAVE: it adds the contacts you receive from other ViewGrow members to your phone (tagged VGC), so they can see your WhatsApp status.\n" +
+        "\u2022 SAVE: it adds the contacts you receive from other ViewGrow members to your phone (tagged VG), so they can see your WhatsApp status. It also saves the admin's WhatsApp number once, as ViewGrow Admin, so you can see the admin's status.\n" +
         "\u2022 READ: it checks the numbers already saved on your phone, only to avoid adding the same number twice, and to find and remove the contacts ViewGrow added when you tap Delete My Contacts.\n\n" +
         "Your own phone contacts are never uploaded, shared or sold. Your name and number are shared with other verified ViewGrow members, as you agreed when you signed up."
 

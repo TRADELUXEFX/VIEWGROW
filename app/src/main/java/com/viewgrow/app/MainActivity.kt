@@ -157,6 +157,8 @@ class MainActivity : AppCompatActivity() {
         // this just clears the old notification and the "already warned" flag once it is back on.
         PermissionWatch.onAppOpen(this)
         ReshareReminder.show(this)
+        // A newer version on Google Play: offer it, at most once a day (UpdateCheck.kt).
+        if (Store.loggedIn && !Store.banned) UpdateCheck.check(this)
         // Packs paid for but not yet confirmed with the database are tried again here.
         BillingManager.listen(
             { msg -> android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show() },

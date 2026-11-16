@@ -52,7 +52,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
                 steps = listOf(
                     "Tap Increase my contact limit on Home.",
                     "Pick +1,000, +3,000 or +5,000.",
-                    "Pay with Google Play, in naira. Your limit goes up once Google confirms the payment."),
+                    "Pay with Google Play, in your local currency. Your limit goes up once Google confirms the payment."),
                 action = "upgrade"),
             Faq("Will a bigger limit give me more contacts?",
                 text = "A bigger limit only gives your account room for more contacts. Your reshares decide how many you get."),
@@ -68,7 +68,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
             Faq("How do I stop saving contacts?",
                 text = "Go to Profile and turn on Pause syncing. Turn it off again to start saving contacts."),
             Faq("Are my contacts shared with anyone?",
-                text = "The contacts stay on your phone, tagged VGC. ViewGrow does not upload your phone\u2019s contacts."),
+                text = "The contacts stay on your phone, tagged VG. ViewGrow does not upload your phone\u2019s contacts."),
             Faq("How do I delete my account?",
                 text = "Go to Profile, then Delete my account, and confirm. Your account is deleted and you cannot get it back. Your number stays on a deleted list, so it cannot log in or sign up again; to use it again, message the admin. If you cannot log in, message the admin on WhatsApp or email teamlimitlessaffliate@gmail.com from your registered number."),
             Faq("How do I delete the contacts ViewGrow saved?",

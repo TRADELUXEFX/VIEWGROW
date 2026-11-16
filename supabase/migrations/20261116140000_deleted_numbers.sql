@@ -1,6 +1,6 @@
--- ViewGrow: delete account + deleted-numbers list. ONE script, safe to run twice. Run it once in the Supabase SQL Editor.
+-- ViewGrow: deleted-numbers list. Safe to run twice. Run it once in the Supabase SQL Editor, then run 20261116180000_delete_removes_data.sql.
 --
--- A logged-in member taps Delete my account: the number goes on the deleted list at once. From then on that number
+-- When a member deletes their account (20261116180000), the number goes on the deleted list. From then on that number
 -- cannot log in (ACCOUNT_DELETED) and cannot sign up (ACCOUNT_DELETED). No approval step.
 -- To allow a number back, the admin removes it from the list:
 --   delete from public.deleted_numbers where public.vg_phone_key(phone) = public.vg_phone_key('THE_NUMBER');
@@ -64,29 +64,4 @@ $$;
 revoke all on function public.web_register(text, text, boolean, text) from public;
 grant execute on function public.web_register(text, text, boolean, text) to anon, authenticated;
 
--- The member must be logged in (right number and password). The number is put on the deleted list at once.
-create or replace function public.web_delete_account(p_phone text, p_pin text)
-returns jsonb
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  st jsonb;
-begin
-  st := (public.web_status_core(p_phone, p_pin))::jsonb;
-  if st is null or coalesce(st->>'ok', 'false') <> 'true' then
-    return jsonb_build_object('ok', false, 'code', coalesce(st->>'code', 'ERROR'));
-  end if;
-  if not exists (select 1 from public.deleted_numbers where public.vg_phone_key(phone) = public.vg_phone_key(p_phone)) then
-    insert into public.deleted_numbers (phone) values (p_phone);
-  end if;
-
-  -- TODO (needs your table names, see chat): delete the member's own rows here, for example
-  --   delete from public.<members_table> where public.vg_phone_key(phone) = public.vg_phone_key(p_phone);
-
-  return jsonb_build_object('ok', true);
-end;
-$$;
-revoke all on function public.web_delete_account(text, text) from public;
-grant execute on function public.web_delete_account(text, text) to anon, authenticated;
+-- web_delete_account is NOT in this file. It lives in 20261116180000_delete_removes_data.sql (run that one after this).

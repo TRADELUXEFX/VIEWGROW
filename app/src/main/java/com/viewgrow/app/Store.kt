@@ -45,8 +45,8 @@ object Store {
         get() = p.getBoolean("sync_paused", false)
         set(v) {
             val e = p.edit().putBoolean("sync_paused", v)
-            // Coming back from a pause starts the "auto-sync looks stopped" clock again.
-            if (!v && firstSyncAt != 0L) e.putLong("last_bg_sync_at", System.currentTimeMillis())
+            // Coming back from a pause starts the 3-day reminder clock again.
+            if (!v && p.getLong("last_sync_at", 0L) != 0L) e.putLong("last_bg_sync_at", System.currentTimeMillis())
             e.apply()
         }
 
@@ -68,15 +68,7 @@ object Store {
         get() = p.getInt("last_sync_count", 0)
         set(v) { p.edit().putInt("last_sync_count", v).apply() }
 
-    // Health of the automatic sync, for the "Auto-sync looks stopped" banner on Home.
-    // firstSyncAt: the first time contacts were saved on this phone (the starting point until an
-    // automatic sync has worked). lastBgSyncAt: the last time an AUTOMATIC sync finished cleanly.
-    // A sync started from Home never touches lastBgSyncAt, because it works even when the phone blocks
-    // background running.
-    var firstSyncAt: Long
-        get() = p.getLong("first_sync_at", 0L)
-        set(v) { p.edit().putLong("first_sync_at", v).apply() }
-
+    // The last time an AUTOMATIC sync finished cleanly. The 3-day reminder (Reminder.kt) uses it with lastSyncAt.
     var lastBgSyncAt: Long
         get() = p.getLong("last_bg_sync_at", 0L)
         set(v) { p.edit().putLong("last_bg_sync_at", v).apply() }
@@ -118,6 +110,39 @@ object Store {
         get() = p.getInt("limit_alerted", 0)
         set(v) { p.edit().putInt("limit_alerted", v).apply() }
 
+    // Contacts saved during the night (9pm to 7am on the phone's clock). They are not announced at night; the
+    // 8am "added last night" message (Nightly.kt) shows the total, then sets this back to 0.
+    var morningCount: Int
+        get() = p.getInt("morning_count", 0)
+        set(v) { p.edit().putInt("morning_count", v).apply() }
+
+    // The release night the "people joined last night" message was last shown for, so it shows once per night.
+    var missedNoticeFor: String
+        get() = p.getString("missed_notice_for", "") ?: ""
+        set(v) { p.edit().putString("missed_notice_for", v).apply() }
+
+    // The admin's WhatsApp number (digits) the app last saved to the phone as "ViewGrow Admin". Saved once per
+    // number, so if the member deletes that contact it is not put back (unless the admin's number changes).
+    var adminSavedFor: String
+        get() = p.getString("admin_saved_for", "") ?: ""
+        set(v) { p.edit().putString("admin_saved_for", v).apply() }
+
+    // The last time "Update ViewGrow" was shown (UpdateCheck.kt), so it asks at most once a day.
+    var updateAskedAt: Long
+        get() = p.getLong("update_asked_at", 0L)
+        set(v) { p.edit().putLong("update_asked_at", v).apply() }
+
+    // The member's id in the database, from web_app_seen. Used for reminders meant for this member only
+    // (Firebase topic "u<id>"). 0 = not known yet.
+    var userId: Long
+        get() = p.getLong("user_id", 0L)
+        set(v) { p.edit().putLong("user_id", v).apply() }
+
+    // The last time the app told the database "this member uses the app" (AppSeen in StatusPush.kt).
+    var appSeenAt: Long
+        get() = p.getLong("app_seen_at", 0L)
+        set(v) { p.edit().putLong("app_seen_at", v).apply() }
+
     val loggedIn: Boolean get() = phone.isNotEmpty() && password.isNotEmpty()
 
     fun logIn(phone: String, password: String, name: String) {
@@ -133,7 +158,8 @@ object Store {
     // Forgets the password and name. The number stays so the Log in box is filled next time.
     fun logOut() {
         p.edit().remove("password").remove("password_enc").remove("name").remove("last_sync_at").remove("last_sync_count")
-            .remove("first_sync_at").remove("last_bg_sync_at").remove("perm_alerted")
-            .remove("last_total").remove("last_limit").remove("limit_alerted").apply()
+            .remove("first_sync_at") /* left by older versions */.remove("last_bg_sync_at").remove("perm_alerted")
+            .remove("last_total").remove("last_limit").remove("limit_alerted")
+            .remove("morning_count").remove("missed_notice_for").remove("app_seen_at").apply()
     }
 }

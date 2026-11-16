@@ -105,7 +105,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         "INVALID_PHONE" -> "Enter a valid Nigerian number, e.g. 0801 234 5678."
         "CONSENT_REQUIRED" -> "Please accept the terms to continue."
         "CHECK_DETAILS" -> "We could not create this account. If you already have one, tap Log in below, or message the admin."
-        "ACCOUNT_DELETED", "DELETION_PENDING" -> "This number belongs to a deleted account. To use it again, message the admin to reactivate it."
+        "ACCOUNT_DELETED" -> "This number belongs to a deleted account. To use it again, message the admin to reactivate it."
         "SIGNUP_CLOSED" -> "Sign-up is closed right now. Check back later."
         "PIN_INVALID" -> "Your password needs at least 6 characters, letters and numbers only."
         "SIGNUP_LIMIT" -> "Too many sign-ups from this connection today. Please try again tomorrow."

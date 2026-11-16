@@ -47,6 +47,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         Remote.load {
             // The admin's contact is now known: refresh the "Reshare" notification so its tap opens WhatsApp.
             context?.let { ReshareReminder.show(it) }
+            // ...and save the admin's number to the phone, once (AdminContactSaver.kt).
+            context?.let { AdminContactSaver.save(it) }
             // Draw the screen again only if the admin button actually changed, so nothing flickers.
             if (isAdded && view.parent != null && Remote.adminExpected() != buttonBefore) render()
         }
@@ -146,7 +148,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val code = j.optString("code")
             // Banned and Blocked get their own full screens.
             if (AccountGate.handle(activity as? MainActivity, j)) return
-            if (code == "WRONG_PIN" || code == "NOT_FOUND" || code == "INVALID_PHONE" || code == "DELETION_PENDING" || code == "ACCOUNT_DELETED") {
+            if (code == "WRONG_PIN" || code == "NOT_FOUND" || code == "INVALID_PHONE" || code == "ACCOUNT_DELETED") {
                 Ui.toast(v, Api.loginMessage(j))
                 (activity as? MainActivity)?.onLoggedOut()
             } else if (status == null) {

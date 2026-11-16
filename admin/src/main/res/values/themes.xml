@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Light only. The admin website inside the app has its own dark mode switch. -->
+    <style name="Theme.VGAdmin" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/green</item>
+        <item name="colorPrimaryVariant">@color/green_dark</item>
+        <item name="colorSecondary">@color/green</item>
+        <item name="android:statusBarColor">@color/green</item>
+        <item name="android:windowBackground">@color/surface</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+</resources>

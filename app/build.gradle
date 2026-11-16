@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
 }
 
 def releaseKsPath = System.getenv('KEYSTORE_FILE')
@@ -83,4 +84,9 @@ dependencies {
     implementation 'androidx.browser:browser:1.8.0'
     // Google Play Billing: the contact packs are bought through Google Play. Play requires 8.0.0 or newer.
     implementation 'com.android.billingclient:billing:8.0.0'
+    // Firebase Cloud Messaging: the "Today's status is up" alert (StatusPush.kt). No analytics.
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    implementation 'com.google.firebase:firebase-messaging'
+    // "Update ViewGrow" pop-up: asks Google Play whether a newer version exists (UpdateCheck.kt).
+    implementation 'com.google.android.play:app-update:2.1.0'
 }

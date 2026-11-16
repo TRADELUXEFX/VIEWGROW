@@ -98,7 +98,6 @@ object Sync {
         val count = pj.optInt("count", maxOf(0, cards.size - 1))
         Store.lastSyncCount = count
         Store.lastSyncAt = System.currentTimeMillis()
-        if (Store.firstSyncAt == 0L) Store.firstSyncAt = Store.lastSyncAt
         Reminder.restart(ctx)
         Notifier.contactsSaved(ctx, count)
         return SyncResult(true, count, "")
@@ -106,10 +105,17 @@ object Sync {
 }
 
 // The "48 contacts saved" message, made on the phone itself.
+// At night (9pm to 7am on the phone's clock) nothing is shown: the count is kept and the 8am message
+// "48 new status viewers added last night" shows it instead (Nightly.kt), so nobody is woken up.
 object Notifier {
     private const val CHANNEL = "contacts"
 
     fun contactsSaved(ctx: Context, count: Int) {
+        if (count <= 0) return
+        if (Nightly.isNight()) {
+            Store.morningCount = Store.morningCount + count
+            return
+        }
         if (Build.VERSION.SDK_INT >= 26) {
             val ch = NotificationChannel(CHANNEL, "Contacts saved", NotificationManager.IMPORTANCE_DEFAULT)
             ctx.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
@@ -142,7 +148,7 @@ object Notifier {
 // One automatic run, run by the timer below (WorkManager).
 // Returns true when it finished cleanly (nothing to save counts), false when the database could not
 // be reached (try again soon), and null when it was skipped or did not finish.
-// A clean run is remembered, which is what clears the "Auto-sync looks stopped" banner on Home.
+// A clean run is remembered (Store.lastBgSyncAt), so the 3-day reminder knows the last time contacts were checked.
 object BackgroundSync {
     fun run(ctx: Context): Boolean? {
         Store.init(ctx)
@@ -152,6 +158,8 @@ object BackgroundSync {
         // Contacts or Notifications off: warn (once), then carry on if Contacts is still allowed.
         PermissionWatch.check(ctx)
         if (!ContactsSaver.hasPermission(ctx)) return null
+        // The admin's number, saved once so the member can see the admin's status (AdminContactSaver.kt).
+        AdminContactSaver.saveNow(ctx)
         val st = Api.request("web_status", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password))
         val j = st.json ?: return false
         if (!j.optBoolean("ok")) {
@@ -197,6 +205,7 @@ object SyncScheduler {
         if (!Store.loggedIn || Store.syncPaused || Store.banned) { cancel(app); return }
         Reminder.ensure(app)
         WeeklySummary.ensure(app)
+        Nightly.ensure(app)
         val hours = if (Store.syncHours in intArrayOf(1, 6, 12, 24)) Store.syncHours else 24
         val req = PeriodicWorkRequestBuilder<SyncWorker>(hours.toLong(), TimeUnit.HOURS)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
@@ -208,6 +217,7 @@ object SyncScheduler {
         WorkManager.getInstance(ctx.applicationContext).cancelUniqueWork(NAME)
         Reminder.cancel(ctx.applicationContext)
         WeeklySummary.cancel(ctx.applicationContext)
+        Nightly.cancel(ctx.applicationContext)
         PermissionWatch.cancel(ctx.applicationContext)
     }
 }
