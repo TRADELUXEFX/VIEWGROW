@@ -32,5 +32,9 @@
         <activity android:name=".ShotsActivity" android:exported="false" />
         <activity android:name=".SyncActivity" android:exported="false" />
 
+        <!-- Ask Google Play services to download the text reader when the app is installed. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr" />
     </application>
 </manifest>

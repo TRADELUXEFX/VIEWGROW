@@ -87,7 +87,8 @@ object Ui {
         val b = text(ctx, label, 15f, if (fill) R.color.white else R.color.green_dark, "semibold", center = true, top = top)
         b.minHeight = dp(ctx, if (fill) 52 else 46)
         b.setPadding(dp(ctx, 16), dp(ctx, 8), dp(ctx, 16), dp(ctx, 8))
-        b.background = if (fill) shape(ctx, color(ctx, R.color.green), 999)
+        // Filled buttons use the member app's green gradient pill.
+        b.background = if (fill) GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(0xFF30BE6C.toInt(), 0xFF0E7E3E.toInt())).apply { cornerRadius = dp(ctx, 999).toFloat() }
         else shape(ctx, color(ctx, R.color.surface), 999, color(ctx, R.color.green_dark), 2)
         b.isClickable = true
         b.isFocusable = true

@@ -125,7 +125,7 @@ class ShotsActivity : AppCompatActivity() {
                 val seen = HashSet<String>()
                 matched.forEach { r -> if (r.number.isEmpty() || seen.add(r.number)) rows.add(r) }
                 when {
-                    failed == uris.size -> showMessage("Couldn't read the screenshots.", busy = false, sub = "Try again with clear screenshots.")
+                    failed == uris.size -> showMessage("Couldn't read the screenshots.", busy = false, sub = "If this is your first time, your phone may still be downloading the text reader from Google Play. Wait a minute with internet on, then try again.")
                     rows.isEmpty() -> showMessage("No reshares found.", busy = false, sub = "Screenshot your status → viewers list, where rows say “Reshared”.")
                     else -> showResults()
                 }

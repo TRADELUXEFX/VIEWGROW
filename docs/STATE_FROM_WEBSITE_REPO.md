@@ -38,6 +38,7 @@ Last updated: 16 Nov 2026. This file is private (the supabase/ folder is blocked
 Run `check_live_matches_claims.sql` (read only, 8 queries; run each one in its own tab). All 8 passed on 16 Nov 2026. It tests that every function the app and site call exists, the 10pm clock and nightly job, the release schedule, the deleted-number block, row-level security and leftovers.
 
 ## Open items
+000. 16 Nov 2026 (night): admin page redesigned (Today numbers first + "Log +", Lists, Users with count/filter on the right, member pop-up with facts and chat button, Days reshared / Downloads design B, Settings menu, one chat icon everywhere). Applied 20261116250000 (Signed up / Got file lists) and 20261116260000 (saved list time + app). Admin app: loading cover, smaller APK (Play services text reader), text size fixed, gradient buttons. Workflow: one deploy.yml that unpacks incoming/ and builds only the changed app (member AAB + APK, admin APK) into one release. Still to do: a "Change admin password" screen (web_admin_set_key exists; check its arguments first), then change the admin key.
 0000. 16 Nov 2026: 20261116240000 applied, notify-status v2 deployed, job viewgrow-wake created (id 4). CRON_SECRET added. Test live with the new app: Notify members, Write your own message, Remind this group, and the 10:05pm wake-up.
 1. Confirm the Android build is green on GitHub.
 2. Deploy the website zip to Netlify.
