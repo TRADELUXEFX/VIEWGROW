@@ -26,7 +26,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import org.json.JSONObject
@@ -205,19 +204,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
         w.webChromeClient = object : WebChromeClient() {
+            // The page's own questions (confirm / alert) use the app's pop-up, not the plain system one.
+            private fun split(message: String?): Pair<String, String> {
+                val m = (message ?: "").trim()
+                val i = m.indexOf("\n\n")
+                return if (i > 0) m.substring(0, i) to m.substring(i + 2).trim() else m to ""
+            }
             override fun onJsConfirm(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
-                AlertDialog.Builder(this@MainActivity).setMessage(message)
-                    .setPositiveButton("OK") { _, _ -> result.confirm() }
-                    .setNegativeButton("Cancel") { _, _ -> result.cancel() }
-                    .setOnCancelListener { result.cancel() }
-                    .show()
+                val (t, m) = split(message)
+                Ui.confirm(this@MainActivity, t, m, onCancel = { result.cancel() }, onOk = { result.confirm() })
                 return true
             }
             override fun onJsAlert(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
-                AlertDialog.Builder(this@MainActivity).setMessage(message)
-                    .setPositiveButton("OK") { _, _ -> result.confirm() }
-                    .setOnCancelListener { result.confirm() }
-                    .show()
+                val (t, m) = split(message)
+                Ui.notice(this@MainActivity, t, m, onClose = { result.confirm() })
                 return true
             }
         }

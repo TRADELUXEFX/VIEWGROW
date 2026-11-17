@@ -32,6 +32,11 @@ object Store {
         get() = p.getBoolean("sync_on", true)
         set(v) { p.edit().putBoolean("sync_on", v).apply() }
 
+    // How often the background check runs, in minutes: 15, 60, 720 or 1440 (Sync screen). Opening the app always checks too.
+    var syncEveryMin: Int
+        get() = p.getInt("sync_every_min", 15)
+        set(v) { p.edit().putInt("sync_every_min", v).apply() }
+
     // A quiet notification when members are saved.
     var notifyOn: Boolean
         get() = p.getBoolean("notify_on", true)
@@ -63,7 +68,7 @@ object Store {
         get() = p.getInt("already_in_phone", 0)
         set(v) { p.edit().putInt("already_in_phone", v).apply() }
 
-    // The last 20 members saved to the phone: [{name, at}] newest first.
+    // The last 50 members saved to the phone: [{name, at}] newest first.
     fun recent(): List<Pair<String, Long>> = try {
         val a = JSONArray(p.getString("recent", "[]"))
         List(a.length()) { i -> a.getJSONObject(i).let { it.optString("name") to it.optLong("at") } }
@@ -74,7 +79,7 @@ object Store {
         val now = System.currentTimeMillis()
         val all = names.map { it to now } + recent()
         val a = JSONArray()
-        all.take(20).forEach { a.put(JSONObject().put("name", it.first).put("at", it.second)) }
+        all.take(50).forEach { a.put(JSONObject().put("name", it.first).put("at", it.second)) }
         p.edit().putString("recent", a.toString()).apply()
     }
 

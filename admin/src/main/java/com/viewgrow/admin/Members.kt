@@ -170,7 +170,7 @@ object Vcf {
     }
 }
 
-// Saves new members to the admin's phone. Runs every 15 minutes in the background when the phone is online,
+// Saves new members to the admin's phone. Runs in the background (every 15 minutes by default; the admin can choose 1 hour, 12 hours or 24 hours) when the phone is online,
 // when the app opens, and from "Check now". The database decides who is new (web_admin_new_members, the same list
 // as the website's New members button). Once a day it also fetches the full list, to keep MemberList up to date.
 object MemberSync {
@@ -183,7 +183,7 @@ object MemberSync {
     fun schedule(ctx: Context) {
         Store.init(ctx)
         if (!Store.signedIn || !Store.syncOn) { cancel(ctx); return }
-        val req = PeriodicWorkRequestBuilder<MemberSyncWorker>(15, TimeUnit.MINUTES)
+        val req = PeriodicWorkRequestBuilder<MemberSyncWorker>(maxOf(15, Store.syncEveryMin).toLong(), TimeUnit.MINUTES)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(WORK, ExistingPeriodicWorkPolicy.KEEP, req)

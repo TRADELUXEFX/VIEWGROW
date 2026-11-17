@@ -10,7 +10,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import com.google.android.gms.tasks.Tasks
@@ -364,33 +363,28 @@ class ShotsActivity : AppCompatActivity() {
 
     // "Is it one of these?": the admin picks the member. The choice is remembered for this name.
     private fun choose(r: Row) {
-        val labels = r.candidates.map { it.first + "  ·  " + show(it.second) } + "None of these"
-        AlertDialog.Builder(this)
-            .setTitle("Who is “${r.name}”?")
-            .setItems(labels.toTypedArray()) { _, which ->
-                if (which < r.candidates.size) {
-                    val (m, k) = r.candidates[which]
-                    // Already in the list as someone else: just remove this row's doubt.
-                    if (rows.any { it !== r && it.number == k }) rows.remove(r) else {
-                        r.kind = Kind.MATCHED; r.number = k; r.member = m; r.how = "You chose this"; r.ticked = true
-                    }
-                    Store.rememberPick(r.name, k)
-                } else {
-                    r.kind = Kind.NOT_FOUND; r.how = "You said none of these"; r.ticked = false
+        val options = r.candidates.map { Ui.Option(it.first, show(it.second)) } + Ui.Option("None of these", muted = true)
+        Ui.choose(this, "Who is “${r.name}”?", "Pick the member this name belongs to.", options) { which ->
+            if (which < r.candidates.size) {
+                val (m, k) = r.candidates[which]
+                // Already in the list as someone else: just remove this row's doubt.
+                if (rows.any { it !== r && it.number == k }) rows.remove(r) else {
+                    r.kind = Kind.MATCHED; r.number = k; r.member = m; r.how = "You chose this"; r.ticked = true
                 }
-                showResults()
+                Store.rememberPick(r.name, k)
+            } else {
+                r.kind = Kind.NOT_FOUND; r.how = "You said none of these"; r.ticked = false
             }
-            .show()
+            showResults()
+        }
     }
 
     private fun pickDay() {
         val days = (0..6).map { addDays(today, -it) }
-        AlertDialog.Builder(this)
-            .setTitle("Log for which day?")
-            .setItems(days.mapIndexed { i, s -> dayLabel(s) + if (i == 0) "  (today)" else "" }.toTypedArray()) { _, which ->
-                logDay = days[which]; showResults()
-            }
-            .show()
+        val options = days.mapIndexed { i, s -> Ui.Option(dayLabel(s), if (i == 0) "Today" else "", selected = s == logDay) }
+        Ui.choose(this, "Log for which day?", options = options) { which ->
+            logDay = days[which]; showResults()
+        }
     }
 
     // ---------- 4. Log ----------
