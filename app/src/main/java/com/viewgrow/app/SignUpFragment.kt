@@ -43,6 +43,8 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
             "Already a member? Log in",
             listOf("Log in" to { main?.showLogIn() })
         )
+        // Shown instead of the form while sign-up is closed.
+        view.findViewById<View>(R.id.btn_closed_login).setOnClickListener { main?.showLogIn() }
 
         // Is sign-up open? (the admin can close it on the website)
         Remote.load {
@@ -56,8 +58,10 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
     }
 
     private fun applyOpen(view: View) {
+        // Closed: the whole form is hidden and a short closed screen (lock, message, Log in) shows instead.
         val open = Remote.signupOpen
-        view.findViewById<View>(R.id.closed).visibility = if (open) View.GONE else View.VISIBLE
+        view.findViewById<View>(R.id.form).visibility = if (open) View.VISIBLE else View.GONE
+        view.findViewById<View>(R.id.closed_box).visibility = if (open) View.GONE else View.VISIBLE
         view.findViewById<Button>(R.id.btn_signup).isEnabled = open && !busy
     }
 
@@ -95,6 +99,8 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
             }
             when (val code = j.optString("code")) {
                 "NAME_TAKEN" -> showSuggestions(view, j)
+                // The admin closed sign-up while the form was open: swap to the closed screen at once.
+                "SIGNUP_CLOSED" -> { Store.signupOpen = false; applyOpen(view) }
                 else -> Ui.showError(error, messageFor(code))
             }
         }

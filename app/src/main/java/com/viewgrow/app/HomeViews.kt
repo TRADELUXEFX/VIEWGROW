@@ -5,6 +5,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -61,18 +62,6 @@ object HomeViews {
         return t
     }
 
-    // Red bar on Home when the member has used 90% or more of their contact limit.
-    fun nearLimitCard(ctx: Context, total: Int, limit: Int, onUpgrade: () -> Unit): View {
-        val box = LinearLayout(ctx)
-        box.orientation = LinearLayout.VERTICAL
-        box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        box.addView(notice(ctx, RED, "Almost full.", "You\u2019ve used $total of your $limit contacts. Increase your limit so new contacts keep coming."))
-        val b = button(ctx, box, "Increase my contact limit", null)
-        b.setOnClickListener { onUpgrade() }
-        box.addView(b)
-        return box
-    }
-
     fun notice(ctx: Context, kind: Int, lead: String, rest: String): TextView {
         val tv = TextView(ctx)
         val bg = when (kind) { WARN -> R.drawable.bg_notice_warn; RED -> R.drawable.bg_notice_red; else -> R.drawable.bg_notice_green }
@@ -126,27 +115,71 @@ object HomeViews {
         return c
     }
 
-    // "Contact limit reached" with the line under it.
-    fun limitCard(ctx: Context): View {
-        val c = card(ctx)
-        c.gravity = Gravity.CENTER_HORIZONTAL
-        c.setPadding(Ui.dp(ctx, 18), Ui.dp(ctx, 20), Ui.dp(ctx, 18), Ui.dp(ctx, 20))
-        val title = TextView(ctx)
-        title.tag = "bold"
-        title.text = "Your limit is full"
-        title.textSize = 20f
-        title.gravity = Gravity.CENTER
-        title.setTextColor(color(ctx, R.color.dark))
-        val sub = TextView(ctx)
-        sub.text = "You\u2019ve received all the contacts your limit allows. Increase it to keep getting new contacts."
-        sub.textSize = 12.5f
-        sub.gravity = Gravity.CENTER
-        sub.setLineSpacing(Ui.dp(ctx, 4).toFloat(), 1f)
-        sub.setTextColor(color(ctx, R.color.text2))
-        sub.layoutParams = below(ctx, 10)
-        c.addView(title)
-        c.addView(sub)
-        return c
+    // A message banner: coloured gradient, title, text, a small picture and a close button (same as the website).
+    // tone: GREEN good news, RED a problem. `key` says which message this is (state + day); once the member
+    // closes it, it stays closed on this phone until the key changes (next day or a different state).
+    fun banner(ctx: Context, tone: Int, pic: BannerPic.Kind, title: String, text: String, key: String, animate: Boolean = true): View? {
+        val prefs = ctx.getSharedPreferences("vg_banners", Context.MODE_PRIVATE)
+        if (prefs.getString("closed", "") == key) return null
+        val frame = FrameLayout(ctx)
+        frame.setBackgroundResource(if (tone == RED) R.drawable.bg_banner_bad else R.drawable.bg_banner_ok)
+        frame.clipToOutline = true
+        frame.layoutParams = below(ctx, 12)
+
+        val row = LinearLayout(ctx)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER_VERTICAL
+        row.setPadding(Ui.dp(ctx, 18), Ui.dp(ctx, 16), Ui.dp(ctx, 6), Ui.dp(ctx, 16))
+
+        val col = LinearLayout(ctx)
+        col.orientation = LinearLayout.VERTICAL
+        col.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        val t = TextView(ctx)
+        t.tag = "bold"
+        t.text = title
+        t.textSize = 16f
+        t.setTextColor(color(ctx, R.color.white))
+        t.setPadding(0, 0, Ui.dp(ctx, 22), 0)
+        val body = TextView(ctx)
+        body.text = text
+        body.textSize = 12.5f
+        body.alpha = 0.94f
+        body.setLineSpacing(Ui.dp(ctx, 2).toFloat(), 1f)
+        body.setTextColor(color(ctx, R.color.white))
+        body.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            .also { it.topMargin = Ui.dp(ctx, 3) }
+        col.addView(t)
+        col.addView(body)
+
+        // The picture draws itself, so its own parts can move (see BannerPic).
+        val img = BannerPic(ctx, pic)
+        img.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 96), Ui.dp(ctx, 88)).also { it.marginEnd = -Ui.dp(ctx, 2) }
+
+        row.addView(col)
+        row.addView(img)
+        frame.addView(row, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+        val x = TextView(ctx)
+        x.text = "\u00D7"
+        x.textSize = 18f
+        x.gravity = Gravity.CENTER
+        x.setTextColor(color(ctx, R.color.white))
+        x.setBackgroundResource(R.drawable.bg_banner_close)
+        x.contentDescription = "Close"
+        x.isClickable = true
+        x.isFocusable = true
+        val xp = FrameLayout.LayoutParams(Ui.dp(ctx, 28), Ui.dp(ctx, 28), Gravity.TOP or Gravity.END)
+        xp.topMargin = Ui.dp(ctx, 8)
+        xp.marginEnd = Ui.dp(ctx, 8)
+        x.setOnClickListener {
+            prefs.edit().putString("closed", key).apply()
+            frame.animate().alpha(0f).translationY(-Ui.dp(ctx, 6).toFloat()).setDuration(200).withEndAction {
+                (frame.parent as? ViewGroup)?.removeView(frame)
+            }.start()
+        }
+        frame.addView(x, xp)
+        if (animate) { Anim.bannerIn(frame); img.play() }
+        return frame
     }
 
     // "3 quick steps to new contacts" for members who are not verified yet.

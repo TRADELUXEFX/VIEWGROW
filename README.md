@@ -25,7 +25,7 @@ It signs up and logs in with the same WhatsApp number and password as the websit
 
 ## What the app does
 - **Welcome, Sign up, Log in.** Light and dark mode. Sign-in screens shrink while the keyboard is open. Text size follows the phone's Font size up to 2.0x.
-- **Home.** Contacts used and limit (gauge), countdown to the next release, and every state (not verified, limit reached, almost at limit at 90%). Saves new contacts to the phone tagged VG.
+- **Home.** Contacts used and limit (gauge, red from 90%), countdown to the next release, and every state (not verified, limit reached). Messages are coloured banners with a picture and a close button (`HomeViews.banner`); closing one keeps it closed until the message changes or tomorrow. Small animations (`Anim.kt`, `ShineTextView.kt`) are skipped when the phone has animations turned off. Saves new contacts to the phone tagged VG.
 - **Sync.** Background timer (WorkManager) every 1h, 6h, 12h or 24h, can be paused. Opening the app always syncs. Android may delay background syncs on some phones.
 - **History.** Days and People views. The phone keeps its own record (`HistoryLog`) because the database only sends counts per day. Each person has a WhatsApp chat button.
 - **Increase my contact limit.** Three packs (+1,000, +3,000, +5,000) bought through Google Play Billing (`BillingManager.kt`). Prices come from Google Play. A purchase is checked by the Edge Function `verify-purchase` before the limit goes up, and only then consumed. The pop-up always shows the opposite of the app's light or dark mode.

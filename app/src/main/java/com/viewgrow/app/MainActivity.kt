@@ -44,6 +44,9 @@ class MainActivity : AppCompatActivity() {
     private val tabIds = intArrayOf(R.id.tab_home, R.id.tab_history, R.id.tab_profile)
     private val iconIds = intArrayOf(R.id.icon_home, R.id.icon_history, R.id.icon_profile)
     private val labelIds = intArrayOf(R.id.label_home, R.id.label_history, R.id.label_profile)
+    // Each tab has a plain icon and a selected one (same lines, with a soft filled part).
+    private val iconOff = intArrayOf(R.drawable.ic_home, R.drawable.ic_history, R.drawable.ic_profile)
+    private val iconOn = intArrayOf(R.drawable.ic_home_on, R.drawable.ic_history_on, R.drawable.ic_profile_on)
 
     // 0 Home, 1 History, 2 Profile. -1 while logged out.
     private var current = -1
@@ -555,7 +558,9 @@ class MainActivity : AppCompatActivity() {
     private fun highlight() {
         tabIds.forEachIndexed { i, _ ->
             val color = if (i == current) Color.WHITE else Color.argb(170, 255, 255, 255)
-            ImageViewCompat.setImageTintList(findViewById<ImageView>(iconIds[i]), ColorStateList.valueOf(color))
+            val icon = findViewById<ImageView>(iconIds[i])
+            icon.setImageResource(if (i == current) iconOn[i] else iconOff[i])
+            ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(color))
             findViewById<TextView>(labelIds[i]).setTextColor(color)
         }
     }

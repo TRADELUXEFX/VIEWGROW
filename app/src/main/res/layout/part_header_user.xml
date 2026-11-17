@@ -49,7 +49,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/white_soft"
                 android:textSize="12.5sp" />
-            <TextView
+            <com.viewgrow.app.ShineTextView
                 android:id="@+id/badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

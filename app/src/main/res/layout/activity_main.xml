@@ -88,7 +88,7 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:contentDescription="@null"
-                android:src="@drawable/ic_contacts" />
+                android:src="@drawable/ic_profile" />
             <TextView
                 android:id="@+id/label_profile"
                 android:layout_width="wrap_content"

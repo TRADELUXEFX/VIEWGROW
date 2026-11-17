@@ -1,11 +1,13 @@
 package com.viewgrow.app
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 
 // The half-circle on Home: a grey track with a coloured arc on top showing how much of the contact limit is used.
 class GaugeView @JvmOverloads constructor(
@@ -30,10 +32,30 @@ class GaugeView @JvmOverloads constructor(
 
     private var fraction = 0f
 
-    fun set(fraction: Float, color: Int) {
-        this.fraction = fraction.coerceIn(0f, 1f)
+    private var filling: ValueAnimator? = null
+
+    fun set(fraction: Float, color: Int, animate: Boolean = false) {
+        filling?.cancel()
         arc.color = color
+        val to = fraction.coerceIn(0f, 1f)
+        if (animate && to > 0f && Anim.on(context)) {
+            // First time Home opens: the arc fills up from empty.
+            filling = ValueAnimator.ofFloat(0f, to).apply {
+                duration = 900
+                interpolator = DecelerateInterpolator(1.6f)
+                addUpdateListener { this@GaugeView.fraction = it.animatedValue as Float; invalidate() }
+                start()
+            }
+            this.fraction = 0f
+        } else {
+            this.fraction = to
+        }
         invalidate()
+    }
+
+    override fun onDetachedFromWindow() {
+        filling?.cancel()
+        super.onDetachedFromWindow()
     }
 
     override fun onDraw(canvas: Canvas) {

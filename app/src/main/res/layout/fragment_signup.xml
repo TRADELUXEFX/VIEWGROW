@@ -40,17 +40,63 @@
             android:paddingEnd="20dp"
             android:paddingBottom="24dp">
 
-            <TextView
-                android:id="@+id/closed"
+            <!-- Sign-up closed: the form is hidden and this shows instead (same as the website). -->
+            <LinearLayout
+                android:id="@+id/closed_box"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_notice_warn"
-                android:padding="12dp"
-                android:text="Sign-up is closed right now. Check back later."
-                android:textColor="@color/amber_text"
-                android:textSize="13sp"
-                android:visibility="gone" />
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingStart="8dp"
+                android:paddingTop="26dp"
+                android:paddingEnd="8dp"
+                android:visibility="gone">
+                <FrameLayout
+                    android:layout_width="76dp"
+                    android:layout_height="76dp"
+                    android:background="@drawable/bg_closed_circle">
+                    <ImageView
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_lock"
+                        android:tint="@color/amber_text" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center"
+                    android:tag="bold"
+                    android:text="Sign-up is closed right now"
+                    android:textColor="@color/dark"
+                    android:textSize="20sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="22dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="2dp"
+                    android:text="New members can’t join at the moment. Please check back soon."
+                    android:textColor="@color/text2"
+                    android:textSize="14sp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_closed_login"
+                    style="@style/AppButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="I have an account: Log in" />
+            </LinearLayout>
+
+            <!-- The sign-up form: hidden while sign-up is closed. -->
+            <LinearLayout
+                android:id="@+id/form"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
             <TextView style="@style/FieldLabel" android:text="Your name" />
             <EditText
@@ -150,6 +196,7 @@
                 android:padding="6dp"
                 android:textColor="@color/text2"
                 android:textSize="13.5sp" />
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

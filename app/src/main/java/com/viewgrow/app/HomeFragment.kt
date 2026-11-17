@@ -31,6 +31,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private var syncError: String? = null
     private var savingSpinner: Spinner? = null
     private var permShown: String? = null
+    // Home's opening animations (number counts up, gauge fills, badge shines) play once per time Home opens.
+    private var intro = false
+    private var shownBanner: String? = null
+    private var countAnim: android.animation.ValueAnimator? = null
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -99,6 +103,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onDestroyView()
         ring?.stop()
         ring = null
+        countAnim?.cancel()
         savingSpinner?.stop()
         savingSpinner = null
         ui.removeCallbacksAndMessages(null)
@@ -108,7 +113,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun tick() {
         val v = view ?: return
-        v.findViewById<TextView>(R.id.timer).text = Release.format(Release.secondsLeft())
+        val timer = v.findViewById<TextView>(R.id.timer)
+        val now = Release.format(Release.secondsLeft())
+        if (timer.text.toString() != now) {
+            timer.text = now
+            if (timer.isShown) Anim.tick(timer)
+        }
         // The release time has passed: ask the database again.
         if (Release.expired() && System.currentTimeMillis() - lastLoad > 15000) reload()
     }
@@ -215,22 +225,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             body.addView(HomeViews.permissionCard(ctx, off) { (activity as? MainActivity)?.fixPermission() })
         }
 
-        // 90% of the contact limit or more: the red bar. The limit reached card below takes over at 100%.
-        // Based on the total and limit the database sends, so an upgrade makes the bar go away on its own.
+        // 90% of the contact limit or more: the gauge turns red (setStats). No red box any more; the gauge says it.
+        // Based on the total and limit the database sends, so an upgrade makes the gauge go back by itself.
         val limitN = if (j.isNull("limit")) 0 else j.optInt("limit")
         Store.lastTotal = total
         Store.lastLimit = limitN
-        val nearLimit = verified && state != "LIMIT_REACHED" && limitN > 0 && total * 10 >= limitN * 9
-        if (nearLimit) {
-            // The red bar has its own big button, so the outline "Increase my contact limit" button is not shown as well.
-            body.addView(HomeViews.nearLimitCard(ctx, total, limitN) {
-                UpgradeSheet.show(ctx, total, limitN)
-            })
-        }
 
         // "Increase my contact limit": always there for verified members, even well under the limit.
-        // Not shown when the red bar or the limit reached card already has the big button.
-        if (verified && !nearLimit && state != "LIMIT_REACHED") {
+        // At the limit it comes under the red banner instead (below).
+        if (verified && state != "LIMIT_REACHED") {
             body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
         }
 
@@ -266,27 +269,26 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
             "LIMIT_REACHED" -> {
                 // The same Google Play pop-up as everywhere else, so nobody is sent to WhatsApp to pay.
-                body.addView(HomeViews.limitCard(ctx))
-                val b = HomeViews.button(ctx, body, "Increase my contact limit", null)
-                b.setOnClickListener { UpgradeSheet.show(ctx, total, limitN) }
-                body.addView(b)
+                banner(body, HomeViews.RED, BannerPic.Kind.BAD, "Your limit is full",
+                    "You\u2019ve received all $limit contacts your limit allows. Increase it to keep getting new contacts.", "full")
+                body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
             }
             "PREPARING" -> {
                 // Verified, waiting for the release. The countdown already says when. Before the first contacts, say what happens next.
                 if ((j.optJSONArray("recent")?.length() ?: 0) == 0) {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No contacts yet.", "Your first contacts arrive after the next release."))
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.WAIT, "Reshare verified", "Your first contacts arrive after the next release.", "wait")
                 }
             }
             "ALREADY_TODAY", "NOTHING_NEW", "NO_POOL" -> {
                 if (recentSync) {
                     val n = Store.lastSyncCount
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Contacts saved.", (if (n == 1) "1 new contact is" else "$n new contacts are") + " now in your phone."))
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.SAVED, if (n == 1) "Saved 1 contact" else "Saved $n contacts", "They are now in your phone.", "saved-${Store.lastSyncAt}")
                 } else if (state == "ALREADY_TODAY") {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Done for today.", "Today\u2019s contacts are already in your phone. Reshare the admin\u2019s status tomorrow to get more."))
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.DONE, "Done for today", "You\u2019ve imported today\u2019s contacts. Reshare the admin\u2019s status tomorrow to get more.", "done")
                 } else if (state == "NOTHING_NEW") {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No new contacts yet.", "Every contact you\u2019ve earned is already in your phone. Reshare the admin\u2019s status again to get more."))
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.NONE, "No new contacts yet", "You\u2019ve imported every contact you\u2019ve earned. Reshare the admin\u2019s status again to get more.", "none")
                 } else {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No new contacts this time.", "No other members were verified before this release. Reshare again to get contacts next time."))
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.NONE, "No new contacts this time", "No other members were verified before this release, so there\u2019s nothing new. Reshare again to get contacts next time.", "nopool")
                 }
             }
             else -> {
@@ -304,27 +306,53 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         Fonts.apply(body)
     }
 
-    private fun setBadge(v: View, verified: Boolean) = Ui.setBadge(v, verified)
+    // Adds a banner to Home. The key is the message plus today's date, so a closed banner comes back tomorrow.
+    private fun banner(body: LinearLayout, tone: Int, pic: BannerPic.Kind, title: String, text: String, what: String) {
+        val key = if (what.startsWith("saved-")) what else what + "-" + java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+        // It slides in once; Home drawing itself again (new data) does not replay it.
+        val animate = shownBanner != key
+        shownBanner = key
+        HomeViews.banner(body.context, tone, pic, title, text, key, animate)?.let { body.addView(it) }
+    }
+
+    private fun setBadge(v: View, verified: Boolean) {
+        Ui.setBadge(v, verified)
+        // The Verified pill shines once, the first time Home opens.
+        if (verified && !intro) v.findViewById<ShineTextView>(R.id.badge).shine()
+    }
 
     // 312/500 with the /500 smaller, and the gauge on the right. The gauge turns red at 90% and over.
+    // The first time Home opens the number counts up and the gauge fills; after that it just updates.
     private fun setStats(v: View, total: Int, limit: String, atLimit: Boolean) {
         val ctx = v.context
-        val label = "$total/$limit"
-        val s = SpannableString(label)
-        val cut = total.toString().length
-        s.setSpan(RelativeSizeSpan(0.55f), cut, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.muted)), cut, label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        v.findViewById<TextView>(R.id.stat_received).text = s
+        fun label(n: Int): SpannableString {
+            val text = "$n/$limit"
+            val s = SpannableString(text)
+            val cut = n.toString().length
+            s.setSpan(RelativeSizeSpan(0.55f), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            s.setSpan(ForegroundColorSpan(ContextCompat.getColor(ctx, R.color.muted)), cut, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            return s
+        }
         val lim = limit.toIntOrNull() ?: 0
         val pct = if (lim > 0) minOf(100, total * 100 / lim) else 0
         // Green, then amber from 75%, then red from 90%, so the limit never comes as a surprise.
         val level = if (atLimit || pct >= 90) 2 else if (pct >= 75) 1 else 0
         val color = ContextCompat.getColor(ctx, intArrayOf(R.color.green, R.color.amber, R.color.red_dark)[level])
-        v.findViewById<GaugeView>(R.id.gauge).set(pct / 100f, color)
-        v.findViewById<TextView>(R.id.gauge_pct).apply {
-            this.text = "$pct%"
-            setTextColor(ContextCompat.getColor(ctx, intArrayOf(R.color.green_text, R.color.amber, R.color.red_dark)[level]))
+        val pctView = v.findViewById<TextView>(R.id.gauge_pct)
+        pctView.setTextColor(ContextCompat.getColor(ctx, intArrayOf(R.color.green_text, R.color.amber, R.color.red_dark)[level]))
+        val first = !intro
+        intro = true
+        val stat = v.findViewById<TextView>(R.id.stat_received)
+        v.findViewById<GaugeView>(R.id.gauge).set(pct / 100f, color, first)
+        if (first) {
+            countAnim?.cancel()
+            countAnim = Anim.countUp(ctx, total, 900) { n ->
+                stat.text = label(n)
+                pctView.text = (if (total > 0) minOf(100, n * pct / total) else pct).toString() + "%"
+            }
         }
+        stat.text = if (first && countAnim != null) label(0) else label(total)
+        pctView.text = if (first && countAnim != null) "0%" else "$pct%"
     }
 
     // ---- WhatsApp ----

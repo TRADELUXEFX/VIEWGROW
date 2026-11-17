@@ -177,6 +177,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         return out
     }
 
+    private var cardsPlayed = false
+
     private fun render() {
         val v = view ?: return
         val list = v.findViewById<LinearLayout>(R.id.hist_list)
@@ -219,6 +221,11 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             row.setOnClickListener { (activity as? MainActivity)?.showHistoryDay(iso, count) }
             Fonts.apply(row)
             list.addView(row)
+        }
+        // The cards come in one after another, the first time the list is drawn.
+        if (!cardsPlayed && list.childCount > 0) {
+            cardsPlayed = true
+            Anim.cardsIn(list)
         }
         val allLoaded = days.size >= totalDays
         when {
