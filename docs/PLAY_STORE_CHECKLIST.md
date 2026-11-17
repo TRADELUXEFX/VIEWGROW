@@ -6,7 +6,7 @@
 3. **Server-side purchase check.** Done: Edge Function `verify-purchase` (supabase/functions/verify-purchase/index.ts), with `web_purchase_precheck` and `web_apply_purchase` live in the database. Tested with a fake token. Still to do: one real purchase with a Play test account.
 4. GitHub secrets for the upload key: `KEYSTORE_BASE64` (the key file encoded as base64), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Build with `gradle :app:bundleRelease` and upload `app-release.aab`. Turn on Play App Signing.
 5. Create the three in-app products `contacts_1000`, `contacts_3000`, `contacts_5000` (consumable, active, with prices).
-6. Install the release build on Android 14, 15 and 16 phones. Test: sign up, contacts permission (Agree and No thanks), sync, notifications off, delete contacts, **delete account**, a test purchase, large font size.
+6. Install the release build on Android 14, 15 and 16 phones. Test: sign up, contacts permission (Step 1: Agree and allow, and Not now), sync, notifications off, delete contacts, **delete account**, a test purchase, large font size.
 
 ## Declarations
 - **Permissions declaration (Contacts):** core function = saving contacts received from other members so they can view the member's WhatsApp status. WRITE_CONTACTS adds them; READ_CONTACTS only dedupes numbers on the phone and finds the app's own VG contacts for removal. Nothing is uploaded. The Contact Picker cannot write contacts or scan for duplicates. This is the item most likely to get a policy question; answer it truthfully and keep the in-app disclosure identical to the listing.

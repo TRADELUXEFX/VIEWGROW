@@ -89,4 +89,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging'
     // "Update ViewGrow" pop-up: asks Google Play whether a newer version exists (UpdateCheck.kt).
     implementation 'com.google.android.play:app-update:2.1.0'
+    // "Rate this app": Google Play's own rating pop-up, asked once after a good save (Rating.kt).
+    implementation 'com.google.android.play:review:2.0.2'
 }

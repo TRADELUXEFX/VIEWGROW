@@ -276,6 +276,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (recentSync) {
                     val n = Store.lastSyncCount
                     banner(body, HomeViews.GREEN, BannerPic.Kind.SAVED, if (n == 1) "Saved 1 contact" else "Saved $n contacts", "They are now in your phone.", "saved-${Store.lastSyncAt}")
+                    // Once per phone, after a good save: Google Play's own "Rate this app" pop-up, a moment after the banner shows.
+                    body.postDelayed({ if (isAdded) activity?.let { Rating.maybeAsk(it, n) } }, 1500)
                 } else if (state == "ALREADY_TODAY") {
                     banner(body, HomeViews.GREEN, BannerPic.Kind.DONE, "Done for today", "Today\u2019s contacts are saved. Reshare the admin\u2019s status tomorrow to get more.", "done")
                 } else if (state == "NOTHING_NEW") {

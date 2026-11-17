@@ -64,7 +64,9 @@ object Remote {
     // When the settings have not been loaded in this run, the last saved contact is used.
     fun adminLink(text: String): String? {
         val t = target(contacts) ?: Store.adminTarget.ifEmpty { null } ?: return null
-        return if (t.startsWith("https://", ignoreCase = true)) t else "https://wa.me/" + t + "?text=" + Uri.encode(text)
+        if (t.startsWith("https://", ignoreCase = true)) return t
+        // No text: just opens the chat with the admin, with nothing typed in the box.
+        return if (text.isEmpty()) "https://wa.me/$t" else "https://wa.me/" + t + "?text=" + Uri.encode(text)
     }
 
     // Opens the chat with the admin (WhatsApp or https link). False when no contact is set or it cannot open.

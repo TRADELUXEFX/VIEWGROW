@@ -16,7 +16,14 @@ object SecretBox {
     private const val PROVIDER = "AndroidKeyStore"
     private const val TRANSFORM = "AES/GCM/NoPadding"
 
-    private fun key(): SecretKey {
+    // The key is looked up once and kept in memory: every Keystore call is slow on some phones (Samsung), and the
+    // app checks the login many times when a screen opens. Repeating it on the main thread froze the screen white.
+    @Volatile private var cached: SecretKey? = null
+
+    @Synchronized
+    private fun key(): SecretKey = cached ?: loadKey().also { cached = it }
+
+    private fun loadKey(): SecretKey {
         val ks = KeyStore.getInstance(PROVIDER).apply { load(null) }
         (ks.getKey(ALIAS, null) as? SecretKey)?.let { return it }
         val gen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, PROVIDER)

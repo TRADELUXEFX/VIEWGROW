@@ -2,6 +2,28 @@
 
 Each change is one migration file. Newest first.
 
+## App v59 (17 Nov 2026): website links in admin messages open; Step 1 made short, no database change
+- Admin "Message everyone" with a link: tapping the notification now opens that link (https only). Before, the app ignored the link and opened itself. StatusPush.kt (open "link" with data "url"; linkTap). The admin page and notify-status already sent the link; no change there.
+- Step 1 (Contacts): the SAVE / READ rows from v57 are replaced by two short lines in the card, the same size as Step 2 ("ViewGrow saves the contacts you receive, and the admin's number, to your phone. It only reads your contacts to skip duplicates and remove its own." and "Your contacts never leave your phone."). "Agree and allow" and "Not now" stay. res/layout/part_perm_use.xml deleted. ContactsDisclosure.kt (STEP, STEP_PRIVACY), PermissionsFragment.kt, fragment_permissions.xml.
+- Step 2 (Notifications) now lists everything the app notifies about: "Get notified when new contacts are saved to your phone, when the admin's status is up, when the admin sends an announcement, and when your contact limit is almost full. You also get a weekly summary and reminders, like when to reshare or when a setting needs fixing."
+- Privacy Policy (Pages.kt, made by the website's tools/legal.py, same words as viewgrow.site/android/privacy/ in website v82): the phone keeps a login code, not the password; login sessions are listed; step 1 shows the contacts disclosure; banned accounts have their VG contacts removed; the limit-full alert is listed.
+- SecretBox.kt: the key helper is named loadKey (clearer next to KeyStore.load).
+- Not built or tested on a phone yet.
+
+## App v58 (17 Nov 2026): admin messages open the admin's chat with nothing typed, no database change
+- A message sent from the admin page with the WhatsApp button on now just opens the chat with the admin. Before, it also typed "Hi, I am ready to reshare your status…" into the box. StatusPush.kt (adminTap takes reshare), Remote.kt (adminLink with empty text gives a plain wa.me link).
+- The "Today's status is up" alert still opens the chat with the reshare message typed in, as before.
+- Not built or tested on a phone yet.
+
+## App v57 (17 Nov 2026): blank white screen after the setup steps fixed; contacts explained on Step 1, no database change
+- Blank screen: the saved login is kept encrypted with the phone's Keystore, and the app decrypted it on the main thread every time it checked "logged in?" (dozens of times when Home opens). On some phones (Samsung) each Keystore call is slow, so the screen froze white for about 10 seconds between the steps and Home. Now the Keystore key is looked up once and the decrypted login is kept in memory until it changes. Files: SecretBox.kt, Store.kt. The login is still stored encrypted; nothing else changes.
+- Step 1 (Contacts): what ViewGrow saves and reads with Contacts is written on the screen (SAVE and READ rows and a privacy line), so there is no pop-up before Android's own box. The button reads "Agree and allow"; "Not now" skips to Step 2. The card is more compact on this step. Files: PermissionsFragment.kt, res/layout/fragment_permissions.xml, new res/layout/part_perm_use.xml. ContactsDisclosure.kt keeps the words in one place (SAVE, READ, PRIVACY); its pop-up is still used when Contacts is turned on later from Home, with the same words.
+- Not built or tested on a phone yet.
+
+## App v56 (17 Nov 2026): "Rate this app" pop-up, no database change
+- Member app: Google Play's own rating pop-up (Play In-App Review library, com.google.android.play:review 2.0.2) is asked for once per phone, 1.5 seconds after Home shows "Saved N contacts" for a save of 10 or more. Google decides whether it really shows and limits how often; test APKs never see it. New file Rating.kt. HomeFragment.kt (the call), Store.kt (review_asked, kept on log out), app/build.gradle (the library).
+- Not built or tested on a phone yet. To see it before release, install from a Play internal testing track.
+
 ## App v53 (17 Nov 2026): login tokens (database migration 20261117140000 applied 17 Nov 2026)
 - The password is sent once, at log in (and once after sign up), to web_login; the app keeps the login token it gets back (encrypted, in the same place the password was kept) and sends it on every call. New file Session.kt. LogInFragment.kt, SignUpFragment.kt, MainActivity.kt (start and onLoggedIn: a phone that still has a saved password trades it for a token once; log out ends the token on the server), Api.kt, HomeFragment.kt, HistoryFragment.kt (SESSION_EXPIRED: "You were logged out. Please log in again." and back to Log in), BillingManager.kt (logged out during a purchase: the purchase stays open and is checked after the next log in), Store.kt (notes).
 - Safe before the migration: if web_login does not exist (HTTP 404) the app logs in the old way and keeps the password.

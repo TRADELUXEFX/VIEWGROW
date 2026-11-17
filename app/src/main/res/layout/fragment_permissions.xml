@@ -78,6 +78,7 @@
             android:orientation="vertical"
             android:padding="20dp">
             <LinearLayout
+                android:id="@+id/step_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_card"
@@ -100,6 +101,33 @@
                     android:lineSpacingExtra="4dp"
                     android:textColor="@color/text"
                     android:textSize="14.5sp" />
+
+                <!-- Step 1 only: one quiet privacy line under the text (Google Play's prominent disclosure is the text
+                     above plus this line, shown right before Android's own Allow box). -->
+                <LinearLayout
+                    android:id="@+id/step_details"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_lock"
+                        app:tint="@color/green_text" />
+                    <TextView
+                        android:id="@+id/step_privacy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:tag="medium"
+                        android:textColor="@color/green_text"
+                        android:textSize="12.5sp" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
@@ -113,4 +141,19 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="24dp" />
+
+    <!-- Step 1 only: say no and move on (the app never blocks anyone). -->
+    <TextView
+        android:id="@+id/btn_skip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-14dp"
+        android:layout_marginBottom="14dp"
+        android:gravity="center"
+        android:minHeight="44dp"
+        android:tag="semibold"
+        android:text="Not now"
+        android:textColor="@color/text2"
+        android:textSize="14sp"
+        android:visibility="gone" />
 </LinearLayout>

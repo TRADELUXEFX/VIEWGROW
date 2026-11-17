@@ -48,16 +48,17 @@ When you sign up we keep your name, your WhatsApp number and your password. Your
 • your contact limit;
 • the time you agreed to our terms;
 • your Google Play purchases of limit increases (which one, the order number and the date);
-• the last time your app checked in, so the admin can see who uses the app and send app reminders.
+• the last time your app checked in, so the admin can see who uses the app and send app reminders;
+• your login sessions: a scrambled login code for each phone you log in on, and when it was last used. Logging out ends it.
 When you sign up we also record your connection address (IP address) and the time. This is used to limit abuse, such as too many sign-ups from one place.
 
 On your phone
-The app keeps your number, name and password on your phone so you stay logged in. The password is encrypted on the phone. The app also keeps its own record of which contacts it saved each day, and the limit increases you bought, so you can see them in History and Purchase history. That record never leaves your phone. Log out removes the password and name from the app.
+So you stay logged in, the app keeps your number, your name and a login code (not your password) on your phone. The login code is encrypted on the phone. The app also keeps its own record of which contacts it saved each day, and the limit increases you bought, so you can see them in History and Purchase history. That record never leaves your phone. Log out removes the login code and name from the app.
 
 Your phone contacts
-The app asks for permission to read and write contacts. Before Android asks, the app shows you what it does with them:
+The app asks for permission to read and write contacts. Before Android asks, step 1 of the setup shows you what it does with them:
 • Save: it adds the contacts you receive to your phone, tagged VG. It also saves the admin's WhatsApp number once, as ViewGrow Admin, so you can see the admin's status. If you delete that contact, the app does not add it again.
-• Read: it checks the numbers already in your phone, only on the phone itself, to avoid saving the same contact twice and to find the contacts ViewGrow added when you tap Delete My Contacts.
+• Read: it checks the numbers already in your phone, only on the phone itself, to avoid saving the same contact twice and to find the contacts ViewGrow added when you tap Delete My Contacts (or if the account is banned).
 It never uploads, shares or sells your own phone contacts. If you say no, the app still opens, but it cannot save contacts.
 
 The contacts you receive
@@ -72,7 +73,7 @@ The app checks for new contacts in the background at the interval you choose in 
 • a message when new contacts are saved (contacts saved at night are announced the next morning at 8am instead);
 • a morning message when you were not on the previous night's list, with how many people joined, so you can reshare that day;
 • a notification that opens the admin's WhatsApp chat, so you can get the status to reshare;
-• one alert when you have used 80% of your contact limit;
+• one alert when you have used 80% of your contact limit, and one when it is full;
 • a weekly summary on Sunday evening (nothing is sent in a week with no new contacts);
 • a reminder after 3 days with no new check, or when a permission is off.
 These messages are delivered by Firebase Cloud Messaging, a Google service. It gives the app an ID for this installation so the message can reach your phone. No name, number or other account detail is sent with the message.

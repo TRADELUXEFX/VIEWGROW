@@ -97,14 +97,17 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 2"
                 icon = R.drawable.ob_contacts
                 title = "Save your contacts"
-                text = "ViewGrow needs this to save your new contacts, and the admin\u2019s number, to your phone. Next, you will see exactly what it does with your contacts."
-                button = "Allow Contacts"
+                text = ContactsDisclosure.STEP
+                button = "Agree and allow"
             }
             PermStep.NOTIFICATIONS -> {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 2 OF 2"
                 icon = R.drawable.ob_bell
                 title = "Stay notified"
-                text = "Get a message when new contacts are saved and when the admin’s status is up."
+                // Every kind of notification the app sends, so the step is accurate: contacts saved / morning update (Sync, Nightly),
+                // status is up and announcements (StatusPush), contact limit (Alerts), reshare reminder, no-sync and permission
+                // reminders (ReshareReminder, Reminder, PermissionWatch), weekly summary (Alerts).
+                text = "Get notified when new contacts are saved to your phone, when the admin’s status is up, when the admin sends an announcement, and when your contact limit is almost full. You also get a weekly summary and reminders, like when to reshare or when a setting needs fixing."
                 button = "Allow Notifications"
             }
             else -> return
@@ -123,19 +126,27 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
         ImageViewCompat.setImageTintList(img, null)
         img.background = null
         img.setPadding(0, 0, 0, 0)
+        // Step 1: what ViewGrow does with Contacts is written on the screen in two short lines (Google Play's prominent
+        // disclosure), and the button is the agreement, so Android's own Allow box comes next with no pop-up in between.
+        val contacts = step == PermStep.CONTACTS
+        v.findViewById<View>(R.id.step_details).visibility = if (contacts) View.VISIBLE else View.GONE
+        v.findViewById<View>(R.id.btn_skip).visibility = if (contacts) View.VISIBLE else View.GONE
+        if (contacts) {
+            v.findViewById<TextView>(R.id.step_privacy).text = ContactsDisclosure.STEP_PRIVACY
+            v.findViewById<TextView>(R.id.btn_skip).setOnClickListener { advance(PermStep.CONTACTS) }
+        }
         val btn = v.findViewById<MaterialButton>(R.id.btn_action)
         btn.text = button
         btn.setOnClickListener { ask() }
+        Fonts.apply(v)
     }
 
     private fun ask() {
         val ctx = context ?: return
         when (step) {
             PermStep.CONTACTS ->
-                // Prominent disclosure first; Android's own box only appears after Agree.
-                ContactsDisclosure.show(ctx, onDecline = { advance(PermStep.CONTACTS) }) {
-                    contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
-                }
+                // The disclosure is already on this screen and "Agree and allow" is the agreement.
+                contactsAsk.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS))
             PermStep.NOTIFICATIONS -> {
                 if (Build.VERSION.SDK_INT >= 33) notificationsAsk.launch(Manifest.permission.POST_NOTIFICATIONS)
                 else advance(PermStep.NOTIFICATIONS)

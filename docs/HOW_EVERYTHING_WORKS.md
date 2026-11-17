@@ -39,7 +39,7 @@ Two extra pieces: small server programs (Edge Functions). "verify-purchase" asks
 - **Admin's number saved for the member.** Once Contacts is allowed, the app saves the admin's WhatsApp number as "ViewGrow Admin" (once), so the member can see the admin's status without saving it by hand.
 - **Chat button.** A floating button that opens the admin on WhatsApp.
 - **Banned and Blocked pages.** Banned (red): the member is banned, and the ViewGrow contacts the app saved are removed. Blocked (amber): password locked after too many wrong tries.
-- **Permissions.** Before Android asks for Contacts, the app explains in plain words why and offers Agree or No thanks.
+- **Permissions.** Step 1 of the setup explains on the screen, in plain words, what the app saves and reads with Contacts. "Agree and allow" opens Android's own box; "Not now" skips. When Contacts is turned on later from Home, the same words show in a pop-up first.
 
 ## The admin app (ViewGrow Admin)
 

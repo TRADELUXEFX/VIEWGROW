@@ -26,12 +26,25 @@ object Store {
 
     // The login token (or, on phones from before tokens, the password until it is traded). Kept encrypted (SecretBox).
     // If the phone's Keystore cannot be used nothing is kept and the member logs in again.
+    // Decrypted once and kept in memory (until it changes): the app reads it many times per screen, and decrypting
+    // each time froze the screen white for seconds on some phones (the blank screen after the setup steps).
     var password: String
-        get() = SecretBox.decrypt(p.getString("password_enc", "") ?: "")
+        get() {
+            val enc = p.getString("password_enc", "") ?: ""
+            synchronized(this) {
+                if (enc == pwEnc) return pwPlain
+            }
+            val plain = if (enc.isEmpty()) "" else SecretBox.decrypt(enc)
+            synchronized(this) { pwEnc = enc; pwPlain = plain }
+            return plain
+        }
         set(v) {
             val enc = if (v.isEmpty()) null else SecretBox.encrypt(v)
             p.edit().apply { if (enc != null) putString("password_enc", enc) else remove("password_enc") }.apply()
+            synchronized(this) { pwEnc = enc ?: ""; pwPlain = if (enc != null) v else "" }
         }
+    private var pwEnc: String? = null
+    private var pwPlain = ""
 
     var name: String
         get() = p.getString("name", "") ?: ""
@@ -132,6 +145,11 @@ object Store {
     var updateAskedAt: Long
         get() = p.getLong("update_asked_at", 0L)
         set(v) { p.edit().putLong("update_asked_at", v).apply() }
+
+    // Google Play's rating pop-up was asked for on this phone (Rating.kt). Kept on log out, so it is asked only once.
+    var reviewAsked: Boolean
+        get() = p.getBoolean("review_asked", false)
+        set(v) { p.edit().putBoolean("review_asked", v).apply() }
 
     // The member's id in the database, from web_app_seen. Used for reminders meant for this member only
     // (Firebase topic "u<id>"). 0 = not known yet.

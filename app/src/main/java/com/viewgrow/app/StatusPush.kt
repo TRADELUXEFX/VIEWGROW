@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 //
 // Message types (data "type"):
 //   status  "Today's status is up". Tap opens the admin's WhatsApp chat.
-//   msg     title + body from the admin. data "open": app | admin (WhatsApp chat) | upgrade (Increase my contact limit).
+//   msg     title + body from the admin. data "open": app | admin (WhatsApp chat, nothing typed) | link (data "url", https) | upgrade (Increase my contact limit).
 //   wake    silent: tonight's contacts are ready, save them now (WakeWorker). Nothing is shown.
 object StatusPush {
     const val TOPIC = "members"
@@ -78,15 +78,17 @@ object StatusPush {
         if (!Store.loggedIn || Store.banned) { stop(app); return }
         when (data["type"]) {
             "status" -> showStatus(app)
-            "msg" -> showMessage(app, data["title"].orEmpty(), data["body"].orEmpty(), data["open"].orEmpty())
+            "msg" -> showMessage(app, data["title"].orEmpty(), data["body"].orEmpty(), data["open"].orEmpty(), data["url"].orEmpty())
             "wake" -> WakeWorker.start(app)
         }
     }
 
-    private fun adminTap(app: Context, code: Int): PendingIntent {
+    // [reshare] true: the chat opens with "Hi, I am ready to reshare your status" typed in (the status-is-up alert).
+    // false: the chat just opens, nothing typed (messages the admin sends from the admin page).
+    private fun adminTap(app: Context, code: Int, reshare: Boolean): PendingIntent {
         val name = Store.name
         val link = Remote.adminLink(
-            if (name.isEmpty()) "Hi, I am ready to reshare your status." else "Hi, I am ready to reshare your status. My name is $name."
+            if (!reshare) "" else if (name.isEmpty()) "Hi, I am ready to reshare your status." else "Hi, I am ready to reshare your status. My name is $name."
         )
         return if (link != null) {
             PendingIntent.getActivity(
@@ -94,6 +96,12 @@ object StatusPush {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
         } else Alerts.openApp(app, code, null)
+    }
+
+    private fun linkTap(app: Context, code: Int, url: String): PendingIntent? {
+        if (!url.startsWith("https://", ignoreCase = true)) return null
+        val i = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return PendingIntent.getActivity(app, code, i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
     private fun showStatus(app: Context) {
@@ -104,17 +112,19 @@ object StatusPush {
             app.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
         }
         post(app, CHANNEL, NOTIFICATION_ID, "Today's status is up 📣",
-            "Reshare it now to be on tonight's list for new status viewers.", adminTap(app, 9))
+            "Reshare it now to be on tonight's list for new status viewers.", adminTap(app, 9, reshare = true))
     }
 
-    private fun showMessage(app: Context, title: String, body: String, open: String) {
+    private fun showMessage(app: Context, title: String, body: String, open: String, url: String = "") {
         if (title.isBlank() || body.isBlank() || !Alerts.canPost(app)) return
         if (Build.VERSION.SDK_INT >= 26) {
             val ch = NotificationChannel(CHANNEL_MSG, "Messages from the admin", NotificationManager.IMPORTANCE_HIGH)
             app.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
         }
         val tap = when (open) {
-            "admin" -> adminTap(app, 10)
+            "admin" -> adminTap(app, 10, reshare = false)
+            // The link the admin typed (https only): opens in the browser, or the app that owns that link.
+            "link" -> linkTap(app, 13, url) ?: Alerts.openApp(app, 12, null)
             "upgrade" -> Alerts.openApp(app, 11, LimitAlert.EXTRA_UPGRADE)
             else -> Alerts.openApp(app, 12, null)
         }
