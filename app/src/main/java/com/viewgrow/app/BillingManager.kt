@@ -171,8 +171,10 @@ object BillingManager {
                 Status.last = null
                 onMessage?.invoke("Payment received. Your contact limit has gone up.")
                 onLimitRaised?.invoke()
-            } else if (j == null) {
-                onMessage?.invoke("We could not confirm your payment yet. It will be checked again when you open the app.")
+            } else if (j == null || j.optString("code") == "SESSION_EXPIRED") {
+                // No answer, or logged out: the purchase stays open and is checked again after the next log in.
+                onMessage?.invoke(if (j == null) "We could not confirm your payment yet. It will be checked again when you open the app."
+                                  else "Please log in again. Your payment will be checked as soon as you do.")
             } else {
                 onMessage?.invoke("We could not confirm your payment. Message the admin with your Google Play order number.")
             }

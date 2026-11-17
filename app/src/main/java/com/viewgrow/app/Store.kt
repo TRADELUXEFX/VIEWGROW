@@ -3,9 +3,9 @@ package com.viewgrow.app
 import android.content.Context
 import android.content.SharedPreferences
 
-// What the phone remembers: who is logged in. The website keeps the same two things (number and
-// password) in the browser, because every database call needs them. Nothing leaves the phone except
-// in those calls.
+// What the phone remembers: who is logged in. The number, and the login token the database gave at log in
+// (Session.kt), which every database call sends. Phones from before login tokens kept the password here until
+// Session.upgrade() trades it for a token. Nothing leaves the phone except in those calls.
 object Store {
     private lateinit var p: SharedPreferences
 
@@ -24,7 +24,8 @@ object Store {
         get() = p.getString("phone", "") ?: ""
         set(v) { p.edit().putString("phone", v).apply() }
 
-    // Kept encrypted (SecretBox). If the phone's Keystore cannot be used nothing is kept and the member logs in again.
+    // The login token (or, on phones from before tokens, the password until it is traded). Kept encrypted (SecretBox).
+    // If the phone's Keystore cannot be used nothing is kept and the member logs in again.
     var password: String
         get() = SecretBox.decrypt(p.getString("password_enc", "") ?: "")
         set(v) {

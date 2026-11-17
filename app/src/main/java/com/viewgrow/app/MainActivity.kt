@@ -88,6 +88,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         // Load the admin's settings right away, so by the time Log in, Sign up or Home opens they are usually ready.
         Remote.load { }
+        // Phones that logged in before login tokens: trade the saved password for a token once (Session.kt).
+        Session.upgrade()
 
         // Edge to edge: the green header runs behind the status bar.
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -492,6 +494,8 @@ class MainActivity : AppCompatActivity() {
     // After Sign up or Log in: ask for what is still missing (contacts, notifications),
     // then Home. When everything is already allowed it goes straight to Home.
     fun onLoggedIn() {
+        // A member let back in after a ban still has the password saved: trade it for a token (does nothing otherwise).
+        Session.upgrade()
         SyncScheduler.schedule(this)
         ReshareReminder.show(this)
         if (PermissionsFragment.anythingToAsk(this)) showPermissions() else showTab(0)
@@ -504,6 +508,7 @@ class MainActivity : AppCompatActivity() {
 
     // goWelcome = false when another full screen (Blocked) is about to take over.
     fun onLoggedOut(goWelcome: Boolean = true) {
+        Session.endOnServer()
         Store.logOut()
         SyncScheduler.cancel(this)
         ReshareReminder.cancel(this)

@@ -1,6 +1,6 @@
 # ViewGrow: current state (website, database, Android app)
 
-Last updated: 16 Nov 2026. This file is private (the supabase/ folder is blocked by netlify.toml). **Update it with every change.**
+Last updated: 17 Nov 2026. This file is private (the supabase/ folder is blocked by netlify.toml). **Update it with every change.**
 
 ## Rules for anyone (human or AI) changing anything
 1. **Read this file, `schema.md` and `changelog.md` first.** Search them for the name of anything you are about to create. If it is already there, change it; do not write a second version.
@@ -19,6 +19,7 @@ Last updated: 16 Nov 2026. This file is private (the supabase/ folder is blocked
 | Admin Delete user | Does not add the number to the deleted list. Refuses banned members. Leaves `web_purchases` rows. |
 | Release schedule | Installed and set to Daily (10pm Lagos). Nightly job runs every night. Confirmed 16 Nov 2026. |
 | Pack purchases | Edge Function `verify-purchase` deployed and tested with a fake token (NOT_FOUND_AT_GOOGLE). `web_purchase_precheck` and `web_apply_purchase` live. A pack ADDS to the limit. A token Google already marked consumed is refused. **A real test purchase has not been done.** |
+| Login tokens | Live (applied 17 Nov 2026, `20261117140000_login_tokens.sql`, both checks passed). Website v79+ and app v53+ log in with web_login and keep a token. Older apps and pages still work with the password. See changelog. |
 | Legal and help pages | Split on 16 Nov 2026. Website pages `/privacy/`, `/terms/`, `/contact/`, `/delete-account/` cover the website only. App pages `/android/privacy/`, `/android/terms/`, `/android/contact/`, `/android/delete-account/` cover the app only: no menu, no link home, not in the sitemap, noindex. The app opens the `/android/` pages and its `Pages.kt` has the same words. All made by `tools/legal.py`. Deploy the website zip to Netlify, then give Google Play the `/android/` URLs. |
 
 ## Android app (package com.viewgrow.app)
@@ -38,6 +39,9 @@ Last updated: 16 Nov 2026. This file is private (the supabase/ folder is blocked
 Run `check_live_matches_claims.sql` (read only, 8 queries; run each one in its own tab). All 8 passed on 16 Nov 2026. It tests that every function the app and site call exists, the 10pm clock and nightly job, the release schedule, the deleted-number block, row-level security and leftovers.
 
 ## Open items
+0000000. 17 Nov 2026: website v62 adds the bottom bar, History (green / amber / red days), the opened day with chat buttons and Profile. Migration 20261117120000 applied and confirmed (web_day_contacts, web_people). Left: deploy the website zip, then test: History, tap a day, chat button, Profile links, dark mode button on Profile, back button.
+000000. 17 Nov 2026: website v61 restyles the member dashboard like the app Home (see changelog). Left: deploy the website zip and test log in, Import contacts, Increase my contact limit, chat button and dark mode.
+00000. 17 Nov 2026: website v60 adds saved messages and the app / admin-chat link icons to Message all members. 20261117100000 applied and confirmed; notify-status redeployed (open "admin"). Left: deploy the website zip, then test: Save, Saved list (tap a row to use it), trash, app icon, chat icon.
 000. 16 Nov 2026 (night): admin page redesigned (Today numbers first + "Log +", Lists, Users with count/filter on the right, member pop-up with facts and chat button, Days reshared / Downloads design B, Settings menu, one chat icon everywhere). Applied 20261116250000 (Signed up / Got file lists) and 20261116260000 (saved list time + app). Admin app: loading cover, smaller APK (Play services text reader), text size fixed, gradient buttons. Workflow: one deploy.yml that unpacks incoming/ and builds only the changed app (member AAB + APK, admin APK) into one release. Still to do: a "Change admin password" screen (web_admin_set_key exists; check its arguments first), then change the admin key.
 0000. 16 Nov 2026: 20261116240000 applied, notify-status v2 deployed, job viewgrow-wake created (id 4). CRON_SECRET added. Test live with the new app: Notify members, Write your own message, Remind this group, and the 10:05pm wake-up.
 1. Confirm the Android build is green on GitHub.

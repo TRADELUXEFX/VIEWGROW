@@ -51,7 +51,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
             Faq("How do I increase my limit?",
                 steps = listOf(
                     "Tap Increase my contact limit on Home.",
-                    "Pick Limit +1,000, +3,000 or +5,000.",
+                    "Pick +1,000, +3,000 or +5,000 limit.",
                     "Pay with Google Play, in your local currency. Your limit goes up once Google confirms the payment."),
                 action = "upgrade"),
             Faq("Will a bigger limit give me more contacts?",

@@ -17,4 +17,4 @@
 
 ## Known limits
 - Android 17+ and later: when you raise targetSdk to 37, Play's Contacts policy applies in full (declaration form). Android 18 plans tighter rules for bulk contact writes. Check the policy before that bump.
-- The app still sends the member's password to the database on every call (the website works the same way). Moving to a login token is a server change.
+- Login tokens (app v53, website v79): the password is sent once at log in; every other call sends a login token. Database migration `20261117140000_login_tokens.sql` applied 17 Nov 2026.

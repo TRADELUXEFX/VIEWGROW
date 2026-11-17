@@ -93,8 +93,14 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
             val j = r.json
             if (j == null) { Ui.showError(error, Api.netMessage(r.error)); return@call }
             if (j.optBoolean("ok")) {
-                Store.logIn(j.optString("phone", phone), password, j.optString("name", name))
-                (activity as? MainActivity)?.onLoggedIn()
+                val num = j.optString("phone", phone)
+                val nm = j.optString("name", name)
+                // Account made: log in once to get a login token, so the password is not kept on the phone.
+                Session.logIn(num, password) { lr ->
+                    val lj = lr.json
+                    Store.logIn(num, if (lj != null && lj.optBoolean("ok")) Session.credential(lj, password) else password, nm)
+                    if (isAdded) (activity as? MainActivity)?.onLoggedIn()
+                }
                 return@call
             }
             when (val code = j.optString("code")) {

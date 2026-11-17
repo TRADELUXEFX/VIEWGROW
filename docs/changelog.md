@@ -2,6 +2,28 @@
 
 Each change is one migration file. Newest first.
 
+## App v53 (17 Nov 2026): login tokens (database migration 20261117140000 applied 17 Nov 2026)
+- The password is sent once, at log in (and once after sign up), to web_login; the app keeps the login token it gets back (encrypted, in the same place the password was kept) and sends it on every call. New file Session.kt. LogInFragment.kt, SignUpFragment.kt, MainActivity.kt (start and onLoggedIn: a phone that still has a saved password trades it for a token once; log out ends the token on the server), Api.kt, HomeFragment.kt, HistoryFragment.kt (SESSION_EXPIRED: "You were logged out. Please log in again." and back to Log in), BillingManager.kt (logged out during a purchase: the purchase stays open and is checked after the next log in), Store.kt (notes).
+- Safe before the migration: if web_login does not exist (HTTP 404) the app logs in the old way and keeps the password.
+- The verify-purchase Edge Function needs no change: it passes the token to web_purchase_precheck like the password before.
+- Not built or tested on a phone yet. Test: fresh log in, sign up, an install that was logged in before (opens without asking to log in), log out, admin resets the password (the app goes back to Log in), ban and unban, a test purchase.
+
+## App v52 (17 Nov 2026): interval locked while syncing is paused, no database change
+- Profile: when Pause syncing is on, the 1h / 6h / 12h / 24h buttons can't be tapped (they were dimmed but still worked). Turning Pause syncing off unlocks them at once. File: ProfileFragment.kt.
+- Not built or tested on a phone yet.
+
+## App v51 (17 Nov 2026): "+1,000 limit" wording, no database change
+- Member app: packs read "+1,000 limit", "+3,000 limit", "+5,000 limit" (was "Limit +1,000"), on the limit pop-up and in Purchase history. The Google Play button reads "Get +3,000 limit · price". FAQ: "Pick +1,000, +3,000 or +5,000 limit." Files: UpgradeSheet.kt, PurchaseHistoryFragment.kt, FaqFragment.kt.
+- Not built or tested on a phone yet.
+
+## App v50 (17 Nov 2026): admin setup header like the member app, no database change
+- Admin app: the two setup steps now have the member app's step header: a small "STEP 1 OF 2" above the title and two dashes underneath (the first filled on step 1, both on step 2). File: admin MainActivity.kt (stepHero).
+- Not built or tested on a phone yet.
+
+## App v49 (17 Nov 2026): admin setup pictures, no database change
+- Admin app: the two setup steps (Save members, Stay notified) show the member app's full-colour pictures (contact card, bell) instead of the emoji. Files: admin MainActivity.kt (showSetup), admin res/drawable-nodpi/ob_contacts.png and ob_bell.png (copied from the member app).
+- Not built or tested on a phone yet.
+
 ## App v47 (17 Nov 2026): "Not verified yet" box removed, no database change
 - Home (not verified): the amber "Not verified yet" box at the top is gone; the "How to get new contacts" card already says what to do. The empty top_slot in fragment_home.xml is removed. Files: HomeFragment.kt, res/layout/fragment_home.xml.
 - Contacts off is still handled only by the existing red "Contacts is off" box and pop-up for verified members.

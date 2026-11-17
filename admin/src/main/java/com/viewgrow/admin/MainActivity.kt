@@ -149,14 +149,15 @@ class MainActivity : AppCompatActivity() {
     private fun showSetup() {
         plainNavBar()
         val contacts = setupStep == 1
-        val header = Ui.hero(this, if (contacts) "Save members" else "Stay notified", "Step $setupStep of 2")
+        val header = stepHero(if (contacts) "Save members" else "Stay notified", setupStep)
         val (root, body) = Ui.page(this, header)
         val card = Ui.card(this, 0, 24)
         card.gravity = Gravity.CENTER_HORIZONTAL
-        val icon = Ui.text(this, if (contacts) "👤" else "🔔", 34f, center = true)
+        // The same full-colour pictures as the member app's permission steps (no emoji).
+        val icon = ImageView(this)
+        icon.setImageResource(if (contacts) R.drawable.ob_contacts else R.drawable.ob_bell)
+        icon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         icon.layoutParams = LinearLayout.LayoutParams(Ui.dp(this, 88), Ui.dp(this, 88))
-        icon.background = Ui.shape(this, Ui.color(this, R.color.tint), 999)
-        icon.gravity = Gravity.CENTER
         card.addView(icon)
         card.addView(Ui.text(this,
             if (contacts) "The app saves every new member to your phone as “Name VG”, so you can see their status and they can see yours. It also looks up the names on your screenshots. Numbers already in your phone are left as they are."
@@ -169,6 +170,40 @@ class MainActivity : AppCompatActivity() {
             else finishSetup()
         })
         setContentView(root)
+    }
+
+    // The setup header, same as the member app's permission steps: "STEP 1 OF 2", the title, and two dashes
+    // (the first N filled on step N).
+    private fun stepHero(title: String, step: Int): LinearLayout {
+        val h = LinearLayout(this)
+        h.orientation = LinearLayout.VERTICAL
+        h.gravity = Gravity.CENTER_HORIZONTAL
+        val g = android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TL_BR,
+            intArrayOf(Ui.color(this, R.color.hero_start), Ui.color(this, R.color.green), Ui.color(this, R.color.hero_end)))
+        val r = Ui.dp(this, 32).toFloat()
+        g.cornerRadii = floatArrayOf(0f, 0f, 0f, 0f, r, r, r, r)
+        h.background = g
+        h.setPadding(Ui.dp(this, 20), Ui.dp(this, 22), Ui.dp(this, 20), Ui.dp(this, 26))
+        h.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        val counter = Ui.text(this, "STEP $step OF 2", 12f, R.color.white, "semibold", center = true)
+        counter.letterSpacing = 0.08f
+        counter.alpha = 0.85f
+        h.addView(counter)
+        h.addView(Ui.text(this, title, 26f, R.color.white, "extrabold", center = true, top = 8))
+        val dashes = LinearLayout(this)
+        dashes.orientation = LinearLayout.HORIZONTAL
+        dashes.layoutParams = Ui.lp(this, 18)
+        for (i in 1..2) {
+            val d = View(this)
+            d.background = Ui.shape(this, if (i <= step) 0xFFFFFFFF.toInt() else 0x59FFFFFF, 3)
+            d.layoutParams = LinearLayout.LayoutParams(0, Ui.dp(this, 5), 1f).also {
+                it.marginStart = if (i == 1) 0 else Ui.dp(this, 4)
+                it.marginEnd = if (i == 2) 0 else Ui.dp(this, 4)
+            }
+            dashes.addView(d)
+        }
+        h.addView(dashes)
+        return h
     }
 
     private fun finishSetup() {

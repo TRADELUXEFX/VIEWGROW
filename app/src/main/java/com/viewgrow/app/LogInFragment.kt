@@ -74,12 +74,12 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
         if (!passwordRule.matches(password)) { Ui.showError(error, "Your password can only use letters and numbers."); return }
 
         Ui.setBusy(button, true, "Log in", "Logging in")
-        val args = JSONObject().put("p_phone", phone).put("p_pin", password)
-        Api.call("web_status", args) { r ->
-            if (!isAdded || view.parent == null) return@call
+        // The password is sent once, here. The database answers with a login token, which the app keeps instead (Session.kt).
+        Session.logIn(phone, password) { r ->
+            if (!isAdded || view.parent == null) return@logIn
             Ui.setBusy(button, false, "Log in")
             val j = r.json
-            if (j == null) { Ui.showError(error, Api.netMessage(r.error)); return@call }
+            if (j == null) { Ui.showError(error, Api.netMessage(r.error)); return@logIn }
             if (!j.optBoolean("ok")) {
                 when (j.optString("code")) {
                     // Banned and Blocked get their own full screens. The number (and for a ban, the password)
@@ -89,18 +89,18 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
                         Store.password = password
                         Ban.mark(view.context, j.optString("reason"))
                         (activity as? MainActivity)?.showBanned()
-                        return@call
+                        return@logIn
                     }
                     "LOCKED" -> {
                         Store.phone = phone
                         (activity as? MainActivity)?.showBlocked(phone)
-                        return@call
+                        return@logIn
                     }
                 }
                 Ui.showError(error, Api.loginMessage(j))
-                return@call
+                return@logIn
             }
-            Store.logIn(phone, password, j.optString("name"))
+            Store.logIn(phone, Session.credential(j, password), j.optString("name"))
             (activity as? MainActivity)?.onLoggedIn()
         }
     }

@@ -26,9 +26,10 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         }
         view.findViewById<TextView>(R.id.version).text = "ViewGrow \u00b7 App version $version"
 
-        // Sync every 1h / 6h / 12h / 24h
+        // Sync every 1h / 6h / 12h / 24h. While syncing is paused the choice is locked: turn Pause syncing off first.
         for (i in hours.indices) {
             view.findViewById<View>(segIds[i]).setOnClickListener {
+                if (Store.syncPaused) return@setOnClickListener
                 Store.syncHours = hours[i]
                 SyncScheduler.schedule(ctx)
                 refresh()
@@ -77,6 +78,9 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             val on = hours[i] == selected
             seg.setBackgroundResource(if (on) R.drawable.bg_seg_on else 0)
             seg.setTextColor(ContextCompat.getColor(ctx, if (on) R.color.white else R.color.text2))
+            // Paused: the buttons can't be tapped (and screen readers say they are off) until syncing is unpaused.
+            seg.isEnabled = !Store.syncPaused
+            seg.isClickable = !Store.syncPaused
         }
     }
 

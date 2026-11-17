@@ -41,7 +41,7 @@ It signs up and logs in with the same WhatsApp number and password as the websit
 - **Update prompt** (`UpdateCheck.kt`, Play In-App Updates). When Google Play has a newer version, a pop-up offers it, at most once a day. Not shown on test APKs.
 - **Admin's number saved** (`AdminContactSaver.kt`). Once Contacts is allowed, the admin's WhatsApp number is saved as "ViewGrow Admin", once per number, so the member can see the admin's status. Not removed by Delete My Contacts. The contacts disclosure and the app's Privacy Policy say so.
 - **Chat button.** A floating button on Home, History and Profile opens the admin on WhatsApp.
-- **Security.** The password is encrypted with the Android Keystore (`SecretBox.kt`). Internet only over HTTPS.
+- **Security.** Log in sends the password once and keeps a login token instead (`Session.kt`, database migration `20261117140000_login_tokens.sql`), encrypted with the Android Keystore (`SecretBox.kt`). Before that migration is applied the app keeps the password, as before. Internet only over HTTPS.
 
 ## Rules for whoever edits this repo
 - Send the FULL updated zip (every file, paths from the repo root). Uploading a zip never deletes anything, so remove old files by hand.
