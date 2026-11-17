@@ -21,7 +21,7 @@ How contacts work
 To get contacts you reshare the admin's status and get verified. Your verified reshares decide how many contacts you get: the more you reshare, the more contacts you get. Contacts are released on the schedule the admin sets, and the app saves them to your phone when you open it or with the automatic timer. We cannot promise a number of status views.
 
 Your contact limit and payments
-Each account has a contact limit: the most contacts it can ever receive. You can raise it with a one-time purchase of a pack (+1,000, +3,000 or +5,000) through Google Play, in your local currency. It is not a subscription. A bigger limit gives you room for more contacts, but your reshares decide how many you get.
+Each account has a contact limit: the most contacts it can ever receive. You can raise it by 1,000, 3,000 or 5,000 with a one-time purchase through Google Play, in your local currency. It is not a subscription. Paying only raises your limit. It does not send you contacts and does not buy anyone's name or number. You still get contacts only by resharing, and your reshares decide how many you get.
 Google Play handles payment and refunds under its own rules. If you paid and your limit did not go up, contact us and send your Google Play order number.
 
 Keep contacts private
@@ -47,12 +47,12 @@ When you sign up we keep your name, your WhatsApp number and your password. Your
 • the number of wrong password tries, and whether your account is locked or banned;
 • your contact limit;
 • the time you agreed to our terms;
-• your Google Play purchases of contact packs (which pack, the order number and the date);
+• your Google Play purchases of limit increases (which one, the order number and the date);
 • the last time your app checked in, so the admin can see who uses the app and send app reminders.
 When you sign up we also record your connection address (IP address) and the time. This is used to limit abuse, such as too many sign-ups from one place.
 
 On your phone
-The app keeps your number, name and password on your phone so you stay logged in. The password is encrypted on the phone. The app also keeps its own record of which contacts it saved each day, and the packs you bought, so you can see them in History and Purchase history. That record never leaves your phone. Log out removes the password and name from the app.
+The app keeps your number, name and password on your phone so you stay logged in. The password is encrypted on the phone. The app also keeps its own record of which contacts it saved each day, and the limit increases you bought, so you can see them in History and Purchase history. That record never leaves your phone. Log out removes the password and name from the app.
 
 Your phone contacts
 The app asks for permission to read and write contacts. Before Android asks, the app shows you what it does with them:
@@ -61,7 +61,7 @@ The app asks for permission to read and write contacts. Before Android asks, the
 It never uploads, shares or sells your own phone contacts. If you say no, the app still opens, but it cannot save contacts.
 
 The contacts you receive
-The names and numbers you receive belong to other members, who agreed to share them when they signed up. In the same way, your name and number may be given to other verified members. Keep the contacts you receive private. Do not share, sell or post them.
+The names and numbers you receive belong to other members, who agreed to share them when they signed up. In the same way, your name and number may be given to other verified members. Members get contacts by resharing, never by paying: nobody can buy your name or number. Keep the contacts you receive private. Do not share, sell or post them.
 
 Notifications and background work
 The app checks for new contacts in the background at the interval you choose in Profile (1, 6, 12 or 24 hours), and once more just after each 10pm release so new contacts arrive the same night. You can pause this in Profile. The app can show:
@@ -79,7 +79,7 @@ These messages are delivered by Firebase Cloud Messaging, a Google service. It g
 You can turn notifications off in your phone settings.
 
 Payments
-You can raise your contact limit with a one-time purchase through Google Play. Google handles your payment details and we never see your card or account details. We receive a confirmation of the purchase (which pack, and the order number), check it with Google, and then raise your limit. Google has its own privacy policy for payments.
+You can raise your contact limit with a one-time purchase through Google Play. Google handles your payment details and we never see your card or account details. We receive a confirmation of the purchase (which pack, and the order number), check it with Google, and then raise your limit. The purchase only raises your limit. It does not buy anyone's name or number. Google has its own privacy policy for payments.
 
 Who can see your data
 The admin can see account details in order to run the service and help members. We do not sell your data. Your data is stored with our database provider, Supabase.

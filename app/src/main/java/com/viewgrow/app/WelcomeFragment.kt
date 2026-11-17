@@ -12,7 +12,7 @@ class WelcomeFragment : Fragment(R.layout.fragment_welcome) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         step(view, R.id.step1, "1", "Sign up", "Create your free account", R.drawable.ob_signup, false)
         step(view, R.id.step2, "2", "Reshare and get verified", "Message the admin, then reshare his status post", R.drawable.ob_reshare, false)
-        step(view, R.id.step3, "3", "Get new status viewers", "Saved to your phone automatically every day", R.drawable.ob_viewers, true)
+        step(view, R.id.step3, "3", "Get new contacts", "They save to your phone by themselves, so more people see your status", R.drawable.ob_viewers, true)
         Fonts.apply(view)
 
         val main = activity as? MainActivity

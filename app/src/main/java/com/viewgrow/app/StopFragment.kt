@@ -75,10 +75,10 @@ class StopFragment : Fragment(R.layout.fragment_stop) {
         v.findViewById<TextView>(R.id.label3).text = "WHAT THIS MEANS"
         val rows = v.findViewById<LinearLayout>(R.id.rows)
         addRow(rows, "\u2715", true, "No new contacts", "You can\u2019t get contacts while banned.")
-        addRow(rows, "\u2715", true, "Saved contacts removed", "ViewGrow contacts leave your phone.")
+        addRow(rows, "\u2715", true, "Saved contacts removed", "The contacts ViewGrow saved are removed from your phone.")
 
         v.findViewById<TextView>(R.id.stop_foot).text =
-            "A new account won\u2019t get around this."
+            "Making a new account will not get around this."
         v.findViewById<TextView>(R.id.stop_caption).text = "Message the admin if you think this is wrong."
     }
 
@@ -149,7 +149,7 @@ class StopFragment : Fragment(R.layout.fragment_stop) {
 
         v.findViewById<TextView>(R.id.label3).text = "HOW TO FIX IT"
         val rows = v.findViewById<LinearLayout>(R.id.rows)
-        addRow(rows, "1", false, "Message the admin", "Send it from your registered number.")
+        addRow(rows, "1", false, "Message the admin", "Send it from the number you signed up with.")
         addRow(rows, "2", false, "Get a new password", "The admin resets it, then you log in.")
 
         // Short on purpose: both buttons and the card fit one screen. Nothing is deleted in this state.

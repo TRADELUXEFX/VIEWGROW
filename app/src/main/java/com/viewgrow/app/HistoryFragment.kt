@@ -13,7 +13,7 @@ import org.json.JSONObject
 
 // History: one card per day the member was verified, with the number of contacts, newest first.
 // Three kinds of day. Green: the member reshared and contacts joined (+36). Amber: the member reshared but
-// nobody joined that day (+0, "You reshared · No one joined"); the database sends that day with a count of 0.
+// nobody joined that day (+0, "You reshared · No new members that day"); the database sends that day with a count of 0.
 // Red: the member did not reshare at all (+0, "You did not reshare"); the day is missing from the database,
 // so withMissedDays fills it in.
 // Tap a day to open it (HistoryDayFragment) and see the people. The Days | People
@@ -194,7 +194,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 quiet.findViewById<TextView>(R.id.h_date).text = DayText.label(iso)
                 val r = DayText.relative(iso)
                 quiet.findViewById<TextView>(R.id.h_sub).text =
-                    if (r.isEmpty()) "You reshared \u00B7 No one joined" else "$r \u00B7 You reshared \u00B7 No one joined"
+                    if (r.isEmpty()) "You reshared \u00B7 No new members that day" else "$r \u00B7 You reshared \u00B7 No new members that day"
                 Fonts.apply(quiet)
                 list.addView(quiet)
                 continue

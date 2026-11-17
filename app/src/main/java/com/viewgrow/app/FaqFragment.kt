@@ -47,15 +47,15 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
         ),
         "YOUR LIMIT AND PAYMENTS" to listOf(
             Faq("What is my contact limit?",
-                text = "The most contacts your account can receive. Home shows how many you have used out of your limit, for example 312/500."),
+                text = "How many contacts your account can save to your phone. Home shows how much you have used, for example 312/500."),
             Faq("How do I increase my limit?",
                 steps = listOf(
                     "Tap Increase my contact limit on Home.",
-                    "Pick +1,000, +3,000 or +5,000.",
+                    "Pick Limit +1,000, +3,000 or +5,000.",
                     "Pay with Google Play, in your local currency. Your limit goes up once Google confirms the payment."),
                 action = "upgrade"),
             Faq("Will a bigger limit give me more contacts?",
-                text = "A bigger limit only gives your account room for more contacts. Your reshares decide how many you get."),
+                text = "No. A bigger limit only gives your account room for more contacts. Paying never sends you contacts: your reshares decide how many you get."),
             Faq("I paid but my limit didn\u2019t go up",
                 steps = listOf(
                     "Wait a few minutes, then close and reopen the app.",
@@ -210,7 +210,7 @@ class FaqFragment : Fragment(R.layout.fragment_faq) {
         } else {
             t.text = "Message admin with my order"
             t.setOnClickListener {
-                val msg = "Hi, I paid for a contact pack on ViewGrow but my limit did not go up. My name is ${Store.name}. My Google Play order number is: "
+                val msg = "Hi, I paid to raise my contact limit on ViewGrow but my limit did not go up. My name is ${Store.name}. My Google Play order number is: "
                 if (!Remote.openAdmin(ctx, msg)) Ui.toast(requireView(), "Could not open the link.")
             }
         }

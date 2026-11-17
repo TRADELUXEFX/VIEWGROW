@@ -80,10 +80,10 @@ object LimitAlert {
         val text: String
         if (total >= limit) {
             title = "Contact limit reached"
-            text = "You have %,d of %,d contacts. Increase your limit to keep getting new contacts.".format(total, limit)
+            text = "You have %,d of %,d contacts. Raise your limit, then keep resharing to get new contacts.".format(total, limit)
         } else {
             title = "You have used $pct% of your contact limit"
-            text = "%,d of %,d contacts used. Increase your limit before it runs out.".format(total, limit)
+            text = "%,d of %,d contacts used. Raise your limit before it is full.".format(total, limit)
         }
         val n = NotificationCompat.Builder(app, CHANNEL)
             .setSmallIcon(R.drawable.ic_notif)

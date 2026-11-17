@@ -36,7 +36,7 @@ object HomeViews {
         box.orientation = LinearLayout.VERTICAL
         box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         val lead = if (off.size == 1) "${off[0]} is off." else "Some permissions are off."
-        val rest = if (off.size == 1) "Turn it on so ViewGrow keeps working." else off.joinToString(", ") + ". Turn them on so ViewGrow keeps working."
+        val rest = if (off.size == 1) "Turn it on so ViewGrow can save your contacts." else off.joinToString(", ") + ". Turn them on so ViewGrow keeps working."
         box.addView(notice(ctx, RED, lead, rest))
         val fix = button(ctx, box, "Fix now", null)
         fix.setOnClickListener { onFix() }
@@ -182,21 +182,21 @@ object HomeViews {
         return frame
     }
 
-    // "3 quick steps to new contacts" for members who are not verified yet.
+    // "How to get new contacts" for members who are not verified yet.
     fun stepsCard(ctx: Context): View {
         val c = card(ctx)
         c.setPadding(Ui.dp(ctx, 12), Ui.dp(ctx, 16), Ui.dp(ctx, 12), Ui.dp(ctx, 12))
         val title = TextView(ctx)
         title.tag = "bold"
-        title.text = "3 quick steps to new contacts"
+        title.text = "How to get new contacts"
         title.textSize = 14.5f
         title.gravity = Gravity.CENTER
         title.setTextColor(color(ctx, R.color.dark))
         c.addView(title)
         val steps = listOf(
-            Pair("Message admin on WhatsApp and save his number", R.drawable.ob_step_message),
-            Pair("View admin\u2019s status and reshare his post", R.drawable.ob_step_reshare),
-            Pair("Come back to the app for your new contacts", R.drawable.ob_step_saved)
+            Pair("Message the admin on WhatsApp and save his number", R.drawable.ob_step_message),
+            Pair("Reshare the admin\u2019s status post on your own status", R.drawable.ob_step_reshare),
+            Pair("New status viewers are added to your phone overnight", R.drawable.ob_step_saved)
         )
         steps.forEachIndexed { i, s ->
             val row = LinearLayout(ctx)

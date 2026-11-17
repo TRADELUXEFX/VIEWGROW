@@ -23,7 +23,7 @@ class PurchaseHistoryFragment : Fragment(R.layout.fragment_purchases) {
         val inflater = LayoutInflater.from(ctx)
         for (p in items) {
             val row = inflater.inflate(R.layout.item_purchase, list, false)
-            row.findViewById<TextView>(R.id.pur_title).text = "+" + "%,d".format(p.pack) + " contacts"
+            row.findViewById<TextView>(R.id.pur_title).text = "Limit +" + "%,d".format(p.pack)
             row.findViewById<TextView>(R.id.pur_date).text = whenText(p.time)
             val price = row.findViewById<TextView>(R.id.pur_price)
             if (p.price.isEmpty()) price.visibility = View.GONE else price.text = p.price

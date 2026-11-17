@@ -202,17 +202,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         body.removeAllViews()
         savingSpinner?.stop()
         savingSpinner = null
-        val top = v.findViewById<LinearLayout>(R.id.top_slot)
-        top.removeAllViews()
 
         val state = j.optString("state")
         val verified = state != "NOT_VERIFIED"
-        // Not verified: no countdown. The "Not verified yet" box takes its place at the top.
+        // Not verified: no countdown. The steps card on Home says what to do.
         v.findViewById<View>(R.id.countdown).visibility = if (verified) View.VISIBLE else View.GONE
         setBadge(v, verified)
-        // The warning box sits above the contacts card for members who are not verified yet.
-        (v.findViewById<View>(R.id.stats_card).layoutParams as LinearLayout.LayoutParams).topMargin =
-            if (verified) 0 else Ui.dp(v.context, 12)
+        (v.findViewById<View>(R.id.stats_card).layoutParams as LinearLayout.LayoutParams).topMargin = 0
 
         val total = if (j.isNull("total")) 0 else j.optInt("total")
         val limit = if (j.isNull("limit")) "\u2014" else j.optInt("limit").toString()
@@ -243,10 +239,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         when (state) {
             "NOT_VERIFIED" -> {
-                val warn = HomeViews.notice(ctx, HomeViews.WARN, "Not verified yet.", "Reshare the admin\u2019s status to unlock your contacts.")
-                (warn.layoutParams as LinearLayout.LayoutParams).topMargin = 0
-                top.addView(warn)
-                Fonts.apply(top)
+                // No separate "Not verified yet" box: the steps card below already says what to do.
                 body.addView(HomeViews.stepsCard(ctx))
                 val msg = "Hi, I just registered on ViewGrow. My name is $name."
                 if (Remote.adminExpected()) {
@@ -270,13 +263,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             "LIMIT_REACHED" -> {
                 // The same Google Play pop-up as everywhere else, so nobody is sent to WhatsApp to pay.
                 banner(body, HomeViews.RED, BannerPic.Kind.BAD, "Your limit is full",
-                    "You\u2019ve received all $limit contacts your limit allows. Increase it to keep getting new contacts.", "full")
+                    "You\u2019ve received all $limit contacts your limit allows. Raise it, then keep resharing to get new contacts.", "full")
                 body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
             }
             "PREPARING" -> {
                 // Verified, waiting for the release. The countdown already says when. Before the first contacts, say what happens next.
                 if ((j.optJSONArray("recent")?.length() ?: 0) == 0) {
-                    banner(body, HomeViews.GREEN, BannerPic.Kind.WAIT, "Reshare verified", "Your first contacts arrive after the next release.", "wait")
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.WAIT, "Reshare verified", "Your first status viewers are added to your phone overnight.", "wait")
                 }
             }
             "ALREADY_TODAY", "NOTHING_NEW", "NO_POOL" -> {
@@ -284,11 +277,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     val n = Store.lastSyncCount
                     banner(body, HomeViews.GREEN, BannerPic.Kind.SAVED, if (n == 1) "Saved 1 contact" else "Saved $n contacts", "They are now in your phone.", "saved-${Store.lastSyncAt}")
                 } else if (state == "ALREADY_TODAY") {
-                    banner(body, HomeViews.GREEN, BannerPic.Kind.DONE, "Done for today", "You\u2019ve imported today\u2019s contacts. Reshare the admin\u2019s status tomorrow to get more.", "done")
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.DONE, "Done for today", "Today\u2019s contacts are saved. Reshare the admin\u2019s status tomorrow to get more.", "done")
                 } else if (state == "NOTHING_NEW") {
-                    banner(body, HomeViews.GREEN, BannerPic.Kind.NONE, "No new contacts yet", "You\u2019ve imported every contact you\u2019ve earned. Reshare the admin\u2019s status again to get more.", "none")
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.NONE, "No new contacts yet", "You have every contact you\u2019ve earned so far. Reshare the admin\u2019s status again to get more.", "none")
                 } else {
-                    banner(body, HomeViews.GREEN, BannerPic.Kind.NONE, "No new contacts this time", "No other members were verified before this release, so there\u2019s nothing new. Reshare again to get contacts next time.", "nopool")
+                    banner(body, HomeViews.GREEN, BannerPic.Kind.NONE, "No new contacts this time", "No other members reshared in time for last night, so there was no one new to send you. Reshare again today.", "nopool")
                 }
             }
             else -> {

@@ -2,6 +2,19 @@
 
 Each change is one migration file. Newest first.
 
+## App v47 (17 Nov 2026): "Not verified yet" box removed, no database change
+- Home (not verified): the amber "Not verified yet" box at the top is gone; the "How to get new contacts" card already says what to do. The empty top_slot in fragment_home.xml is removed. Files: HomeFragment.kt, res/layout/fragment_home.xml.
+- Contacts off is still handled only by the existing red "Contacts is off" box and pop-up for verified members.
+- Not built or tested on a phone yet.
+
+## App v46 (17 Nov 2026): clearer wording, no database change
+- Member app: plainer words on Welcome, Sign up, the permission steps, Home, History, Profile, Delete my account, Banned and Blocked. New members see "How to get new contacts", and step 3 says new status viewers are added to the phone overnight (no more "next release"). Home messages no longer say "imported" (the app saves contacts by itself). "Get new contacts in" is now "Next contacts in". History: "You reshared · No new members that day".
+- The pop-up when a member who is not verified taps History or Profile is now "Get verified first": one line on why, then the same 3 steps as Home, left-aligned (res/layout/dialog_verify.xml). Button: "Message the admin".
+- Contact limit and payments (from v42 to v45): packs are named "Limit +1,000 / +3,000 / +5,000", the Buy button says "Raise limit", and the limit pop-up explains that paying only raises the limit and members get contacts by resharing. "One-time payment, not a subscription" is centred, without the tick (ic_check_green.xml removed).
+- Admin app: "Save new members to this phone", "Tell me when members are saved", and clearer lines on the screenshot Check and Skipped tabs (SyncActivity.kt, ShotsActivity.kt).
+- Unchanged on purpose: the contacts notice (ContactsDisclosure.kt), because Google Play checks that wording; the "Get new status viewers today" notification.
+- Not built or tested on a phone yet.
+
 ## App v41 (17 Nov 2026): sign-up closed screen and moving banner pictures, no database change
 - Member app only (Android). Sign-up closed: the whole form is hidden, as on the website. A centred amber circle with a lock, "Sign-up is closed right now", "New members can’t join at the moment. Please check back soon." and an "I have an account: Log in" button. The old small amber box above the form is gone. If the admin closes sign-up while the form is open and the member taps Sign up, the screen switches to the closed screen at once. Files: res/layout/fragment_signup.xml, SignUpFragment.kt, new res/drawable/ic_lock.xml and bg_closed_circle.xml.
 - Banner pictures now move inside, like the website. The five Home banner pictures (Reshare verified, Saved, Done for today, No new contacts, Your limit is full) are drawn in code from the website's own shapes (new BannerPic.kt) instead of flat PNGs. After the banner slides in: the small dot / badge / hub rises into place (0.6 s delay, 0.7 s) and the clock hand, tick, dashes or gauge needle pops in (0.85 s delay, overshoots, settles in 0.5 s). The whole picture no longer rises on its own (the website does not do that). Nothing moves when the phone has animations turned off. The ban_*.png files are removed. Files: BannerPic.kt (new), HomeViews.kt, HomeFragment.kt, Anim.kt (bannerIn no longer moves the picture).

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- "Verified members only" pop-up: shown when a member who is not verified taps History or Profile. -->
+<!-- "Get verified first" pop-up: shown when a member who is not verified taps History or Profile. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -23,7 +23,7 @@
         android:layout_marginTop="6dp"
         android:gravity="center"
         android:tag="extrabold"
-        android:text="This is only available to verified members"
+        android:text="Get verified first"
         android:textColor="@color/dark"
         android:textSize="20sp" />
 
@@ -33,8 +33,19 @@
         android:layout_marginTop="8dp"
         android:gravity="center"
         android:lineSpacingExtra="3dp"
-        android:text="Contact the admin on WhatsApp to get verified."
+        android:text="History and Profile open once the admin verifies you."
         android:textColor="@color/text2"
+        android:textSize="14sp" />
+
+    <!-- How to get verified: the same order as the steps on Home. Left-aligned so the numbers line up. -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:gravity="start"
+        android:lineSpacingExtra="4dp"
+        android:text="1. Message the admin on WhatsApp and save his number.\n2. Post the admin’s status on your own status.\n3. The admin checks it and verifies you. New status viewers are then added to your phone overnight."
+        android:textColor="@color/text"
         android:textSize="14sp" />
 
     <TextView
@@ -50,7 +61,7 @@
         android:focusable="true"
         android:gravity="center"
         android:tag="semibold"
-        android:text="Message Admin"
+        android:text="Message the admin"
         android:textColor="@color/white"
         android:textSize="15sp" />
 

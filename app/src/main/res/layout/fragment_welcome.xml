@@ -66,7 +66,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:gravity="center"
-                    android:text="Just follow these three easy steps"
+                    android:text="It works in 3 simple steps"
                     android:textColor="@color/white_soft"
                     android:textSize="14sp" />
             </LinearLayout>

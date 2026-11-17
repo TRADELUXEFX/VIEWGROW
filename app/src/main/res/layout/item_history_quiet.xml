@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A day in the History list the member reshared but nobody joined: amber card, date, "You reshared · No one joined", +0. Not tappable; shows the arrow like every other day. -->
+<!-- A day in the History list the member reshared but nobody joined: amber card, date, "You reshared · No new members that day", +0. Not tappable; shows the arrow like every other day. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

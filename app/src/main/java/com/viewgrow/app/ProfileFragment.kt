@@ -91,7 +91,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         ConfirmDialog.show(
             ctx,
             "Delete my contacts?",
-            "This removes every contact ViewGrow saved to your phone. Your own ViewGrow contact stays. They will not come back unless the admin approves a new download.",
+            "This removes every contact ViewGrow saved to your phone, except ViewGrow Admin. They will not come back unless the admin allows it.",
             "Delete"
         ) { deleteNow() }
     }

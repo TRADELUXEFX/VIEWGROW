@@ -97,14 +97,14 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 2"
                 icon = R.drawable.ob_contacts
                 title = "Save your contacts"
-                text = "ViewGrow saves the contacts you receive, and the admin\u2019s number, to your phone. You will see exactly what it does with your contacts before Android asks."
+                text = "ViewGrow needs this to save your new contacts, and the admin\u2019s number, to your phone. Next, you will see exactly what it does with your contacts."
                 button = "Allow Contacts"
             }
             PermStep.NOTIFICATIONS -> {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 2 OF 2"
                 icon = R.drawable.ob_bell
                 title = "Stay notified"
-                text = "Get notified when new contacts are saved."
+                text = "Get a message when new contacts are saved and when the admin’s status is up."
                 button = "Allow Notifications"
             }
             else -> return

@@ -32,7 +32,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         // get this number as a status viewer. The database records that as "consent".
         Ui.linkText(
             view.findViewById(R.id.terms),
-            "By signing up you accept the Terms and Conditions and Privacy Policy, and agree that other members can receive your number as a status viewer.",
+            "By signing up you accept the Terms and Conditions and Privacy Policy, and agree that ViewGrow can share your name and number with other members, so they can see your status.",
             listOf(
                 "Terms and Conditions" to { main?.showPage(Pages.TERMS) },
                 "Privacy Policy" to { main?.showPage(Pages.PRIVACY) }

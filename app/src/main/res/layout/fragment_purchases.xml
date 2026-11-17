@@ -65,7 +65,7 @@
                 android:gravity="center"
                 android:lineSpacingExtra="3dp"
                 android:padding="22dp"
-                android:text="No purchases yet. Packs you buy with Google Play will show here."
+                android:text="No purchases yet. Limit increases you buy with Google Play will show here."
                 android:textColor="@color/muted"
                 android:textSize="13sp"
                 android:visibility="gone" />

@@ -37,7 +37,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="3dp"
-                android:text="Your contact limit is the most amount of WhatsApp contacts your ViewGrow account can receive and save to your phone. Once it is full, no more can be added."
+                android:text="Your contact limit is how many contacts your account can save to your phone. When it is full, new contacts stop coming in."
                 android:textColor="@color/explain_text"
                 android:textSize="12sp" />
             <TextView
@@ -45,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:lineSpacingExtra="3dp"
-                android:text="Paying raises your limit, so more contacts can be saved on your phone, which increases your status viewers, potentially through reshares."
+                android:text="You get new contacts by resharing the admin\'s status. Raising your limit gives you room to keep saving them when it is full. Your payment only raises your limit."
                 android:textColor="@color/explain_text"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -99,9 +99,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:drawableStart="@drawable/ic_check_green"
-            android:drawablePadding="8dp"
-            android:gravity="center_vertical"
+            android:gravity="center"
             android:text="One-time payment, not a subscription"
             android:textColor="@color/text"
             android:textSize="12sp" />
@@ -115,7 +113,7 @@
             app:icon="@drawable/ic_google_play"
             app:iconGravity="textStart"
             app:iconPadding="8dp"
-            android:text="Buy with Google Play" />
+            android:text="Raise limit with Google Play" />
 
         <LinearLayout
             android:layout_width="match_parent"

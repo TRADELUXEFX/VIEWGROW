@@ -51,7 +51,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="4dp"
-                android:text="You can delete your ViewGrow account here.\n\nWhen you delete it: the contacts ViewGrow saved to this phone are removed, you are logged out, and your account is deleted. You cannot get this account back. Your own phone contacts are never touched.\n\nYour number is kept on a deleted list (nothing else), so it cannot log in or sign up again. To use it again, message the admin."
+                android:text="You can delete your ViewGrow account here.\n\nWhen you delete it: the contacts ViewGrow saved to this phone are removed, you are logged out, and your account is deleted. You cannot get this account back. Your own phone contacts are never touched.\n\nOnly your number is kept, on a deleted list, so it cannot sign up again. To use it again, message the admin."
                 android:textColor="@color/text"
                 android:textSize="14sp" />
 

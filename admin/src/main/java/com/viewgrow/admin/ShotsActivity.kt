@@ -76,7 +76,7 @@ class ShotsActivity : AppCompatActivity() {
         Ui.edgeToEdge(this)
         if (!Store.signedIn) { finish(); return }
         if (savedInstanceState == null) {
-            showMessage("Choose the screenshots of your status viewers list.", busy = false)
+            showMessage("Choose screenshots of your status viewers list.", busy = false)
             picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         } else finish()
     }
@@ -445,7 +445,7 @@ class ShotsActivity : AppCompatActivity() {
             body.addView(Ui.text(this, "Nothing left to check.", 13.5f, R.color.text2, center = true, top = 6))
             return
         }
-        body.addView(Ui.text(this, "Not sure who these are. Tap to pick the member.", 13f, R.color.text2))
+        body.addView(Ui.text(this, "Not sure who these are. Tap Choose to pick the right member.", 13f, R.color.text2))
         check.forEachIndexed { i, r ->
             val c = LinearLayout(this)
             c.orientation = LinearLayout.HORIZONTAL
@@ -474,7 +474,7 @@ class ShotsActivity : AppCompatActivity() {
             body.addView(Ui.text(this, "Nobody was skipped.", 14f, R.color.text2, center = true, top = 40))
             return
         }
-        body.addView(Ui.text(this, "Not ViewGrow members, so they can’t be logged.", 13f, R.color.text2))
+        body.addView(Ui.text(this, "These are not ViewGrow members, so they can’t be logged.", 13f, R.color.text2))
         val list = Ui.card(this, 10, 12)
         list.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0)
         skipped.forEachIndexed { i, r ->

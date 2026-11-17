@@ -28,7 +28,7 @@ class SyncActivity : AppCompatActivity() {
     private fun render() {
         val (root, body) = Ui.page(this, Ui.hero(this, "Contacts sync", onBack = { finish() }, action = R.drawable.ic_history to { showRecent() }))
 
-        body.addView(switchRow("Save new contacts", "", Store.syncOn) { on ->
+        body.addView(switchRow("Save new members to this phone", "", Store.syncOn) { on ->
             Store.syncOn = on
             if (on) MemberSync.schedule(this) else MemberSync.cancel(this)
             render()
@@ -55,7 +55,7 @@ class SyncActivity : AppCompatActivity() {
             }
             body.addView(every)
         }
-        body.addView(switchRow("Notification", "", Store.notifyOn) { on -> Store.notifyOn = on })
+        body.addView(switchRow("Tell me when members are saved", "", Store.notifyOn) { on -> Store.notifyOn = on })
 
         val tiles = LinearLayout(this)
         tiles.orientation = LinearLayout.HORIZONTAL

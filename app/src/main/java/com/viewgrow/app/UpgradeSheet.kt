@@ -103,14 +103,14 @@ object UpgradeSheet {
                 row.findViewById<TextView>(R.id.pack_price).text = prices?.get(packs[i]) ?: if (prices == null) LOADING else NO_PRICE
             }
             val price = prices?.get(packs[picked])
-            buy.text = "Buy +" + "%,d".format(packs[picked]) + (if (price != null) " \u00B7 $price" else "")
+            buy.text = "Raise limit +" + "%,d".format(packs[picked]) + (if (price != null) " \u00B7 $price" else "")
             buy.isEnabled = price != null
             buy.alpha = if (price != null) 1f else 0.5f
         }
 
         for ((i, n) in packs.withIndex()) {
             val row = LayoutInflater.from(ui).inflate(R.layout.item_upgrade_pack, rows, false)
-            row.findViewById<TextView>(R.id.pack_name).text = "+" + "%,d".format(n) + " contacts"
+            row.findViewById<TextView>(R.id.pack_name).text = "Limit +" + "%,d".format(n)
             val sub = row.findViewById<TextView>(R.id.pack_sub)
             if (limit > 0) sub.text = "Your limit goes from %,d to %,d".format(limit, limit + n) else sub.visibility = View.GONE
             if (i == RECOMMENDED) {
