@@ -95,14 +95,14 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
         when (step) {
             PermStep.CONTACTS -> {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 2"
-                icon = R.drawable.ic_contacts
+                icon = R.drawable.ob_contacts
                 title = "Save your contacts"
                 text = "ViewGrow saves the contacts you receive, and the admin\u2019s number, to your phone. You will see exactly what it does with your contacts before Android asks."
                 button = "Allow Contacts"
             }
             PermStep.NOTIFICATIONS -> {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 2 OF 2"
-                icon = R.drawable.ic_bell
+                icon = R.drawable.ob_bell
                 title = "Stay notified"
                 text = "Get notified when new contacts are saved."
                 button = "Allow Notifications"
@@ -118,8 +118,11 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
         v.findViewById<TextView>(R.id.step_title).text = title
         v.findViewById<TextView>(R.id.step_text).text = text
         val img = v.findViewById<ImageView>(R.id.step_icon)
+        // A full-colour picture (green circle drawn in the picture), so no tint, background or padding.
         img.setImageResource(icon)
-        ImageViewCompat.setImageTintList(img, ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.green_text)))
+        ImageViewCompat.setImageTintList(img, null)
+        img.background = null
+        img.setPadding(0, 0, 0, 0)
         val btn = v.findViewById<MaterialButton>(R.id.btn_action)
         btn.text = button
         btn.setOnClickListener { ask() }

@@ -1,5 +1,6 @@
 package com.viewgrow.admin
 
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
@@ -47,7 +48,9 @@ class MainActivity : AppCompatActivity() {
 
     private val io = Executors.newSingleThreadExecutor()
     private var web: WebView? = null
-    // Covers the admin page while it signs in, so the website's own Sign in screen never flashes.
+    // At launch the splash (icon on green) stays up until the admin page has signed in, then Today shows.
+    // There is no in-between "Opening" screen. `cover` is only used to say "No internet connection".
+    @Volatile private var pageReady = false
     private var cover: FrameLayout? = null
     private val coverTimeout = Runnable { hideCover() }
     // The host of the page the WebView shows. The bridge only answers pages from viewgrow.site.
@@ -63,6 +66,13 @@ class MainActivity : AppCompatActivity() {
     private val notificationsAsk = registerForActivityResult(ActivityResultContracts.RequestPermission()) { finishSetup() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Green splash with the ViewGrow icon (same as the member app's, on green), kept for a moment so it doesn't flash.
+        val splashStart = System.currentTimeMillis()
+        installSplashScreen().setKeepOnScreenCondition {
+            val t = System.currentTimeMillis() - splashStart
+            // Short minimum; when the admin is signed in, wait for the page too (at most 10 seconds).
+            t < 700 || (web != null && !pageReady && t < 10000)
+        }
         super.onCreate(savedInstanceState)
         Store.init(this)
         Ui.edgeToEdge(this)
@@ -98,8 +108,9 @@ class MainActivity : AppCompatActivity() {
     // ---------- 1. Sign in ----------
 
     private fun showSignIn(message: String) {
-        cover?.removeCallbacks(coverTimeout); cover = null
+        webRoot?.removeCallbacks(coverTimeout); cover = null
         web?.destroy(); web = null
+        plainNavBar()
         val (root, body) = Ui.page(this, Ui.hero(this, "ViewGrow Admin", "For the admin only", logo = true))
         body.addView(Ui.text(this, "Admin key", 12.5f, R.color.text2, "semibold"))
         val key = Ui.field(this, "Your admin key", true)
@@ -136,6 +147,7 @@ class MainActivity : AppCompatActivity() {
     // ---------- 2. Setup ----------
 
     private fun showSetup() {
+        plainNavBar()
         val contacts = setupStep == 1
         val header = Ui.hero(this, if (contacts) "Save members" else "Stay notified", "Step $setupStep of 2")
         val (root, body) = Ui.page(this, header)
@@ -171,10 +183,17 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
     private fun showWeb() {
-        cover?.removeCallbacks(coverTimeout); cover = null
+        webRoot?.removeCallbacks(coverTimeout); cover = null
         MemberSync.schedule(this)
         val root = FrameLayout(this)
-        root.setBackgroundColor(Ui.color(this, R.color.surface))
+        // The phone's bottom area (under the home line) is painted by the app; the page says which colour (see bar()).
+        strip = BottomStrip(root, Ui.color(this, R.color.surface))
+        root.background = strip
+        @Suppress("DEPRECATION")
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        if (Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
+        pageBar = intArrayOf(0, 0)
+        paintPageStrip()
         val w = WebView(this)
         w.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         w.setBackgroundColor(Ui.color(this, R.color.surface))
@@ -222,8 +241,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         root.addView(w)
-        val c = buildCover()
-        root.addView(c)
         // The page's green header runs under the status bar; the page is told how tall the status bar is.
         Ui.fitInsets(root, onTop = { px ->
             topDp = Math.round(px / resources.displayMetrics.density)
@@ -231,14 +248,65 @@ class MainActivity : AppCompatActivity() {
         })
         setContentView(root)
         web = w
-        cover = c
+        webRoot = root
+        pageReady = false
         w.loadUrl(ADMIN_URL)
-        // If the page never says it's ready (an older website), show it anyway after a while.
-        c.removeCallbacks(coverTimeout)
-        c.postDelayed(coverTimeout, 12000)
+        // If the page never says it's ready (an older website), let the splash go anyway after a while.
+        root.removeCallbacks(coverTimeout)
+        root.postDelayed(coverTimeout, 10000)
+    }
+    private var webRoot: FrameLayout? = null
+
+    // ---- The strip under the page (the phone's navigation area) ----
+    private var strip: BottomStrip? = null
+    private var pageBar = intArrayOf(0, 0)   // the colours the page asked for (0 = not told yet)
+
+    // Paints the page colour, and the strip along the bottom edge (as tall as the root's bottom padding, which is the
+    // navigation bar). Left to right, like the bottom bar, so the bar and the strip look like one piece.
+    class BottomStrip(private val host: View, private val page: Int) : android.graphics.drawable.Drawable() {
+        private val paint = android.graphics.Paint()
+        private var a = page
+        private var b = page
+        fun set(start: Int, end: Int) { a = start; b = end; invalidateSelf(); host.invalidate() }
+        val isLight: Boolean get() = androidx.core.graphics.ColorUtils.calculateLuminance(a) > 0.5
+        override fun draw(c: android.graphics.Canvas) {
+            val r = bounds
+            paint.shader = null
+            paint.color = page
+            c.drawRect(r, paint)
+            val h = host.paddingBottom
+            if (h <= 0) return
+            paint.shader = android.graphics.LinearGradient(r.left.toFloat(), 0f, r.right.toFloat(), 0f, a, b, android.graphics.Shader.TileMode.CLAMP)
+            c.drawRect(r.left.toFloat(), (r.bottom - h).toFloat(), r.right.toFloat(), r.bottom.toFloat(), paint)
+        }
+        override fun setAlpha(alpha: Int) {}
+        override fun setColorFilter(cf: android.graphics.ColorFilter?) {}
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity() = android.graphics.PixelFormat.OPAQUE
     }
 
-    // The cover: the app's green gradient, the logo and "Opening your admin page".
+    // The app's own screens (Sign in, Setup) keep the phone's normal navigation bar, as before.
+    private fun plainNavBar() {
+        strip = null
+        @Suppress("DEPRECATION")
+        window.navigationBarColor = android.graphics.Color.BLACK
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = false
+    }
+
+    private fun paintStrip(start: Int, end: Int) {
+        val s = strip ?: return
+        s.set(start, end)
+        // White icons (home line, buttons) on green, dark ones on white.
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = s.isLight
+    }
+
+    // Back to what the page asked for (after the green "No internet" cover goes).
+    private fun paintPageStrip() {
+        if (pageBar[0] != 0 || pageBar[1] != 0) paintStrip(pageBar[0], pageBar[1])
+        else paintStrip(Ui.color(this, R.color.surface), Ui.color(this, R.color.surface))
+    }
+
+    // Only for "No internet connection": the app's green gradient, the logo, the message and Try again.
     private fun buildCover(): FrameLayout {
         val c = FrameLayout(this)
         c.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -256,7 +324,7 @@ class MainActivity : AppCompatActivity() {
         img.clipToOutline = true
         img.layoutParams = LinearLayout.LayoutParams(Ui.dp(this, 76), Ui.dp(this, 76))
         col.addView(img)
-        val msg = Ui.text(this, "Opening your admin page", 15f, R.color.white, "semibold", center = true, top = 18)
+        val msg = Ui.text(this, "No internet connection", 15f, R.color.white, "semibold", center = true, top = 18)
         msg.tag = "msg"
         col.addView(msg)
         val bar = android.widget.ProgressBar(this)
@@ -265,22 +333,28 @@ class MainActivity : AppCompatActivity() {
         lp.topMargin = Ui.dp(this, 16)
         bar.layoutParams = lp
         bar.tag = "bar"
+        bar.visibility = View.GONE
         col.addView(bar)
         c.addView(col)
         return c
     }
 
+    // The page is signed in (or gave up waiting): the splash can go, and any "No internet" cover too.
     private fun hideCover() {
+        pageReady = true
+        webRoot?.removeCallbacks(coverTimeout)
         val c = cover ?: return
-        c.removeCallbacks(coverTimeout)
         cover = null
+        paintPageStrip()
         c.animate().alpha(0f).setDuration(220).withEndAction { (c.parent as? ViewGroup)?.removeView(c) }.start()
     }
 
     // No internet while opening: keep the cover, say so, and offer Try again (the key is kept).
     private fun coverOffline() {
-        val c = cover ?: return
-        c.removeCallbacks(coverTimeout)
+        pageReady = true
+        webRoot?.removeCallbacks(coverTimeout)
+        val c = cover ?: buildCover().also { nc -> webRoot?.addView(nc); cover = nc }
+        paintStrip(Ui.color(this, R.color.green), Ui.color(this, R.color.hero_end))
         val col = c.getChildAt(0) as LinearLayout
         (col.findViewWithTag<TextView>("msg"))?.text = "No internet connection"
         col.findViewWithTag<View>("bar")?.visibility = View.GONE
@@ -293,10 +367,10 @@ class MainActivity : AppCompatActivity() {
             lp.topMargin = Ui.dp(this, 18)
             b.layoutParams = lp
             b.setOnClickListener {
-                col.removeView(b)
-                (col.findViewWithTag<TextView>("msg"))?.text = "Opening your admin page"
-                col.findViewWithTag<View>("bar")?.visibility = View.VISIBLE
-                c.postDelayed(coverTimeout, 12000)
+                // Take the message away and load the page again; it comes back if there's still no internet.
+                cover = null
+                (c.parent as? ViewGroup)?.removeView(c)
+                paintPageStrip()
                 web?.reload()
             }
             col.addView(b)
@@ -321,13 +395,26 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // The page has signed in and is showing the dashboard: take the cover away.
+        // The page has signed in and is showing Today: the splash goes.
         @JavascriptInterface
         fun ready() { if (ours()) runOnUiThread { hideCover() } }
 
         // The page could not reach the server while signing in.
         @JavascriptInterface
         fun offline() { if (ours()) runOnUiThread { coverOffline() } }
+
+        // The colour for the phone's bottom area, from the page: the green bar's two colours, or one colour twice
+        // (an open pop-up, a full screen, or the plain page). "#rrggbb".
+        @JavascriptInterface
+        fun bar(start: String, end: String) {
+            if (!ours()) return
+            val a = try { android.graphics.Color.parseColor(start) } catch (e: Exception) { return }
+            val b = try { android.graphics.Color.parseColor(end) } catch (e: Exception) { a }
+            runOnUiThread {
+                pageBar = intArrayOf(a, b)
+                if (cover == null) paintStrip(a, b)
+            }
+        }
 
         // How tall the status bar is (dp), so the page's green header can sit under it.
         @JavascriptInterface

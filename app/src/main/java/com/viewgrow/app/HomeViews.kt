@@ -66,7 +66,7 @@ object HomeViews {
         val box = LinearLayout(ctx)
         box.orientation = LinearLayout.VERTICAL
         box.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        box.addView(notice(ctx, RED, "Almost at your limit.", "You have used $total of $limit contacts. Upgrade so new contacts keep being added to your phone."))
+        box.addView(notice(ctx, RED, "Almost full.", "You\u2019ve used $total of your $limit contacts. Increase your limit so new contacts keep coming."))
         val b = button(ctx, box, "Increase my contact limit", null)
         b.setOnClickListener { onUpgrade() }
         box.addView(b)
@@ -133,12 +133,12 @@ object HomeViews {
         c.setPadding(Ui.dp(ctx, 18), Ui.dp(ctx, 20), Ui.dp(ctx, 18), Ui.dp(ctx, 20))
         val title = TextView(ctx)
         title.tag = "bold"
-        title.text = "Contact limit reached"
+        title.text = "Your limit is full"
         title.textSize = 20f
         title.gravity = Gravity.CENTER
         title.setTextColor(color(ctx, R.color.dark))
         val sub = TextView(ctx)
-        sub.text = "You will not get new contacts added to your phone until you increase your limit."
+        sub.text = "You\u2019ve received all the contacts your limit allows. Increase it to keep getting new contacts."
         sub.textSize = 12.5f
         sub.gravity = Gravity.CENTER
         sub.setLineSpacing(Ui.dp(ctx, 4).toFloat(), 1f)
@@ -161,9 +161,9 @@ object HomeViews {
         title.setTextColor(color(ctx, R.color.dark))
         c.addView(title)
         val steps = listOf(
-            Pair("Message admin on WhatsApp and save his number", R.drawable.ic_chat),
-            Pair("View admin\u2019s status and reshare his post", R.drawable.ic_reshare),
-            Pair("Come back to the app for your new contacts", R.drawable.ic_download)
+            Pair("Message admin on WhatsApp and save his number", R.drawable.ob_step_message),
+            Pair("View admin\u2019s status and reshare his post", R.drawable.ob_step_reshare),
+            Pair("Come back to the app for your new contacts", R.drawable.ob_step_saved)
         )
         steps.forEachIndexed { i, s ->
             val row = LinearLayout(ctx)
@@ -192,10 +192,8 @@ object HomeViews {
             text.layoutParams = tlp
 
             val icon = ImageView(ctx)
+            // A full-colour picture (rounded green square drawn in the picture), no tint or padding.
             icon.setImageResource(s.second)
-            icon.setBackgroundResource(R.drawable.bg_step_icon)
-            icon.setPadding(Ui.dp(ctx, 8), Ui.dp(ctx, 8), Ui.dp(ctx, 8), Ui.dp(ctx, 8))
-            ImageViewCompat.setImageTintList(icon, ColorStateList.valueOf(color(ctx, R.color.green_text)))
             icon.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 36), Ui.dp(ctx, 36))
 
             row.addView(num)
@@ -248,12 +246,13 @@ object HomeViews {
         n.setTextColor(color(ctx, R.color.green_text))
         inner.addView(d)
         inner.addView(n)
+        // The arrow shows on every row so the list lines up; only rows with people open (onClick set).
+        val arrow = ImageView(ctx)
+        arrow.setImageResource(R.drawable.ic_chevron_right)
+        arrow.setColorFilter(color(ctx, R.color.text2))
+        arrow.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 16), Ui.dp(ctx, 16)).also { it.marginStart = Ui.dp(ctx, 6) }
+        inner.addView(arrow)
         if (onClick != null) {
-            val arrow = ImageView(ctx)
-            arrow.setImageResource(R.drawable.ic_chevron_right)
-            arrow.setColorFilter(color(ctx, R.color.text2))
-            arrow.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 16), Ui.dp(ctx, 16)).also { it.marginStart = Ui.dp(ctx, 6) }
-            inner.addView(arrow)
             row.isClickable = true
             row.isFocusable = true
             row.setOnClickListener { onClick() }
@@ -293,7 +292,8 @@ object HomeViews {
             val o = recent.optJSONObject(i) ?: continue
             val dayKey = o.optString("day")
             val cnt = o.optInt("count")
-            c.addView(historyRow(ctx, dayKey, cnt, true, if (onDay != null) ({ onDay(dayKey, cnt) }) else null))
+            // +0 days show the arrow too but do nothing when tapped (same as History).
+            c.addView(historyRow(ctx, dayKey, cnt, true, if (onDay != null && cnt > 0) ({ onDay(dayKey, cnt) }) else null))
         }
         return c
     }

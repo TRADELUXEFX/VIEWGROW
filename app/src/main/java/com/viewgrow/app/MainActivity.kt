@@ -119,10 +119,11 @@ class MainActivity : AppCompatActivity() {
                     is WelcomeFragment -> chrome(false, R.color.surface)
                     is SignUpFragment, is LogInFragment, is TextPageFragment, is FaqFragment, is DeleteAccountFragment, is PurchaseHistoryFragment, is PermissionsFragment -> chrome(false, R.color.surface)
                     is StopFragment -> chrome(false, R.color.surface, greenStripOn = false)
-                    is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> chrome(true, R.color.green_dark)
+                    is HomeFragment, is HistoryFragment, is HistoryDayFragment, is ProfileFragment -> {}
                 }
                 // The chat button shows on Home, History and Profile only.
                 fab.visibility = if (f is HomeFragment || f is HistoryFragment || f is ProfileFragment) View.VISIBLE else View.GONE
+                if (f is HomeFragment || f is HistoryFragment || f is HistoryDayFragment || f is ProfileFragment) refreshNav()
             }
         }, true)
 
@@ -379,6 +380,20 @@ class MainActivity : AppCompatActivity() {
     // History and Profile are for verified members only. The last answer from the database decides:
     // "NOT_VERIFIED" keeps the member on Home with a short message. No answer yet does not block.
     private fun notVerified(): Boolean = Status.last?.optString("state") == "NOT_VERIFIED"
+
+    // The bottom bar (Home, History, Profile) only shows for verified members. A member who is not verified
+    // stays on Home with no bar, so there is nothing to tap that they can't open. Called when a member screen
+    // opens and again when Home gets a fresh answer from the database (verified or not).
+    fun refreshNav() {
+        if (!::nav.isInitialized) return
+        val f = supportFragmentManager.findFragmentById(R.id.container)
+        if (f !is HomeFragment && f !is HistoryFragment && f !is HistoryDayFragment && f !is ProfileFragment) return
+        val show = !notVerified()
+        chrome(show, R.color.green_dark, greenStripOn = show)
+        // Not verified: Home already has a big "Message admin on WhatsApp" button, so the floating chat button hides.
+        if (!show) fab.visibility = View.GONE
+        else if (f !is HistoryDayFragment) fab.visibility = View.VISIBLE
+    }
 
     // The pop-up a member who is not verified gets when tapping History or Profile.
     private fun showVerifyPopup() {

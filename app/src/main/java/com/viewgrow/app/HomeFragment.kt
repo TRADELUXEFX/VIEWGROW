@@ -158,6 +158,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
         status = j
         Status.last = j
+        (activity as? MainActivity)?.refreshNav()
         val name = j.optString("name")
         if (name.isNotEmpty() && name != Store.name) {
             Store.name = name
@@ -281,11 +282,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     val n = Store.lastSyncCount
                     body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Contacts saved.", (if (n == 1) "1 new contact is" else "$n new contacts are") + " now in your phone."))
                 } else if (state == "ALREADY_TODAY") {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Already downloaded today.", "You\u2019ve used today\u2019s download. Come back tomorrow, after your reshare is verified."))
+                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "Done for today.", "Today\u2019s contacts are already in your phone. Reshare the admin\u2019s status tomorrow to get more."))
                 } else if (state == "NOTHING_NEW") {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "All caught up.", "You\u2019ve received all your contacts for now. New ones arrive after your next verified reshare."))
+                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No new contacts yet.", "Every contact you\u2019ve earned is already in your phone. Reshare the admin\u2019s status again to get more."))
                 } else {
-                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No contacts today.", "Nothing new to save. You\u2019re all set."))
+                    body.addView(HomeViews.notice(ctx, HomeViews.GREEN, "No new contacts this time.", "No other members were verified before this release. Reshare again to get contacts next time."))
                 }
             }
             else -> {

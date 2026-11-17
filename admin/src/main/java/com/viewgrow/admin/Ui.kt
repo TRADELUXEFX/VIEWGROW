@@ -421,4 +421,105 @@ object Ui {
             card.addView(pill(act, closeLabel, filled = true, danger = false, top = 20) { close() })
         }
     }
+
+    // A calendar in a pop-up, the same as the admin website's: tap a day to pick it at once.
+    // value and max are "yyyy-MM-dd"; days after max (today) can't be picked. Today has a green ring.
+    fun pickDate(act: Activity, value: String, max: String, onPick: (String) -> Unit) {
+        val utc = java.util.TimeZone.getTimeZone("UTC")
+        val start = value.ifEmpty { max }
+        if (start.length < 10 || max.length < 10) return
+        var y = start.substring(0, 4).toInt()
+        var m = start.substring(5, 7).toInt() - 1
+        val maxY = max.substring(0, 4).toInt()
+        val maxM = max.substring(5, 7).toInt() - 1
+        val months = arrayOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+        popup(act, null) { card, close ->
+            val box = LinearLayout(act)
+            box.orientation = LinearLayout.VERTICAL
+            card.setPadding(dp(act, 18), dp(act, 20), dp(act, 18), dp(act, 18))
+            card.addView(box)
+            fun arrow(label: String, enabled: Boolean, step: Int, redraw: () -> Unit): TextView {
+                val b = text(act, label, 22f, R.color.green_dark, "bold", center = true)
+                b.layoutParams = LinearLayout.LayoutParams(dp(act, 38), dp(act, 38))
+                b.gravity = Gravity.CENTER
+                b.background = shape(act, color(act, R.color.tint), 999)
+                b.alpha = if (enabled) 1f else 0.35f
+                if (enabled) b.setOnClickListener {
+                    m += step
+                    if (m < 0) { m = 11; y-- }
+                    if (m > 11) { m = 0; y++ }
+                    redraw()
+                }
+                return b
+            }
+            fun draw() {
+                box.removeAllViews()
+                // Month, with previous / next.
+                val top = LinearLayout(act)
+                top.orientation = LinearLayout.HORIZONTAL
+                top.gravity = Gravity.CENTER_VERTICAL
+                val atMax = y > maxY || (y == maxY && m >= maxM)
+                val title = text(act, months[m] + " " + y, 16f, R.color.dark, "bold", center = true)
+                title.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                top.addView(arrow("‹", true, -1) { draw() })
+                top.addView(title)
+                top.addView(arrow("›", !atMax, 1) { draw() })
+                box.addView(top)
+                // M T W T F S S
+                val wk = LinearLayout(act)
+                wk.orientation = LinearLayout.HORIZONTAL
+                wk.layoutParams = lp(act, 10)
+                listOf("M", "T", "W", "T", "F", "S", "S").forEach {
+                    val t = text(act, it, 12f, R.color.muted, "semibold", center = true)
+                    t.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                    t.setPadding(0, dp(act, 6), 0, dp(act, 6))
+                    wk.addView(t)
+                }
+                box.addView(wk)
+                // The days.
+                val c = java.util.Calendar.getInstance(utc)
+                c.clear(); c.set(y, m, 1)
+                val first = (c.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7      // Monday first
+                val n = c.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
+                var row: LinearLayout? = null
+                for (i in 0 until 42) {
+                    if (i % 7 == 0) {
+                        if (i >= first + n) break
+                        row = LinearLayout(act).also { r -> r.orientation = LinearLayout.HORIZONTAL; box.addView(r) }
+                    }
+                    val cell = FrameLayout(act)
+                    cell.layoutParams = LinearLayout.LayoutParams(0, dp(act, 42), 1f)
+                    val d = i - first + 1
+                    if (d in 1..n) {
+                        val ds = String.format(java.util.Locale.US, "%04d-%02d-%02d", y, m + 1, d)
+                        val sel = ds == value
+                        val t = text(act, "$d", 14f, if (sel) R.color.white else R.color.dark, "semibold", center = true)
+                        t.layoutParams = FrameLayout.LayoutParams(dp(act, 38), dp(act, 38), Gravity.CENTER)
+                        t.gravity = Gravity.CENTER
+                        when {
+                            sel -> t.background = shape(act, color(act, R.color.green), 999)
+                            ds == max -> t.background = shape(act, color(act, R.color.surface), 999, color(act, R.color.green), 2)
+                        }
+                        if (ds > max) t.alpha = 0.3f
+                        else t.setOnClickListener { close(); onPick(ds) }
+                        cell.addView(t)
+                    }
+                    row?.addView(cell)
+                }
+                // Cancel / Today.
+                val foot = LinearLayout(act)
+                foot.orientation = LinearLayout.HORIZONTAL
+                foot.layoutParams = lp(act, 14)
+                val cancel = pill(act, "Cancel", filled = false, danger = false, top = 0) { close() }
+                cancel.background = shape(act, color(act, R.color.surface), 999, color(act, R.color.green_dark), 2)
+                cancel.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).also { it.marginEnd = dp(act, 10) }
+                val today = pill(act, "Today", filled = true, danger = false, top = 0) { close(); onPick(max) }
+                today.minHeight = dp(act, 46)
+                today.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                foot.addView(cancel); foot.addView(today)
+                box.addView(foot)
+            }
+            draw()
+        }
+    }
 }

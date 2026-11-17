@@ -2,6 +2,76 @@
 
 Each change is one migration file. Newest first.
 
+## Website v72 + app v38 (17 Nov 2026): onboarding pictures, no database change
+- Member app: same screens, same layout and text; only the icons change to full-colour pictures in the banner style. Welcome: sign-up form, reshare, new viewers (ob_signup / ob_reshare / ob_viewers). Allow Contacts: contact card (ob_contacts). Allow Notifications: bell (ob_bell). Home, not verified, "3 quick steps": message, reshare, saved (ob_step_*). Files: WelcomeFragment.kt, PermissionsFragment.kt, HomeViews.kt, res/drawable-nodpi/ob_*.png. Not built or tested on a phone yet.
+- Member site (index.js, style.css): the same three pictures in "3 quick steps to new contacts" on Home (not verified).
+
+## Website v71 (17 Nov 2026): one icon set and new banner pictures, no database change
+- Member site (app.html, index.js, style.css): Home / History / Profile, log out, dark mode (moon / sun), Import and the sign-up-closed lock use one icon style (same 2px lines and rounded ends, with a soft filled part; the open tab's filled part is stronger). New flat banner pictures: phone with a clock and moon (Reshare verified), contact cards with a download badge (contacts ready), phone with a tick (Saved), calendar with a tick (Done for today), empty tray (No new contacts), browser (Open in Chrome or Safari), full gauge (limit full). The badge rises and the tick / arrow pops as before. The chat icon is unchanged.
+- Admin page (admin.html): bottom bar icons (Today, Lists, Users, Settings) in the same style.
+
+## Website v70 + app v37 (17 Nov 2026): animations, no database change
+- Member site (index.js, style.css): the Contacts received number counts up and the gauge fills when Home first opens; banners slide in and their picture moves a little (moon rises, tick pops); the Verified badge shines once; the countdown seconds tick; Import shows a spinner, then a tick, then the saved screen; History cards come in one after another.
+- Admin page (admin.js, style.css): Today's numbers count up (and again when they change); pop-ups rise from the bottom with a small bounce; list rows come in one after another. No press animations on buttons.
+- Admin app (ShotsActivity.kt): on the Logged screen the tick pops in, "22 logged" counts up and the rest slides up.
+- All animations are off when the phone is set to reduce motion (website) or animations are turned off (admin app). Not tested on a phone yet.
+
+## Website v69 (17 Nov 2026): wording put back, no database change
+- Member site (index.js). Only the asked-for wording stays changed: "48 new contacts. Tap Import to add them to your phone.", the privacy line, and the centred "Reshare tomorrow to get more contacts." line after Import. Put back as in v67: Reshare verified, Done for today, No new contacts yet, No new contacts this time, Your limit is full, Download again approved, and the Instagram/WhatsApp text. After Import, the full "Import them" steps card is back under the "Saved 48 contacts" banner.
+
+## Website v68 (17 Nov 2026): shorter banner wording, sign-up closed screen, no database change
+- Member site (index.js, app.html, style.css). Shorter banners: "48 new contacts. Tap Import to add them to your phone.", "48 contacts saved. Open the file in your Downloads and choose Contacts.", "Reshare verified. Your new contacts arrive tonight at 10pm.", "Done for today. Reshare tomorrow to get more contacts.", "No new contacts yet. You have them all. Reshare to get more.", "Your limit is full. Increase it to keep getting new contacts.", etc. "Almost full" text removed (the red gauge shows it). Privacy line: "Keep the file private. Sharing it gets you banned." (not shown inside Instagram/WhatsApp, where there is no Import). After Import, the bottom line is centred: "Reshare tomorrow to get more contacts." Sign-up closed: the form is hidden; a centred lock, "Sign-up is closed right now", and "I have an account: Log in".
+
+## Website v67 (17 Nov 2026): message banners (design D), one at a time, with a close button, no database change
+- Member site (index.js, app.html, style.css). Every message on Home (and "Sign-up is closed" on the sign-up page) is now a coloured banner with a small picture: green good news, amber do something, red a problem. Only one banner shows at a time: "Download again approved" and the Instagram/WhatsApp warning are written into the "contacts are ready" banner; "Almost full" is a short red line over the Increase button; after Import, one "Saved 48 contacts" banner says how to import (the separate "Import them" box is gone). Every banner has a ✕: it slides away and stays closed on that phone until the message changes (next day or a new state). The app is not changed yet.
+
+## Website v66 + app v36 (17 Nov 2026): clearer member messages, no database change
+- Wording only (website index.js; app HomeFragment.kt, HomeViews.kt). "All caught up" → "No new contacts yet. You've imported every contact you've earned. Reshare the admin's status again to get more." "Already downloaded today" → "Done for today…". "No contacts today" → "No new contacts this time…". "Almost at your limit" → "Almost full…". "Contact limit reached" → "Your limit is full…". "Reshare verified" now says "Come back then to import them". Also: "20 new contacts are ready", "Open this page in Chrome or Safari", "Download again approved", "Nothing to import right now". The look of the message boxes is not changed yet.
+
+## Website v65 (17 Nov 2026): limit screens tidied, no database change
+- Member site (index.js, style.css). Limit reached: no "Get new contacts in" countdown (nothing comes until the limit is raised); the reason comes first ("Contact limit reached. You have received all 500 contacts your limit allows…") and then the "Increase my contact limit" button (was "UPGRADE CONTACT LIMIT" in capitals, above the note). Contacts ready: "Keep contact files private…" is a short red line under Import contacts instead of a box, so at 90% only one red box ("Almost at your limit") shows. WhatsApp messages unchanged.
+
+## App v35 (17 Nov 2026): Log day picked on a calendar, no database change
+- Admin app: the day on the Log screen (top right, with a calendar icon) opens a calendar pop-up like the admin website's: month with ‹ ›, today ringed in green, later days greyed out, tap a day to pick it, Cancel / Today. Any day up to today (it used to be a list of the last 7 days). Files: Ui.kt (pickDate), ShotsActivity.kt, res/drawable/ic_calendar.xml. Not built or tested on a phone yet.
+
+## App v34 (17 Nov 2026): new Log check screen in the admin app, no database change
+- Admin app (admin/.../ShotsActivity.kt): the screenshot screens are titled just "Log". The check screen's green header has "Log" on the left, the day on the right (tap to change it) and three tabs: Ready, Check (amber dot while something is waiting) and Skipped. Tap a tab or swipe left / right. Ready has Tick all / Untick all; Check has a Choose button per unsure name and shows "All checked" when done; Skipped lists the non-members. The Log button stays at the bottom and shows "Logging 22…" while it saves. You still check and tap Log; nothing is logged by itself.
+- Website unchanged (still v64). Not built or tested on a phone yet.
+
+## Website v64 + app v33 (17 Nov 2026): admin bottom bar like the member app, no database change
+- Admin page (style.css, admin.js): the bottom bar is now the member app's: full width, green gradient, round top corners, white icons (open tab solid white, others faded); darker green in dark mode. Same width as the page on a computer. "Remind this group" sits just above it and the list scrolls clear of it.
+- Admin app (admin/.../MainActivity.kt): the phone's own bottom area (under the home line) takes the colour the page asks for: green under the bar, white under an open pop-up or full screen. Sign in and Setup keep the normal bar. Needs website v64 for the green (an older website just gives white).
+- Not built or tested on a phone yet.
+
+## Website v63 + app v32 (17 Nov 2026): no bottom bar until verified; admin app splash, no database change
+- Member site (index.js, screens.css) and member app (MainActivity.kt, HomeFragment.kt): members who are not verified (or still need to enter a name) see Home only, with no Home / History / Profile bar. The app also hides its floating chat button then (Home already has "Message admin on WhatsApp"); the "only available to verified members" pop-up can no longer appear. The bar comes back as soon as the status says verified.
+- Admin app: opens with the member app's splash (icon in the middle) on green, kept until the admin page has signed in (at most 10 seconds), then Today. The green "Opening your admin page" screen is gone; a green "No internet connection" screen with Try again only appears if the page can't load.
+- App History arrows and the Profile moon from app v30 are included. Not built or tested yet.
+
+## App v30 (17 Nov 2026): arrows on every day, moon on Profile, no database change
+- Android member app only (play-ready v30). History: the amber (reshared, nobody joined) and red (did not reshare) day cards now show the side arrow like every other day; they still do nothing when tapped. Home Recent: every row shows the arrow; +0 rows no longer open an empty day. Profile: the light/dark button (moon / sun) sits in the green header next to Log out, as on website v62.
+- Files: app/src/main/java/com/viewgrow/app/HomeViews.kt, ProfileFragment.kt; res/layout/item_history_missed.xml, item_history_quiet.xml, fragment_profile.xml. Not built or tested yet (GitHub builds it).
+
+## 20261117120000: History opened day + People lists, website v62
+- Status: APPLIED 17 Nov 2026 by the owner. Confirmed: pg_proc shows web_day_contacts and web_people.
+- Adds two public read-only functions: `web_day_contacts(p_phone, p_pin, p_day)` (the people of one day) and `web_people(p_phone, p_pin, p_offset, p_limit)` (everyone the member has imported, newest first). Both read only the logged-in member's own `web_received` rows, so contacts that are not yet imported or are over the limit are never shown. No table changed, nothing deleted.
+- Website v62 (no other database change): bottom bar (Home, History, Profile), History with green / amber / red day cards (red = a day in between with no reshare, filled in on the page; amber = reshared, nobody joined), opened day with name, number and a WhatsApp chat button, Profile (name, number, FAQ, Terms, Privacy, Delete my account, Log out). Dark mode button is in the green header (Home and Profile). Every day card and Home Recent row shows the side arrow; only days with people open (amber, red and +0 days do nothing when tapped, as in the app). `web_people` is not used by any screen yet (the People tab was left out on purpose).
+- Files: `app.html`, `index.js`, new `screens.css`. The Android app is not changed.
+- Not tested live yet: History, tap a day, chat button, Profile links, dark mode on Profile, back button on the opened day.
+
+## Website v61 (17 Nov 2026): member dashboard looks like the app Home
+- No database change. Files: `app.html` (dashboard header and slots), `index.js` (`render`, theme icons), `style.css` (block at the end). Needs only the website deploy.
+- Removed from the dashboard: the "Available now" box (the count now shows in a notice when files are ready) and the old top bar.
+- Not tested live yet: log in, a verified day, Import contacts, Increase my contact limit link, chat button, dark mode.
+
+## 20261117100000: saved messages (Message all members), website v60
+- Status: APPLIED 17 Nov 2026 by the owner. Pre-check passed (_web_admin_ok exists: true). Confirmed: web_admin_saved_list returns {ok: true, rows: []}.
+- Adds table admin_saved_messages (RLS on, no public access) and admin functions web_admin_saved_list(p_key), web_admin_saved_add(p_key, p_title, p_body, p_mode, p_url), web_admin_saved_delete(p_key, p_id). Changes no existing function.
+- Website (admin.js, style.css): the Message all members sheet is now Title, Message, Link, with two icons beside Link. App icon = tapping opens the app (no link). Chat icon = tapping opens the admin's WhatsApp chat (the app already knows the number). Neither on = the typed https link, or the app if empty. Send to all members, then Save and Saved list (replaces the bottom Cancel; the top x closes). The old grey text under the heading and the link hint line are gone. The heading now lines up with the x.
+- Saved list: tapping a row loads it into the sheet to edit and send; the trash icon deletes at once (no question). Save and the list need the migration above; without it the buttons say so.
+- Edge Function notify-status: kind "all" also accepts open: "admin" (tap opens the admin's WhatsApp chat). Status: DEPLOYED 17 Nov 2026 by the owner. Confirmed: the deployed code has the toAdmin change (checked from the downloaded function). Not yet tested live: the chat icon and app icon sends.
+- No app change, no versionCode change. Phones on the current app open the admin chat for open "admin" (already supported in StatusPush.kt).
+
 ## 20261116260000: saved list shows the time logged and app / website
 - Status: APPLIED 16 Nov 2026 by the owner. Pre-check passed (logged_at and app_seen_at, both timestamp with time zone). Confirmed: the function has app_seen_at, the key works, and the 15 Nov list's first row has at, id and app.
 - Re-creates web_admin_pool_list (same arguments, total, order and cap) with three more fields per row: id, at (web_verifications.logged_at) and app (web_users.app_seen_at is not null). The old definition was read from the live database on 16 Nov 2026 and kept as is otherwise.
@@ -255,3 +325,8 @@ Status: captured with `supabase db pull` (see README)
 - Import tip card (shown after a download): close (×) button added. It hides the tip for the current visit only.
 - After a download, a 'Back to dashboard' button returns to the dashboard (it reloads the status). Before, the download screen had no way back.
 - Notices in the member app are one sentence each. The bold lead-in now sits inline. Saved notice: 'Saved N contacts to <file>.' Import tip is one line with a close (×).
+
+## Message all members: optional link
+- The admin's "Message all members" sheet has an optional Link field. With a link, tapping the notification opens it; without one it opens the app, as before.
+- Edge Function `notify-status` (kind "all") accepts `url` (https only; anything else is refused with BAD_LINK) and sends `open: "link"` + `url`. Redeploy this function in Supabase.
+- Member app reads `url` in `StatusPush.kt`. Older app versions ignore it and just open the app. No database change.
