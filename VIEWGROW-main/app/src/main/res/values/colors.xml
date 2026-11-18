@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same palette as the ViewGrow website (style.css). -->
+<resources>
+    <color name="white">#FFFFFF</color>
+    <!-- Launch splash background: dark, with the icon on it. -->
+    <color name="splash_bg">#111B21</color>
+    <color name="green">#1FAA59</color>
+    <color name="green_dark">#158245</color>
+    <color name="tint">#CDEBD8</color>
+    <color name="border">#B8DEC6</color>
+    <color name="field">#E6F4EA</color>
+    <color name="text">#555555</color>
+    <color name="text2">#7A8580</color>
+    <color name="muted">#8A928C</color>
+    <color name="dark">#111B21</color>
+    <color name="red_dark">#B3413D</color>
+    <color name="red_bg">#FBEAE9</color>
+    <color name="amber">#E8A93B</color>
+    <color name="amber_bg">#FCF3E3</color>
+    <color name="amber_text">#8A5A00</color>
+    <color name="amber_tag">#F6E2B8</color>
+    <color name="out_muted">#B9C1BC</color>
+    <color name="header_text_soft">#D6F4E2</color>
+    <!-- Card and page surface: white in light mode, dark in dark mode. -->
+    <color name="surface">#FFFFFF</color>
+    <color name="seg_track">#F0F5F2</color>
+    <!-- Green used for text on light or dark surfaces: dark green in light mode, light green in dark mode. -->
+    <color name="green_text">#158245</color>
+    <!-- Filled button green. Dark mode uses the deeper green so white text stays readable. -->
+    <color name="btn_fill">#1FAA59</color>
+    <!-- Filled red button (Log out). White text on it in both modes. -->
+    <color name="btn_red">#C9403B</color>
+    <!-- Text on the green header and nav bar. Same in light and dark mode. -->
+    <color name="header_label">#D9F2E4</color>
+    <color name="nav_inactive">#B3FFFFFF</color>
+    <!-- Switch track when off: clearly darker than the card so the white thumb stands out. -->
+    <color name="switch_off">#C3CEC8</color>
+    <!-- Launcher icon background and launch splash (the icon's own light grey). -->
+    <color name="ic_launcher_bg">#F6F6F6</color>
+    <color name="glass">#26FFFFFF</color>
+    <color name="glass_line">#40FFFFFF</color>
+    <color name="white_soft">#D9FFFFFF</color>
+    <!-- Selected side of the History toggle: white pill, so its text stays dark green in light and dark mode. -->
+    <color name="tog_on_text">#158245</color>
+    <!-- Banned and Blocked screens: header colours, same in light and dark mode. -->
+    <color name="ban_start">#D9534F</color>
+    <color name="ban_end">#B3413D</color>
+    <color name="lock_start">#D9962B</color>
+    <color name="lock_end">#A86A12</color>
+    <!-- History: a day with no contacts (red card). -->
+    <color name="red_border">#F0C9C7</color>
+    <color name="red_tag">#F4CFCD</color>
+    <!-- Step dashes on the green permissions header: not reached yet (same in light and dark mode). -->
+    <color name="dash_off">#59FFFFFF</color>
+
+    <!-- Welcome screen -->
+    <color name="welcome_hero_start">#6FDD94</color>
+    <color name="welcome_hero_end">#0A6834</color>
+    <color name="welcome_lime">#DEFFA0</color>
+    <color name="welcome_line">#B0DEC4</color>
+    <color name="welcome_btn_stroke">#A8D6BA</color>
+
+    <!-- Explainer box on the Increase my contact limit pop-up: a clearer green than a normal card. -->
+    <color name="explain_bg">#C2E6D0</color>
+    <color name="explain_border">#9FD1B3</color>
+    <color name="explain_text">#2F3A35</color>
+</resources>

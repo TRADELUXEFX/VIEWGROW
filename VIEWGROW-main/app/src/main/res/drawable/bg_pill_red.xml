@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Filled red pill for the confirm button of a destructive pop-up (Delete). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/btn_red" />
+    <corners android:radius="999dp" />
+</shape>

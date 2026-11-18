@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "980870314989",
+    "project_id": "viewgrow-site",
+    "storage_bucket": "viewgrow-site.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:980870314989:android:2f864af7625d8c586c45e4",
+        "android_client_info": {
+          "package_name": "com.viewgrow.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASzIZ-f4b418yCTwBqyyk-8Jf4e2ZsuTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
