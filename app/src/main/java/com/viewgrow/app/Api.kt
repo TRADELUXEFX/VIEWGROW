@@ -28,7 +28,7 @@ object Api {
     }
 
     // The contact file can take a while to build on the server, so it gets longer.
-    private fun readTimeout(fn: String): Int = if (fn == "web_prepare_download") 60000 else if (fn == "web_verify_purchase") 30000 else 15000
+    private fun readTimeout(fn: String): Int = if (fn == "web_prepare_download" || fn == "web_app_restore") 60000 else if (fn == "web_verify_purchase") 30000 else 15000
 
     // Blocking. Only for background threads (the sync worker); screens use call().
     fun request(fn: String, args: JSONObject): ApiResult {

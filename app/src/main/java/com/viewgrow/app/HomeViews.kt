@@ -44,6 +44,33 @@ object HomeViews {
         return box
     }
 
+    // "Sync now" button on Home: a refresh icon and the words side by side, centred in one green pill.
+    // One tap checks the database and saves the contacts at once. The icon turns while it works (spin).
+    fun syncButton(ctx: Context, onClick: (View) -> Unit): View {
+        val row = LinearLayout(ctx)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER
+        row.setBackgroundResource(R.drawable.bg_pill_fill)
+        row.isClickable = true
+        row.isFocusable = true
+        row.minimumHeight = Ui.dp(ctx, 46)
+        row.layoutParams = below(ctx, 12)
+        val icon = ImageView(ctx)
+        icon.setImageResource(R.drawable.ic_sync)
+        icon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        icon.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 18), Ui.dp(ctx, 18)).also { it.marginEnd = Ui.dp(ctx, 8) }
+        val label = TextView(ctx)
+        label.tag = "semibold"
+        label.text = "Sync now"
+        label.textSize = 13f
+        label.setTextColor(color(ctx, R.color.surface))
+        label.setPadding(0, Ui.dp(ctx, 12), 0, Ui.dp(ctx, 12))
+        row.addView(icon)
+        row.addView(label)
+        row.setOnClickListener { onClick(icon) }
+        return row
+    }
+
     // "Increase my contact limit" button on Home. Always there for verified members.
     fun upgradeButton(ctx: Context, onClick: () -> Unit): View {
         val t = TextView(ctx)

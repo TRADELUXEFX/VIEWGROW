@@ -181,7 +181,9 @@ object AppSeen {
 // 10:10pm check and the 8am catch-up (Nightly.kt) remain as backups.
 class WakeWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): ListenableWorker.Result {
-        if (BackgroundSync.run(applicationContext) == false && runAttemptCount < 2) return ListenableWorker.Result.retry()
+        val ok = BackgroundSync.run(applicationContext)
+        // Database not reachable, the release not landed yet, or the save failed: try again in a few minutes.
+        if ((ok == false || BackgroundSync.retryWanted) && runAttemptCount < 4) return ListenableWorker.Result.retry()
         return ListenableWorker.Result.success()
     }
 
@@ -191,6 +193,7 @@ class WakeWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
             if (!Store.loggedIn || Store.syncPaused || Store.banned) return
             val req = OneTimeWorkRequestBuilder<WakeWorker>()
                 .setInitialDelay((Math.random() * 90_000).toLong(), TimeUnit.MILLISECONDS)
+                .setBackoffCriteria(androidx.work.BackoffPolicy.LINEAR, 3, TimeUnit.MINUTES)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
             WorkManager.getInstance(ctx).enqueueUniqueWork("viewgrow-wake", ExistingWorkPolicy.KEEP, req)

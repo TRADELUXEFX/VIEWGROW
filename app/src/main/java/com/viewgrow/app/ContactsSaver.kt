@@ -16,6 +16,17 @@ object ContactsSaver {
 
     class Card(val name: String, val number: String, val note: String)
 
+    private val markerName = Regex("^ViewGrow \\d+$")
+
+    // The name shown in the phone: "Team Limitless" becomes "Team Limitless VG". Done in two places on purpose
+    // (name ending + company field) so a VG contact is easy to spot. Not added twice if the name already ends in
+    // VG, and not added to the member's own marker contact ("ViewGrow <id>") or "ViewGrow Admin".
+    fun displayName(name: String): String {
+        val n = name.trim()
+        if (n.isEmpty() || markerName.matches(n) || n == "ViewGrow Admin") return n
+        return if (n.endsWith(" $TAG", ignoreCase = false)) n else "$n $TAG"
+    }
+
     fun hasPermission(ctx: Context): Boolean =
         ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.WRITE_CONTACTS) == PackageManager.PERMISSION_GRANTED
@@ -99,7 +110,11 @@ object ContactsSaver {
     }
 
     // Saves every card whose number is not in the phone yet. Returns false if the phone refused.
-    fun save(ctx: Context, cards: List<Card>): Boolean {
+    fun save(ctx: Context, cards: List<Card>): Boolean = saveCounting(ctx, cards) >= 0
+
+    // Same as save, but returns how many of the member's contacts were actually put in (the member's own
+    // "ViewGrow <id>" marker card is not counted), or -1 if the phone refused.
+    fun saveCounting(ctx: Context, cards: List<Card>): Int {
         val have = existingKeys(ctx)
         val todo = cards.filter { have.add(key(it.number)) }
         var i = 0
@@ -110,11 +125,12 @@ object ContactsSaver {
             try {
                 ctx.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
             } catch (e: Exception) {
-                return false
+                return -1
             }
             i = end
         }
-        return true
+        val marker = Regex("^ViewGrow \\d+$")
+        return todo.count { !marker.matches(it.name.trim()) }
     }
 
     private fun addCard(ops: ArrayList<ContentProviderOperation>, c: Card) {
@@ -129,7 +145,7 @@ object ContactsSaver {
             ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                 .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, at)
                 .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, c.name)
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayName(c.name))
                 .build()
         )
         ops.add(

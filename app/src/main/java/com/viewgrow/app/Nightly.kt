@@ -56,6 +56,7 @@ object Nightly {
 
     private fun releaseRequest(): OneTimeWorkRequest = OneTimeWorkRequestBuilder<ReleaseCheckWorker>()
         .setInitialDelay(delayTo(22, 10, TimeZone.getTimeZone("Africa/Lagos")), TimeUnit.MILLISECONDS)
+        .setBackoffCriteria(androidx.work.BackoffPolicy.LINEAR, 3, TimeUnit.MINUTES)
         .setConstraints(online)
         .build()
 
@@ -172,7 +173,7 @@ class ReleaseCheckWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, p
     override fun doWork(): ListenableWorker.Result {
         val ok = BackgroundSync.run(applicationContext)
         // Database not reachable yet (for example the release is still running): try again shortly.
-        if (ok == false && runAttemptCount < 3) return ListenableWorker.Result.retry()
+        if ((ok == false || BackgroundSync.retryWanted) && runAttemptCount < 4) return ListenableWorker.Result.retry()
         Nightly.bookNextRelease(applicationContext)
         return ListenableWorker.Result.success()
     }

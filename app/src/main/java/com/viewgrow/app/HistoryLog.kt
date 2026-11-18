@@ -27,10 +27,17 @@ object HistoryLog {
 
     private fun key(number: String): String = number.filter { it.isDigit() }.takeLast(10)
 
+    // The member's own marker contact from the database: named "ViewGrow" or "ViewGrow <id>", with a
+    // placeholder number (+234000 and the id). It is only there so Delete My Contacts can find the others.
+    // It is never shown anywhere in History, so it is left out when writing and when reading.
+    private val markerName = Regex("^ViewGrow(\\s+\\d+)?$", RegexOption.IGNORE_CASE)
+    private fun isMarker(name: String, number: String): Boolean =
+        markerName.matches(name.trim()) || number.filter { it.isDigit() }.startsWith("234000")
+
     // Today as yyyy-MM-dd on the phone's clock.
     fun today(): String = DayText.iso(Calendar.getInstance())
 
-    // Adds the contacts of one sync to that day. The member's own marker contact ("ViewGrow") is left out,
+    // Adds the contacts of one sync to that day. The member's own marker contact ("ViewGrow" or "ViewGrow <id>") is left out,
     // and a number already logged for the day is not added twice.
     @Synchronized
     fun add(ctx: Context, cards: List<ContactsSaver.Card>, day: String) {
@@ -40,7 +47,7 @@ object HistoryLog {
         for (i in 0 until arr.length()) seen.add(key(arr.getJSONObject(i).optString("p")))
         var added = 0
         for (c in cards) {
-            if (c.name.equals("ViewGrow", ignoreCase = true)) continue
+            if (isMarker(c.name, c.number)) continue
             val k = key(c.number)
             if (k.isEmpty() || !seen.add(k)) continue
             arr.put(JSONObject().put("n", if (c.name == c.number) "" else c.name).put("p", c.number))
@@ -56,6 +63,7 @@ object HistoryLog {
         val out = ArrayList<Entry>()
         for (i in 0 until arr.length()) {
             val o = arr.optJSONObject(i) ?: continue
+            if (isMarker(o.optString("n"), o.optString("p"))) continue
             out.add(Entry(o.optString("n"), o.optString("p")))
         }
         return out
@@ -76,6 +84,7 @@ object HistoryLog {
                 val k = key(number)
                 if (k.isEmpty()) continue
                 val name = o.optString("n")
+                if (isMarker(name, number)) continue
                 val a = map[k]
                 if (a == null) {
                     map[k] = Acc(name, number, day)
@@ -97,7 +106,12 @@ object HistoryLog {
         val keys = all.keys()
         while (keys.hasNext()) {
             val day = keys.next()
-            if (day >= from) n += all.optJSONArray(day)?.length() ?: 0
+            if (day < from) continue
+            val arr = all.optJSONArray(day) ?: continue
+            for (i in 0 until arr.length()) {
+                val o = arr.optJSONObject(i) ?: continue
+                if (!isMarker(o.optString("n"), o.optString("p"))) n++
+            }
         }
         return n
     }

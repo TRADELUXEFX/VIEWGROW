@@ -33,6 +33,14 @@ object Release {
         return ((t / 86400000L + 1L) * 86400000L - t) / 1000L
     }
 
+    // The database's current day as yyyy-MM-dd. The day rolls at 10pm Lagos (21:00 UTC), so it is the UTC date of
+    // now + 3 hours, the same rule as the fallback above. Before 10pm, today's reshare has no contacts yet.
+    fun dbToday(): String {
+        val f = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        f.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        return f.format(java.util.Date(System.currentTimeMillis() + 10800000L))
+    }
+
     fun format(left: Long): String {
         val h = left / 3600L
         val m = (left % 3600L) / 60L

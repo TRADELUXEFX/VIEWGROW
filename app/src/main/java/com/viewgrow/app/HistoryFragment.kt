@@ -188,6 +188,17 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         if (mode == 1) { renderPeople(list, inflater); return }
         val shown = withMissedDays()
         for ((iso, count) in shown) {
+            // Today's reshare, before 10pm: the release has not happened, so "no new members" would not be true yet.
+            // A calm card says the member is verified and when the contacts arrive. After the release this day shows
+            // the real count (or the real "no new members").
+            if (count == 0 && iso == Release.dbToday()) {
+                val wait = inflater.inflate(R.layout.item_history_pending, list, false)
+                wait.findViewById<TextView>(R.id.h_date).text = DayText.label(iso)
+                wait.findViewById<TextView>(R.id.h_sub).text = "Today \u00B7 Contacts arrive at 10pm"
+                Fonts.apply(wait)
+                list.addView(wait)
+                continue
+            }
             if (count == 0) {
                 // The member reshared (the database has the day) but nobody joined: amber card, not tappable.
                 val quiet = inflater.inflate(R.layout.item_history_quiet, list, false)
@@ -233,6 +244,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             !loadedOnce -> {}
             totalDays == 0 -> setFoot("No verified days yet.", false)
             !allLoaded -> setFoot("Load more", true)
+            list.childCount == 0 -> setFoot("Your first contacts arrive tonight at 10pm.", false)
             else -> setFoot("", false)
         }
     }

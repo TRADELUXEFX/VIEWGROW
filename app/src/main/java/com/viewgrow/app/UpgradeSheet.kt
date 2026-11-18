@@ -73,7 +73,8 @@ object UpgradeSheet {
         val buy = v.findViewById<MaterialButton>(R.id.up_buy)
         var picked = RECOMMENDED // the recommended (middle) pack starts picked
         // Pack size -> price from Google Play. null while loading, empty if Google Play is not available.
-        var prices: Map<Int, String>? = null
+        // Starts with the prices Google Play sent last time (kept on the phone), so they show at once.
+        var prices: Map<Int, String>? = BillingManager.cachedPrices(ctx)
         var showing = true
         val rows = v.findViewById<LinearLayout>(R.id.up_packs)
         val views = ArrayList<View>()
@@ -154,8 +155,8 @@ object UpgradeSheet {
         // Real prices from Google Play, in the member's own currency.
         BillingManager.loadPrices(ctx) { got ->
             if (!showing) return@loadPrices
-            prices = got
-            paint()
+            // A failed refresh does not wipe prices that are already showing.
+            if (got.isNotEmpty() || prices == null) { prices = got; paint() }
         }
         buy.setOnClickListener {
             val act = activityOf(ctx)

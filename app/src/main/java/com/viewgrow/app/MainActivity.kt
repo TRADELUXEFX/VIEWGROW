@@ -171,6 +171,8 @@ class MainActivity : AppCompatActivity() {
             { refreshAfterPurchase() }
         )
         BillingManager.retryOpenPurchases(this)
+        // Ask Google Play for the pack prices now, so the Increase my contact limit pop-up shows them at once.
+        BillingManager.prefetch(this)
         // Opened from the "permission is off" notification: go straight to the fix, no pop-up first.
         if (intent?.getBooleanExtra(PermissionWatch.EXTRA_FIX, false) == true) {
             intent.removeExtra(PermissionWatch.EXTRA_FIX)

@@ -83,8 +83,46 @@ object BillingManager {
         })
     }
 
+    // The last prices Google Play sent, kept in memory and on the phone, so the pop-up can show them at once
+    // instead of waiting for Google Play to answer. They are refreshed every time Google Play answers.
+    private var cached: Map<Int, String>? = null
+    private fun prefs(ctx: Context) = ctx.applicationContext.getSharedPreferences("viewgrow_prices", Context.MODE_PRIVATE)
+
+    fun cachedPrices(ctx: Context): Map<Int, String>? {
+        cached?.let { return it }
+        val s = prefs(ctx).getString("prices", null) ?: return null
+        return try {
+            val j = JSONObject(s)
+            val m = HashMap<Int, String>()
+            for (size in PRODUCT_IDS.keys) { val p = j.optString(size.toString()); if (p.isNotEmpty()) m[size] = p }
+            if (m.size == PRODUCT_IDS.size) { cached = m; m } else null
+        } catch (e: Exception) { null }
+    }
+
+    private fun saveCache(ctx: Context, m: Map<Int, String>) {
+        if (m.size != PRODUCT_IDS.size) return
+        cached = m
+        val j = JSONObject()
+        for ((k, v) in m) j.put(k.toString(), v)
+        prefs(ctx).edit().putString("prices", j.toString()).apply()
+    }
+
+    // Asks Google Play for the prices as soon as the app opens (logged in), so they are ready before the pop-up is.
+    fun prefetch(ctx: Context) {
+        if (!Store.loggedIn || Store.banned) return
+        loadPrices(ctx) { }
+    }
+
     // Asks Google Play for the three packs. done gets pack size -> price text (empty map if Play is not available).
+    // If the first try gets nothing (Google Play slow to connect), it tries once more after 2 seconds.
     fun loadPrices(ctx: Context, done: (Map<Int, String>) -> Unit) {
+        queryPrices(ctx) { first ->
+            if (first.isNotEmpty()) { done(first); return@queryPrices }
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ queryPrices(ctx, done) }, 2000L)
+        }
+    }
+
+    private fun queryPrices(ctx: Context, done: (Map<Int, String>) -> Unit) {
         connect(ctx, { c ->
             val products = PRODUCT_IDS.values.map {
                 QueryProductDetailsParams.Product.newBuilder()
@@ -102,6 +140,7 @@ object BillingManager {
                         out[size] = price
                     }
                 }
+                saveCache(ctx, out)
                 done(out)
             }
         }, { done(emptyMap()) })
@@ -113,9 +152,19 @@ object BillingManager {
         val d = details[id]
         val c = client
         if (d == null || c == null || !c.isReady) {
-            onMessage?.invoke("Google Play is not available right now. Try again in a moment.")
+            // The price on screen may have come from the saved copy. Get the pack details from Google Play, then open it.
+            loadPrices(activity) { got ->
+                if (got.isNotEmpty() && details[id] != null && client?.isReady == true) open(activity, id)
+                else onMessage?.invoke("Google Play is not available right now. Try again in a moment.")
+            }
             return
         }
+        open(activity, id)
+    }
+
+    private fun open(activity: Activity, id: String) {
+        val d = details[id] ?: return
+        val c = client ?: return
         val params = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(
                 listOf(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(d).build())

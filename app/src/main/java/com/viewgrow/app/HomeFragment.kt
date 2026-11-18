@@ -29,6 +29,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private var lastLoad = 0L
     private var lastAuto = 0L
     private var syncError: String? = null
+    // "Sync now" was tapped: check the database, then save at once if contacts are ready.
+    private var syncNowPending = false
     private var savingSpinner: Spinner? = null
     private var permShown: String? = null
     // Home's opening animations (number counts up, gauge fills, badge shines) play once per time Home opens.
@@ -151,10 +153,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val v = view ?: return
         val j = r.json
         if (j == null) {
+            syncNowPending = false
             if (status == null) showProblem(Api.netMessage(r.error)) else Ui.toast(v, Api.netMessage(r.error))
             return
         }
         if (!j.optBoolean("ok")) {
+            syncNowPending = false
             val code = j.optString("code")
             // Banned and Blocked get their own full screens.
             if (AccountGate.handle(activity as? MainActivity, j)) return
@@ -175,7 +179,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             Ui.bindUserHeader(v)
         }
         render()
-        maybeAutoSync()
+        if (syncNowPending) finishSyncNow(v) else maybeAutoSync()
     }
 
     private fun showProblem(message: String) {
@@ -230,6 +234,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // "Increase my contact limit": always there for verified members, even well under the limit.
         // At the limit it comes under the red banner instead (below).
         if (verified && state != "LIMIT_REACHED") {
+            val sync = HomeViews.syncButton(ctx) { syncNow() }
+            body.addView(sync)
+            if (syncNowPending || syncing) spin((sync as LinearLayout).getChildAt(0))
             body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
         }
 
@@ -381,7 +388,60 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         startSync()
     }
 
-    private fun startSync() {
+    // "Sync now": ask the database again, then (finishSyncNow) save the contacts if they are ready.
+    // Works at 10pm when the release has just happened, without leaving the app or waiting for the timer.
+    private fun syncNow() {
+        val ctx = context ?: return
+        val v = view ?: return
+        if (syncing || syncNowPending) return
+        if (!ContactsSaver.hasPermission(ctx)) {
+            Ui.toast(v, "Allow Contacts so ViewGrow can save your contacts.")
+            return
+        }
+        syncNowPending = true
+        render()
+        reload()
+    }
+
+    private fun finishSyncNow(v: View) {
+        syncNowPending = false
+        when (status?.optString("state")) {
+            // New contacts first, then anything the member deleted from the phone is put back.
+            "READY" -> { lastAuto = System.currentTimeMillis(); startSync(alsoRestore = true) }
+            "PREPARING" -> restoreDeleted("Contacts are not ready yet. Try again at the next release.")
+            else -> restoreDeleted("Nothing new to sync right now.")
+        }
+    }
+
+    // Puts back contacts the member already received but deleted. nothingMsg is shown when nothing was missing.
+    private fun restoreDeleted(nothingMsg: String?) {
+        val ctx = context ?: return
+        syncing = true
+        render()
+        Sync.restore(ctx) { n ->
+            syncing = false
+            if (!isAdded || view == null) return@restore
+            reload()
+            val v = view ?: return@restore
+            when {
+                n > 0 -> Ui.toast(v, if (n == 1) "1 deleted contact was put back in your phone." else "$n deleted contacts were put back in your phone.")
+                n == 0 -> if (nothingMsg != null) Ui.toast(v, nothingMsg)
+                else -> if (nothingMsg != null) Ui.toast(v, "Could not check your contacts. Please try again.")
+            }
+        }
+    }
+
+    // The refresh icon turns until the next time Home is drawn.
+    private fun spin(icon: View) {
+        android.animation.ObjectAnimator.ofFloat(icon, View.ROTATION, 0f, 360f).apply {
+            duration = 900
+            repeatCount = android.animation.ObjectAnimator.INFINITE
+            interpolator = android.view.animation.LinearInterpolator()
+            start()
+        }
+    }
+
+    private fun startSync(alsoRestore: Boolean = false) {
         val ctx = context ?: return
         syncing = true
         syncError = null
@@ -395,7 +455,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
             if (res.ok) {
                 syncError = null
-                reload()
+                if (alsoRestore) restoreDeleted(null) else reload()
             } else {
                 // Another sync (the timer) already running is not an error worth showing.
                 syncError = if (res.message.startsWith("Already syncing")) null else res.message

@@ -45,6 +45,28 @@ object Sync {
         }
     }
 
+    // "Sync now" also puts back contacts the member already received but deleted from the phone (web_app_restore).
+    // Gives the number put back, or -1 when it could not be checked (not logged in, no Contacts permission, no
+    // network, or the database function is not installed yet). Numbers already in the phone are skipped.
+    fun restore(ctx: Context, onDone: (Int) -> Unit) {
+        val app = ctx.applicationContext
+        pool.execute {
+            val n = if (running.compareAndSet(false, true)) {
+                try { restoreMissing(app) } finally { running.set(false) }
+            } else -1
+            main.post { onDone(n) }
+        }
+    }
+
+    private fun restoreMissing(ctx: Context): Int {
+        Store.init(ctx)
+        if (!Store.loggedIn || Store.banned || !ContactsSaver.hasPermission(ctx)) return -1
+        val r = Api.request("web_app_restore", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password))
+        val j = r.json ?: return -1
+        if (!j.optBoolean("ok")) return -1
+        return ContactsSaver.saveCounting(ctx, ContactsSaver.parse(j.optString("vcf")))
+    }
+
     // On a background thread only.
     fun runBlocking(ctx: Context): SyncResult {
         if (!running.compareAndSet(false, true)) return SyncResult(false, 0, "Already syncing. Please wait.")
@@ -150,7 +172,12 @@ object Notifier {
 // be reached (try again soon), and null when it was skipped or did not finish.
 // A clean run is remembered (Store.lastBgSyncAt), so the 3-day reminder knows the last time contacts were checked.
 object BackgroundSync {
+    // Set by run(): true when the night's contacts are not in the phone yet but should be soon (the release had not
+    // landed when we asked, or the save failed). The 10pm wake-up and the 10:10pm check use it to try again shortly.
+    @Volatile var retryWanted = false
+
     fun run(ctx: Context): Boolean? {
+        retryWanted = false
         Store.init(ctx)
         // Put the "Get new status viewers today" notification back if it was swiped away.
         ReshareReminder.show(ctx)
@@ -170,8 +197,14 @@ object BackgroundSync {
             return null
         }
         var status = j
+        // Verified but the release has not happened yet: at 10pm that means the database is a little late.
+        if (j.optString("state") == "PREPARING") retryWanted = true
         if (j.optString("state") == "READY") {
-            if (!Sync.runBlocking(ctx).ok) return null
+            val r = Sync.runBlocking(ctx)
+            if (!r.ok) {
+                retryWanted = !r.banned && !r.message.startsWith("Already syncing")
+                return null
+            }
             // The sync changed the total, so ask again before checking the limit.
             Api.request("web_status", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)).json
                 ?.takeIf { it.optBoolean("ok") }?.let { status = it }
