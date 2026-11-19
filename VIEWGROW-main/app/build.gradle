@@ -1,0 +1,94 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
+}
+
+def releaseKsPath = System.getenv('KEYSTORE_FILE')
+def hasReleaseKs = releaseKsPath && new File(releaseKsPath).exists()
+def runNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '0').toInteger()
+
+android {
+    namespace 'com.viewgrow.app'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.viewgrow.app"
+        minSdk 24
+        targetSdk 36
+        // Goes up by one on every GitHub build, so each APK installs over the last one.
+        versionCode 1 + runNumber
+        versionName "1.0.${runNumber}"
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseKs) {
+                storeFile new File(releaseKsPath)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS')
+                keyPassword System.getenv('KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Release key when the secrets are set. Without them the APK is signed with the debug key so test
+            // builds still install, but the Play bundle (bundleRelease) refuses to build, see the check below.
+            signingConfig hasReleaseKs ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    lint {
+        // Lint runs on release builds and its report is kept, but a warning does not stop the build.
+        checkReleaseBuilds true
+        abortOnError false
+    }
+
+    // Google Play only accepts an Android App Bundle signed with your own upload key.
+    bundle {
+        language { enableSplit = false }
+    }
+}
+
+// Never make a Play bundle with the debug key: Play Console would reject it.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(':app:bundleRelease') && !hasReleaseKs) {
+        throw new GradleException('bundleRelease needs the upload key: set KEYSTORE_FILE, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD.')
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.fragment:fragment-ktx:1.8.2'
+    implementation 'androidx.activity:activity-ktx:1.9.1'
+    // Background timer: checks for new contacts every 1h, 6h, 12h or 24h, even when the app is closed.
+    implementation 'androidx.work:work-runtime-ktx:2.9.1'
+    // Terms, Privacy and Contact us open the website inside the app.
+    implementation 'androidx.browser:browser:1.8.0'
+    // Google Play Billing: the contact packs are bought through Google Play. Play requires 8.0.0 or newer.
+    implementation 'com.android.billingclient:billing:8.0.0'
+    // Firebase Cloud Messaging: the "Today's status is up" alert (StatusPush.kt). No analytics.
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    implementation 'com.google.firebase:firebase-messaging'
+    // "Update ViewGrow" pop-up: asks Google Play whether a newer version exists (UpdateCheck.kt).
+    implementation 'com.google.android.play:app-update:2.1.0'
+    // "Rate this app": Google Play's own rating pop-up, asked once after a good save (Rating.kt).
+    implementation 'com.google.android.play:review:2.0.2'
+}

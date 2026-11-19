@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "A permission is off" pop-up: shown inside the app when it opens (or returns from Settings) and
+     Contacts or Notifications is off. The rows are added in code (MainActivity). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingStart="22dp"
+    android:paddingTop="18dp"
+    android:paddingEnd="22dp"
+    android:paddingBottom="22dp">
+
+    <ImageView
+        android:layout_width="110dp"
+        android:layout_height="88dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ill_blocked" />
+
+    <TextView
+        android:id="@+id/perm_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:tag="extrabold"
+        android:text="A permission is off"
+        android:textColor="@color/dark"
+        android:textSize="20sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:text="ViewGrow needs this to keep saving your contacts."
+        android:textColor="@color/text2"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:id="@+id/perm_rows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="vertical" />
+
+    <TextView
+        android:id="@+id/perm_fix"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_pill_fill"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:tag="semibold"
+        android:text="Fix now"
+        android:textColor="@color/white"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/perm_later"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_pill_outline"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:tag="semibold"
+        android:text="Later"
+        android:textColor="@color/green_text"
+        android:textSize="15sp" />
+</LinearLayout>

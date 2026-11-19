@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Message banner, green (good news). Same colours as the website. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="315" android:startColor="#36C774" android:endColor="#0E7E3E" />
+    <corners android:radius="20dp" />
+</shape>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:orientation="vertical">
+
+    <!-- Compact green header: History on the left, the total on the right, and the Days | People toggle underneath. -->
+    <LinearLayout
+        android:id="@+id/hero"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_hero"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="42dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:tag="extrabold"
+                android:text="History"
+                android:textColor="@color/white"
+                android:textSize="26sp" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+            <LinearLayout
+                android:id="@+id/hist_total_pill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_glass"
+                android:gravity="bottom"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="6dp">
+                <TextView
+                    android:id="@+id/hist_total"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:tag="bold"
+                    android:text="0"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+                <TextView
+                    android:id="@+id/hist_limit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:tag="semibold"
+                    android:textColor="@color/header_label"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+        <!-- Days | People toggle, inside the green header under the title row. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/bg_badge_glass"
+            android:orientation="horizontal"
+            android:padding="3dp">
+            <TextView
+                android:id="@+id/tog_days"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+        android:minHeight="34dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:tag="semibold"
+                android:text="Days"
+                android:textColor="@color/white"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/tog_people"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+        android:minHeight="34dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:tag="semibold"
+                android:text="People"
+                android:textColor="@color/white"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="90dp"
+        android:scrollbars="none">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="12dp">
+
+            <LinearLayout
+                android:id="@+id/hist_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/hist_foot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingTop="12dp"
+                android:paddingBottom="16dp"
+                android:tag="semibold"
+                android:textColor="@color/green_text"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/hero"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_hero"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingTop="40dp"
+        android:paddingBottom="36dp">
+        <TextView
+            android:id="@+id/step_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.08"
+            android:tag="semibold"
+            android:textColor="@color/white_soft"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/step_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:tag="extrabold"
+            android:textColor="@color/white"
+            android:textSize="26sp" />
+        <!-- Step dashes: stretch across the header; the first N are filled on step N. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginEnd="20dp"
+            android:orientation="horizontal">
+        <View
+            android:id="@+id/dash_1"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_dash_off" />
+        <View
+            android:id="@+id/dash_2"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_dash_off" />
+        <View
+            android:id="@+id/dash_3"
+            android:layout_width="0dp"
+            android:layout_height="5dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="0dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_dash_off" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="none">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+            <LinearLayout
+                android:id="@+id/step_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="28dp">
+                <ImageView
+                    android:id="@+id/step_icon"
+                    android:layout_width="88dp"
+                    android:layout_height="88dp"
+                    android:background="@drawable/bg_tint_circle"
+                    android:contentDescription="@null"
+                    android:padding="24dp" />
+                <TextView
+                    android:id="@+id/step_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="22dp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="@color/text"
+                    android:textSize="14.5sp" />
+
+                <!-- Step 1 only: one quiet privacy line under the text (Google Play's prominent disclosure is the text
+                     above plus this line, shown right before Android's own Allow box). -->
+                <LinearLayout
+                    android:id="@+id/step_details"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_lock"
+                        app:tint="@color/green_text" />
+                    <TextView
+                        android:id="@+id/step_privacy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:tag="medium"
+                        android:textColor="@color/green_text"
+                        android:textSize="12.5sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_action"
+        style="@style/AppButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Step 1 only: say no and move on (the app never blocks anyone). -->
+    <TextView
+        android:id="@+id/btn_skip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-14dp"
+        android:layout_marginBottom="14dp"
+        android:gravity="center"
+        android:minHeight="44dp"
+        android:tag="semibold"
+        android:text="Not now"
+        android:textColor="@color/text2"
+        android:textSize="14sp"
+        android:visibility="gone" />
+</LinearLayout>

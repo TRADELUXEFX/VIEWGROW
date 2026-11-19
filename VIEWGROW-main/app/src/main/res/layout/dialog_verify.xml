@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Get verified first" pop-up: shown when a member who is not verified taps History or Profile. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingStart="22dp"
+    android:paddingTop="18dp"
+    android:paddingEnd="22dp"
+    android:paddingBottom="22dp">
+
+    <ImageView
+        android:layout_width="110dp"
+        android:layout_height="88dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ill_blocked" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:tag="extrabold"
+        android:text="Get verified first"
+        android:textColor="@color/dark"
+        android:textSize="20sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:text="History and Profile open once the admin verifies you."
+        android:textColor="@color/text2"
+        android:textSize="14sp" />
+
+    <!-- How to get verified: the same order as the steps on Home. Left-aligned so the numbers line up. -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:gravity="start"
+        android:lineSpacingExtra="4dp"
+        android:text="1. Message the admin on WhatsApp and save his number.\n2. Post the admin’s status on your own status.\n3. The admin checks it and verifies you. New status viewers are then added to your phone overnight."
+        android:textColor="@color/text"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/verify_admin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_marginTop="22dp"
+        android:background="@drawable/bg_pill_fill"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:tag="semibold"
+        android:text="Message the admin"
+        android:textColor="@color/white"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/verify_close"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="50dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_pill_outline"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:tag="semibold"
+        android:text="Close"
+        android:textColor="@color/green_text"
+        android:textSize="15sp" />
+</LinearLayout>

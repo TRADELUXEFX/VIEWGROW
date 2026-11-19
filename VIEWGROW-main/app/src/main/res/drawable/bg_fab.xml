@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The round chat button that floats on Home, History and Profile. Flat green with a darker ripple, same as VGContact's chat bubble. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/green_dark">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/green" />
+        </shape>
+    </item>
+</ripple>

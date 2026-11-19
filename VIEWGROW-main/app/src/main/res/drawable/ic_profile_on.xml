@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Profile tab, selected. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.35" android:pathData="M12,4.7 a3.8,3.8 0 1 1 0,7.6 a3.8,3.8 0 1 1 0,-7.6 Z" />
+    <path android:fillColor="#FFFFFFFF" android:fillAlpha="0.35" android:pathData="M4.5,20.5 c0.8,-3.6 3.9,-5.8 7.5,-5.8 s6.7,2.2 7.5,5.8 Z" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M12,4.7 a3.8,3.8 0 1 1 0,7.6 a3.8,3.8 0 1 1 0,-7.6 Z" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M4.5,20.5 c0.8,-3.6 3.9,-5.8 7.5,-5.8 s6.7,2.2 7.5,5.8" />
+</vector>
