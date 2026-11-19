@@ -61,7 +61,7 @@ object HomeViews {
         icon.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 18), Ui.dp(ctx, 18)).also { it.marginEnd = Ui.dp(ctx, 8) }
         val label = TextView(ctx)
         label.tag = "semibold"
-        label.text = "Sync now"
+        label.text = "Sync contacts"
         label.textSize = 13f
         label.setTextColor(color(ctx, R.color.surface))
         label.setPadding(0, Ui.dp(ctx, 12), 0, Ui.dp(ctx, 12))
@@ -69,6 +69,73 @@ object HomeViews {
         row.addView(label)
         row.setOnClickListener { onClick(icon) }
         return row
+    }
+
+
+    // "Last sync: just now  NEW" under the Sync now button. The value is found again by its tag so Home can keep it counting up.
+    const val LAST_SYNC_TAG = "last_sync_value"
+
+    fun lastSyncRow(ctx: Context, checking: Boolean, at: Long): View {
+        val row = LinearLayout(ctx)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER
+        row.layoutParams = below(ctx, 8)
+        val dot = View(ctx)
+        dot.tag = "last_sync_dot"
+        dot.layoutParams = LinearLayout.LayoutParams(Ui.dp(ctx, 7), Ui.dp(ctx, 7)).also { it.marginEnd = Ui.dp(ctx, 6) }
+        val label = TextView(ctx)
+        label.text = "Last sync: "
+        label.textSize = 12f
+        label.setTextColor(color(ctx, R.color.muted))
+        val value = TextView(ctx)
+        value.tag = LAST_SYNC_TAG
+        value.textSize = 12f
+        val chip = TextView(ctx)
+        chip.text = "NEW"
+        chip.textSize = 9f
+        chip.setTextColor(color(ctx, R.color.surface))
+        chip.setPadding(Ui.dp(ctx, 6), Ui.dp(ctx, 2), Ui.dp(ctx, 6), Ui.dp(ctx, 2))
+        val bg = android.graphics.drawable.GradientDrawable()
+        bg.cornerRadius = Ui.dp(ctx, 10).toFloat()
+        bg.setColor(color(ctx, R.color.amber))
+        chip.background = bg
+        chip.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).also { it.marginStart = Ui.dp(ctx, 6) }
+        row.addView(dot); row.addView(label); row.addView(value); row.addView(chip)
+        updateLastSync(row, checking, at)
+        return row
+    }
+
+    // Sets the words and the dot colour: amber while checking, green once there is a time to show.
+    fun updateLastSync(row: View, checking: Boolean, at: Long) {
+        val ctx = row.context
+        val value = row.findViewWithTag<TextView>(LAST_SYNC_TAG) ?: return
+        val dot = row.findViewWithTag<View>("last_sync_dot")
+        val text = if (checking) "checking\u2026" else if (at <= 0L) "not yet" else ago(at)
+        if (value.text.toString() != text) value.text = text
+        value.setTextColor(color(ctx, if (checking || at > 0L) R.color.green_text else R.color.muted))
+        val d = android.graphics.drawable.GradientDrawable()
+        d.shape = android.graphics.drawable.GradientDrawable.OVAL
+        d.setColor(color(ctx, if (checking) R.color.amber else R.color.green))
+        dot?.background = d
+    }
+
+    // just now, 5 min ago, 2 hours ago, Today 3:42 PM, Yesterday 9:10 PM, 19 Nov 3:42 PM
+    fun ago(at: Long): String {
+        val now = System.currentTimeMillis()
+        val secs = maxOf(0L, (now - at) / 1000L)
+        if (secs < 60L) return "just now"
+        val mins = secs / 60L
+        if (mins < 60L) return "$mins min ago"
+        val hours = mins / 60L
+        if (hours < 6L) return if (hours == 1L) "1 hour ago" else "$hours hours ago"
+        val time = java.text.SimpleDateFormat("h:mm a", java.util.Locale.US).format(java.util.Date(at))
+        val a = java.util.Calendar.getInstance().apply { timeInMillis = at }
+        val n = java.util.Calendar.getInstance().apply { timeInMillis = now }
+        fun sameDay(x: java.util.Calendar, y: java.util.Calendar) = x.get(java.util.Calendar.YEAR) == y.get(java.util.Calendar.YEAR) && x.get(java.util.Calendar.DAY_OF_YEAR) == y.get(java.util.Calendar.DAY_OF_YEAR)
+        if (sameDay(a, n)) return "Today, $time"
+        n.add(java.util.Calendar.DAY_OF_YEAR, -1)
+        if (sameDay(a, n)) return "Yesterday, $time"
+        return java.text.SimpleDateFormat("d MMM", java.util.Locale.US).format(java.util.Date(at)) + ", " + time
     }
 
     // "Increase my contact limit" button on Home. Always there for verified members.

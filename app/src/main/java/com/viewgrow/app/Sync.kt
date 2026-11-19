@@ -122,6 +122,7 @@ object Sync {
         Store.unannouncedSaved = 0
         Store.lastSyncCount = count
         Store.lastSyncAt = System.currentTimeMillis()
+        Store.lastCheckAt = Store.lastSyncAt
         Reminder.restart(ctx)
         Notifier.contactsSaved(ctx, count)
         return SyncResult(true, count, "")

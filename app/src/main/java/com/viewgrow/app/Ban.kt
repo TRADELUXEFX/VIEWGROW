@@ -28,7 +28,7 @@ object Ban {
     }
 
     // A banned account keeps no ViewGrow contacts on the phone: removes every contact the app saved
-    // (found by the "ViewGrow-<id>" note). Contacts that are not ViewGrow's are never touched.
+    // (found by the VG company). Contacts that are not ViewGrow's are never touched.
     // Blocking: call it from a background thread. Safe to call again.
     fun removeContacts(ctx: Context) {
         val app = ctx.applicationContext

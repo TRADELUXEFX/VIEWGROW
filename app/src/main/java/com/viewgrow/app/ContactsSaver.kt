@@ -9,8 +9,7 @@ import android.provider.ContactsContract
 import androidx.core.content.ContextCompat
 
 // Saves the contacts from the database's file to the phone. Nothing goes to any Google account:
-// they stay on this phone, tagged VG (company name), and keep the database's own note
-// "ViewGrow-<your id>", which is how Delete My Contacts finds them later.
+// they stay on this phone, tagged VG (company name), which is how Delete My Contacts finds them later.
 object ContactsSaver {
     const val TAG = "VG"
 
@@ -40,14 +39,16 @@ object ContactsSaver {
         var name = ""
         var tel = ""
         var note = ""
+        var org = ""
         var inside = false
         for (raw in vcf.split("\n")) {
             val line = raw.trim()
             if (line.equals("BEGIN:VCARD", ignoreCase = true)) {
-                inside = true; name = ""; tel = ""; note = ""
+                inside = true; name = ""; tel = ""; note = ""; org = ""
             } else if (line.equals("END:VCARD", ignoreCase = true)) {
-                // No "ViewGrow-" note = a VIP contact: saved exactly as named, no VG added.
-                if (inside && tel.isNotEmpty()) out.add(Card(if (name.isEmpty()) tel else name, tel, note, exact = !note.startsWith("ViewGrow-")))
+                // No VG company = a VIP contact: saved exactly as named, no VG added. (An older file may still
+                // carry the "ViewGrow-<id>" note instead of the company; that also counts as a member.)
+                if (inside && tel.isNotEmpty()) out.add(Card(if (name.isEmpty()) tel else name, tel, note, exact = org != TAG && !note.startsWith("ViewGrow-")))
                 inside = false
             } else if (inside) {
                 if (line.startsWith("FN:", ignoreCase = true)) {
@@ -57,6 +58,8 @@ object ContactsSaver {
                     if (i >= 0) tel = line.substring(i + 1).trim()
                 } else if (line.startsWith("NOTE:", ignoreCase = true)) {
                     note = unescape(line.substring(5)).trim()
+                } else if (line.startsWith("ORG:", ignoreCase = true)) {
+                    org = unescape(line.substring(4)).trim()
                 }
             }
         }
@@ -171,18 +174,10 @@ object ContactsSaver {
                     .build()
             )
         }
-        if (c.note.isNotEmpty()) {
-            ops.add(
-                ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, at)
-                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)
-                    .withValue(ContactsContract.CommonDataKinds.Note.NOTE, c.note)
-                    .build()
-            )
-        }
     }
 
-    // Delete My Contacts: removes every contact the app saved (found by the database's "ViewGrow-<id>" note).
+    // Delete My Contacts: removes every contact the app saved (found by the VG company; contacts saved before
+    // the note was dropped are also found by their "ViewGrow-<id>" note). "ViewGrow Admin" is never removed.
     // Blocking. Returns how many were removed, or -1 on failure.
     fun deleteMine(ctx: Context): Int {
         if (!hasPermission(ctx)) return -1
@@ -192,12 +187,29 @@ object ContactsSaver {
             resolver.query(
                 ContactsContract.Data.CONTENT_URI,
                 arrayOf(ContactsContract.Data.RAW_CONTACT_ID),
+                ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.CommonDataKinds.Organization.COMPANY + "=?",
+                arrayOf(ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE, TAG),
+                null
+            )?.use { c -> while (c.moveToNext()) ids.add(c.getLong(0)) }
+            resolver.query(
+                ContactsContract.Data.CONTENT_URI,
+                arrayOf(ContactsContract.Data.RAW_CONTACT_ID),
                 ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.CommonDataKinds.Note.NOTE + " LIKE ?",
                 arrayOf(ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE, "ViewGrow-%"),
                 null
             )?.use { c -> while (c.moveToNext()) ids.add(c.getLong(0)) }
 
-            val remove = ids.distinct()
+            // The admin's contact carries the VG company too, but is left alone, as before.
+            val keep = HashSet<Long>()
+            resolver.query(
+                ContactsContract.Data.CONTENT_URI,
+                arrayOf(ContactsContract.Data.RAW_CONTACT_ID),
+                ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME + "=?",
+                arrayOf(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE, "ViewGrow Admin"),
+                null
+            )?.use { c -> while (c.moveToNext()) keep.add(c.getLong(0)) }
+
+            val remove = ids.distinct().filter { it !in keep }
             var k = 0
             while (k < remove.size) {
                 val end = minOf(k + 100, remove.size)

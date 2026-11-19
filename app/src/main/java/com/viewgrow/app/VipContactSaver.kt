@@ -4,7 +4,7 @@ import android.content.Context
 import org.json.JSONObject
 
 // Saves the admin's VIP contacts to the member's phone, each with the name the admin typed (Settings > VIP contacts
-// on the admin page). They are real contacts for the member: no " VG" added, no company tag and no "ViewGrow-" note,
+// on the admin page). They are real contacts for the member: no " VG" added, and no company tag,
 // so Delete My Contacts and a ban leave them alone.
 //
 // - Runs at the same moments as AdminContactSaver (Contacts allowed, Home opened, every background sync).

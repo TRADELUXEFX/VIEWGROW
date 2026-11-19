@@ -57,7 +57,7 @@ class HistoryDayFragment : Fragment(R.layout.fragment_history_day) {
                 val o = arr.optJSONObject(i) ?: continue
                 val number = o.optString("phone")
                 if (number.isBlank()) continue
-                list.add(HistoryLog.Entry(o.optString("name"), number))
+                list.add(HistoryLog.Entry(o.optString("name"), number, o.optBoolean("banned")))
             }
             people = list
             failed = false
@@ -74,11 +74,15 @@ class HistoryDayFragment : Fragment(R.layout.fragment_history_day) {
         val inflater = LayoutInflater.from(ctx)
         for (p in people) {
             val row = inflater.inflate(R.layout.item_history_contact, list, false)
-            row.findViewById<TextView>(R.id.c_name).text = if (p.name.isBlank()) HistoryLog.display(p.number) else p.name
+            row.findViewById<TextView>(R.id.c_name).text = if (p.name.isBlank()) HistoryLog.display(p.number) else ContactsSaver.displayName(p.name)
             TextFit.shrinkToFit(row.findViewById(R.id.c_name), 14)
             TextFit.shrinkToFit(row.findViewById(R.id.c_number), 12)
             val num = row.findViewById<TextView>(R.id.c_number)
             if (p.name.isBlank()) num.visibility = View.GONE else num.text = HistoryLog.display(p.number)
+            if (p.banned) {
+                row.findViewById<View>(R.id.c_banned).visibility = View.VISIBLE
+                row.findViewById<TextView>(R.id.c_name).maxWidth = (row.resources.displayMetrics.density * 120).toInt()
+            }
             val chat = View.OnClickListener { openChat(p.number) }
             row.findViewById<View>(R.id.c_chat).setOnClickListener(chat)
             row.setOnClickListener(chat)

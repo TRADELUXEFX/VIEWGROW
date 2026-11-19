@@ -75,6 +75,8 @@ These cannot be broken even by a mistake in the code:
 
 **Download.** web_prepare_download works out how many contacts the member may still get (limit minus received), picks that many people from the released lists (nobody they already have), builds the file, and stores it as a pending download. If the member asks again the same day it hands out the same file. Nothing is recorded as received yet. web_confirm_download then marks it done, writes the web_received rows, and sets capped_day if the limit is now reached. A second confirmed daily download the same day is blocked by the table rule.
 
+**What a contact in the file looks like.** Each member contact has the person's name ending " VG", the company VG, and the number. There is no note and no marker contact. The admin's VIP contacts come first, with the exact name and no company. The same card is used by web_app_restore (the app's restore). Contacts saved on phones before 19 Nov 2026 still carry the old "ViewGrow-<id>" note; the app still recognises it.
+
 **The limit.** The default is 500 (web_settings). A personal limit (limit_override) replaces it. A paid pack raises limit_override by the pack size, up to 100,000.
 
 **Buying a pack.** The app sends the purchase to the Edge Function verify-purchase, not to the database directly. It checks the member (web_purchase_precheck), asks Google whether the payment is real and not already used up, then web_apply_purchase writes the web_purchases row and raises the limit. The two purchase functions are blocked for the public and only the Edge Function can call them.

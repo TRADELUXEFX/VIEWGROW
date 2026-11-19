@@ -6,10 +6,10 @@ import java.util.Locale
 // History reads everything from the database (web_history, web_day_contacts, web_people). Nothing about
 // who was received is kept on the phone. This object only holds small helpers for showing numbers.
 object HistoryLog {
-    class Entry(val name: String, val number: String)
+    class Entry(val name: String, val number: String, val banned: Boolean = false)
 
     // One person with the day they were received.
-    class Person(val name: String, val number: String, val last: String)
+    class Person(val name: String, val number: String, val last: String, val banned: Boolean = false)
 
     // Today as yyyy-MM-dd on the phone's clock.
     fun today(): String = DayText.iso(Calendar.getInstance())

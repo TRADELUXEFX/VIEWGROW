@@ -64,6 +64,11 @@ object Store {
         get() = p.getLong("last_sync_at", 0L)
         set(v) { p.edit().putLong("last_sync_at", v).apply() }
 
+    // The last time the app finished checking or saving this phone's contacts (any successful sync). Home shows it as "Last sync".
+    var lastCheckAt: Long
+        get() = p.getLong("last_check_at", 0L)
+        set(v) { p.edit().putLong("last_check_at", v).apply() }
+
     // The contacts total and limit Home last showed, so the FAQ page can open Increase my contact limit with the right numbers.
     var lastTotal: Int
         get() = p.getInt("last_total", 0)

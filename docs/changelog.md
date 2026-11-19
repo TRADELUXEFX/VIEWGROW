@@ -2,14 +2,60 @@
 
 Each change is one migration file. Newest first.
 
+## Migration check (19 Nov 2026): which SQL is applied
+- Order to run, oldest first: 20261118220000, 20261118230000, 20261119150000, 20261119160000, 20261119170000, 20261119180000, 20261119190000.
+- All applied: 20261118220000, 20261118230000, 20261119150000, 20261119160000, 20261119170000, 20261119180000, 20261119190000. Nothing left to run (confirmed by the read-only check on 19 Nov 2026, all six columns true).
+- Read-only check (changes nothing; all true means everything above is applied):
+```sql
+select
+  to_regclass('public.web_vip_contacts') is not null as vip_table_160000,
+  to_regprocedure('public.web_admin_vip_list(text)') is not null as vip_list_160000,
+  position('+234000' in pg_get_functiondef('public.web_prepare_download(text,text)'::regprocedure)) = 0 as no_marker_150000,
+  position('web_vip_contacts' in pg_get_functiondef('public.web_prepare_download(text,text)'::regprocedure)) > 0 as vip_in_file_170000,
+  position('NOTE:ViewGrow-' in pg_get_functiondef('public.web_prepare_download(text,text)'::regprocedure)) = 0 as no_note_180000,
+  position('exists (select 1 from public.web_users' in pg_get_functiondef('public.web_people(text,text,integer,integer)'::regprocedure)) > 0 as last_one_190000;
+```
+- Result on 19 Nov 2026: true, true, true, true, true, true.
+
+## App update (19 Nov 2026): Last sync line, "Sync contacts" button, VG on People names, no database change
+- Status: app files only (HomeFragment, HomeViews, Store, Sync, HistoryFragment, HistoryDayFragment). Needs a new app build; nothing to run in the database.
+- Home: a "Last sync: just now" line (with a NEW chip) sits under the sync button. It counts up by itself (just now, 5 min ago, 2 hours ago, Today, Yesterday, date). Amber dot while checking, green when there is a time. Store.lastCheckAt is saved after any successful sync or restore.
+- Home: the button now says "Sync contacts" (it said "Sync now").
+- Home: auto-sync also runs for any state except NOT_VERIFIED. If contacts are READY it saves them and restores anything missing; if nothing is new it only puts back what is missing from the phone (for example after a reinstall).
+- History > People and an opened day: names show with the VG tag ("Victor VG") like on the phone, using ContactsSaver.displayName (not added twice).
+- Not changed: the 3/500 counter still counts members who were deleted (see 20261119190000).
+
+## 20261119190000: people who are no longer members are hidden from History
+- Status: APPLIED (confirmed by the read-only check on 19 Nov 2026: web_people and web_day_contacts both hide people who are not members). File: migrations/20261119190000_hide_deleted_in_history.sql. It replaces the earlier deleted-list version of this file. Needs the new app build to show the Banned tag.
+- Why: when a member is deleted their number stays in other members' received lists (web_received holds copies, not links), so it kept showing in History > People (e.g. DREAL). The admin's Delete user button does not use deleted_numbers, so the rule is "a received person is shown only while a member with that number exists".
+- web_people and web_day_contacts get that one condition. web_people's total counts only the listed people, so paging stays correct.
+- Already correct (checked in the live function text, 19 Nov 2026): _web_candidates skips banned members, and both delete paths remove the person's web_snapshot_contacts, so nobody deleted or banned is handed out to new members.
+- Not changed: the contact limit counter (e.g. 3/500) still counts them, web_received keeps the rows, web_history (the +count on each day card) is untouched, and banned members already received still show in People, now with a red "Banned" tag.
+- Banned tag: web_people and web_day_contacts also return "banned" (true/false) for each person. The app (item_history_contact.xml, HistoryFragment, HistoryDayFragment) shows a red "Banned" tag beside the name. Older app versions ignore the extra field. Needs the new app build to show.
+
+## 20261119150000: marker contact no longer added to contact files
+- Status: APPLIED (confirmed by the read-only check on 19 Nov 2026: no +234000 marker in web_prepare_download). It had no earlier changelog entry.
+- Changes ONLY web_prepare_download and web_app_restore: the member's own marker card ("ViewGrow <id>", number +234000...) is no longer added. Real contacts are unchanged. Markers already on phones stay until deleted by hand. App v60 hides the marker from History.
+
+## 20261118230000: contact names in the file end with " VG"
+- Status: APPLIED 18 Nov 2026 by the owner (per the file header). No earlier changelog entry.
+- Changes ONLY web_prepare_download and web_app_restore: "Team Limitless" becomes "Team Limitless VG" in the FN and N lines, besides the VG company. web_received.name is unchanged (the stored name stays the person's own). 20261118220000 (web_app_restore, applied 18 Nov 2026) is described under App v60.
+
+## 20261119180000: contacts carry only the VG company (no "ViewGrow-<id>" note)
+- Status: APPLIED 19 Nov 2026 by the owner in the Supabase SQL Editor (migrations/20261119180000_remove_note_from_contacts.sql, run after 20261119170000). The new app build (VG company instead of the note) is still to release; until members update, an old app saves contacts from a file without the note as VIPs.
+- web_prepare_download and web_app_restore no longer write the NOTE line on member contact cards. Names (ending " VG"), the ORG:VG company, numbers, VIP contacts and the limit are unchanged.
+- App (ContactsSaver.kt): a contact is a member's when it has the VG company (an older file that still has the "ViewGrow-<id>" note also counts); no VG company = a VIP. The app no longer saves the note. Delete My Contacts and a ban find contacts by the VG company, and still find older ones by their note. "ViewGrow Admin" is never removed.
+- Contacts already on phones keep their old note. Nothing is deleted from the database or from phones.
+- Order matters: apply the migration and the new app together. An old app reading a file without the note would treat members as VIPs.
+
 ## 20261119170000: VIP contacts are in every contacts file from the website
-- Status: NOT YET APPLIED. Run AFTER 20261119160000_vip_contacts.sql and 20261119150000_remove_marker_contact.sql (it is built on that latest web_prepare_download: people keep their " VG" names, no marker contact). Run migrations/20261119170000_vip_in_contact_file.sql once in the SQL Editor (it stops without changing anything if something is not as expected). Rollback: rollback/vip_in_contact_file_rollback.sql.
+- Status: APPLIED (confirmed by the read-only check on 19 Nov 2026: web_prepare_download mentions web_vip_contacts). Run order was AFTER 20261119160000_vip_contacts.sql and 20261119150000_remove_marker_contact.sql (it is built on that latest web_prepare_download: people keep their " VG" names, no marker contact). Run migrations/20261119170000_vip_in_contact_file.sql once in the SQL Editor (it stops without changing anything if something is not as expected). Rollback: rollback/vip_in_contact_file_rollback.sql.
 - Every VIP (name exactly as typed, no VG tag, no ViewGrow note) is in EVERY VCF a member downloads on the website (daily files and full re-downloads), first in the file. Nothing is tracked, so a VIP added later is simply in the next file. VIPs never count toward the contact limit and are not in web_received. Only web_prepare_download changes; web_confirm_download is untouched.
 - Decision (owner): duplicates are accepted. A member who imports two files may see a VIP more than once, because the phone's import does not check for existing contacts. (The app is different: it saves each VIP once per phone and skips numbers already there.)
 - Wording: the website Privacy Policy (/privacy/, section The contact files you download) now says the file can include a few extra contacts the admin chose. The admin VIP screen says the app saves them and every contacts file includes them.
 
 ## 20261119160000: VIP contacts (admin Settings + app)
-- Status: NOT YET APPLIED. Before running: run the read-only check below and make sure both columns are true. Then run migrations/20261119160000_vip_contacts.sql once in the SQL Editor. Then deploy the website zip and build the app.
+- Status: APPLIED (confirmed by the read-only check on 19 Nov 2026: web_vip_contacts table and web_admin_vip_list exist). Before running it needed the read-only check below with both columns true. Then run migrations/20261119160000_vip_contacts.sql once in the SQL Editor. Then deploy the website zip and build the app.
 - Check (read only): `select to_regprocedure('public._web_admin_ok(text)') is not null as admin_ok, to_regprocedure('public._web_auth(text,text)') is not null as auth_ok, to_regclass('public.web_vip_contacts') is null as table_is_new;` (table_is_new false only means the file was already run, which is safe.)
 - New table web_vip_contacts (id, name, phone unique, created_at), row level security on, nobody can read or write it directly. New functions: web_admin_vip_list(p_key), web_admin_vip_save(p_key, p_name, p_phone, p_id default null) (adds or changes; errors BAD_NAME, BAD_PHONE, DUPLICATE, NOT_FOUND), web_admin_vip_delete(p_key, p_id), web_vip_numbers(p_phone, p_pin) (a logged-in member gets {ok, contacts:[{name, phone}]}). No existing function or table is changed. Phones: 0803 456 7890 becomes 2348034567890; another country code is kept; 10 to 15 digits.
 - Admin page (admin.html, admin.js, style.css): Settings has a new row "VIP contacts" (star icon, "3 numbers · saved to new members"). It opens its own full screen: back circle, centred title "VIP contacts", a + circle on the right. Rows show a person icon, the name, the number and a chat button (opens WhatsApp to check the number). The + opens the Add VIP pop-up (Name, Phone number, Save). Tapping a row opens the same pop-up to change it, with Remove.

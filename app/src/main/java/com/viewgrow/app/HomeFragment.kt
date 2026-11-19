@@ -121,6 +121,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             timer.text = now
             if (timer.isShown) Anim.tick(timer)
         }
+        // "Last sync" counts up by itself (just now, 5 min ago...).
+        view?.findViewWithTag<View>(HomeViews.LAST_SYNC_TAG)?.let { val row = it.parent as? View; if (row != null) HomeViews.updateLastSync(row, syncNowPending || syncing, Store.lastCheckAt) }
         // The release time has passed: ask the database again.
         if (Release.expired() && System.currentTimeMillis() - lastLoad > 15000) reload()
     }
@@ -231,6 +233,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val sync = HomeViews.syncButton(ctx) { syncNow() }
             body.addView(sync)
             if (syncNowPending || syncing) spin((sync as LinearLayout).getChildAt(0))
+            body.addView(HomeViews.lastSyncRow(ctx, syncNowPending || syncing, Store.lastCheckAt))
             body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
         }
 
@@ -372,14 +375,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // Paused means paused: nothing is saved on open either.
     private fun maybeAutoSync() {
         val ctx = context ?: return
-        if (syncing || status?.optString("state") != "READY") return
+        val state = status?.optString("state")
+        if (syncing || state == null || state == "NOT_VERIFIED") return
         if (Store.syncPaused || Store.banned) return
         val now = System.currentTimeMillis()
         if (now - lastAuto < 20000L) return
         // Contacts permission off: the banner at the top of Home already says so.
         if (!ContactsSaver.hasPermission(ctx)) return
         lastAuto = now
-        startSync()
+        // New contacts ready: save them, and put back anything missing from the phone too.
+        // Nothing new (for example right after a reinstall, with the phone's contacts deleted): just put back what is missing.
+        if (state == "READY") startSync(alsoRestore = true) else restoreDeleted(null)
     }
 
     // "Sync now": ask the database again, then (finishSyncNow) save the contacts if they are ready.
@@ -414,6 +420,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         render()
         Sync.restore(ctx) { n ->
             syncing = false
+            if (n >= 0) {
+                Store.lastCheckAt = System.currentTimeMillis()
+                if (n > 0) { Store.lastSyncCount = n; Store.lastSyncAt = Store.lastCheckAt }
+            }
             if (!isAdded || view == null) return@restore
             reload()
             val v = view ?: return@restore

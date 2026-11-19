@@ -11,7 +11,7 @@ import java.util.concurrent.Executors
 // - Once per admin number (Store.adminSavedFor): if the member deletes the contact, it is not put back,
 //   unless the admin's number changes.
 // - Skipped if the number is already in the phone under any name (ContactsSaver.save never adds a number twice).
-// - It has no "ViewGrow-" note, so Delete My Contacts and a ban leave it alone, like a contact the member saved.
+// - Delete My Contacts and a ban skip it by its name, like a contact the member saved.
 //
 // The same moments also save the admin's VIP contacts (VipContactSaver.kt): the numbers and names the admin sets in
 // Settings > VIP contacts on the admin page.
