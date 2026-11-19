@@ -29,15 +29,35 @@ jobs:
         run: |
           shopt -s nullglob
           zips=(incoming/*.zip)
-          if [ ${#zips[@]} -eq 0 ]; then echo "No zip in incoming/."; exit 0; fi
+          if [ ${#zips[@]} -eq 0 ]; then
+            echo "No zip in incoming/."
+            stray=(*.zip)
+            if [ ${#stray[@]} -gt 0 ]; then echo "::warning::A zip is in the repo root (${stray[0]}), not in incoming/. It was NOT unpacked. Move it into incoming/."; fi
+            exit 0
+          fi
           for z in "${zips[@]}"; do
             echo "Unpacking $z"
             rm -rf /tmp/unz && mkdir -p /tmp/unz
             unzip -q -o "$z" -d /tmp/unz
+            rm -rf /tmp/unz/__MACOSX
+            # A zip with ONE wrapper folder around everything (like GitHub's own Download ZIP, VIEWGROW-main/...)
+            # is opened up: its inside is used as the repo root, so files never land in a stray sub-folder.
+            src=/tmp/unz
+            for _ in 1 2 3; do
+              entries=("$src"/* "$src"/.[!.]*)
+              nm="${entries[0]##*/}"
+              case "$nm" in app|admin|supabase|docs|gradle|incoming) break;; esac   # a real project folder, not a wrapper
+              if [ ${#entries[@]} -eq 1 ] && [ -d "${entries[0]}" ]; then
+                echo "Zip has a wrapper folder: ${entries[0]##*/}. Using what is inside it."
+                src="${entries[0]}"
+              else
+                break
+              fi
+            done
             # Copy everything except protected folders and the delete list.
-            [ -f /tmp/unz/DELETE_FILES.txt ] && mv /tmp/unz/DELETE_FILES.txt /tmp/DELETE_FILES.txt || rm -f /tmp/DELETE_FILES.txt
-            rm -rf /tmp/unz/.git /tmp/unz/.github /tmp/unz/incoming
-            cp -a /tmp/unz/. ./
+            [ -f "$src/DELETE_FILES.txt" ] && mv "$src/DELETE_FILES.txt" /tmp/DELETE_FILES.txt || rm -f /tmp/DELETE_FILES.txt
+            rm -rf "$src/.git" "$src/.github" "$src/incoming"
+            cp -a "$src"/. ./
             # Delete files listed in DELETE_FILES.txt (single files, protected paths skipped).
             if [ -f /tmp/DELETE_FILES.txt ]; then
               while IFS= read -r p || [ -n "$p" ]; do
@@ -86,6 +106,10 @@ jobs:
           echo "app=$app" >> "$GITHUB_OUTPUT"
           echo "admin=$admin" >> "$GITHUB_OUTPUT"
           echo "Build member app: $app / Build admin app: $admin"
+          if [ "$app" = "false" ] && [ "$admin" = "false" ]; then
+            echo "::warning::Nothing was built: no files under app/ or admin/ changed in this push. If you meant to update the app, upload the zip into incoming/, with app/ at the top of the zip."
+            echo "Nothing was built: no files under app/ or admin/ changed. Upload the zip into incoming/, with app/ at the top of the zip." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   # 2a. Member app: AAB + APK
   member-app:
