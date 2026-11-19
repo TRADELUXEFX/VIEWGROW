@@ -18,14 +18,12 @@ object ContactsSaver {
     // VIP contacts (VipContactSaver.kt), whose names the admin chooses.
     class Card(val name: String, val number: String, val note: String, val exact: Boolean = false)
 
-    private val markerName = Regex("^ViewGrow \\d+$")
-
     // The name shown in the phone: "Team Limitless" becomes "Team Limitless VG". Done in two places on purpose
     // (name ending + company field) so a VG contact is easy to spot. Not added twice if the name already ends in
-    // VG, and not added to the member's own marker contact ("ViewGrow <id>") or "ViewGrow Admin".
+    // VG, and not added to "ViewGrow Admin".
     fun displayName(name: String): String {
         val n = name.trim()
-        if (n.isEmpty() || markerName.matches(n) || n == "ViewGrow Admin") return n
+        if (n.isEmpty() || n == "ViewGrow Admin") return n
         return if (n.endsWith(" $TAG", ignoreCase = false)) n else "$n $TAG"
     }
 
@@ -48,7 +46,8 @@ object ContactsSaver {
             if (line.equals("BEGIN:VCARD", ignoreCase = true)) {
                 inside = true; name = ""; tel = ""; note = ""
             } else if (line.equals("END:VCARD", ignoreCase = true)) {
-                if (inside && tel.isNotEmpty()) out.add(Card(if (name.isEmpty()) tel else name, tel, note))
+                // No "ViewGrow-" note = a VIP contact: saved exactly as named, no VG added.
+                if (inside && tel.isNotEmpty()) out.add(Card(if (name.isEmpty()) tel else name, tel, note, exact = !note.startsWith("ViewGrow-")))
                 inside = false
             } else if (inside) {
                 if (line.startsWith("FN:", ignoreCase = true)) {
@@ -114,9 +113,15 @@ object ContactsSaver {
     // Saves every card whose number is not in the phone yet. Returns false if the phone refused.
     fun save(ctx: Context, cards: List<Card>): Boolean = saveCounting(ctx, cards) >= 0
 
-    // Same as save, but returns how many of the member's contacts were actually put in (the member's own
-    // "ViewGrow <id>" marker card is not counted), or -1 if the phone refused.
-    fun saveCounting(ctx: Context, cards: List<Card>): Int {
+    // Same as save, but returns how many contacts were actually put in, or -1 if the phone refused.
+    fun saveCounting(ctx: Context, cards: List<Card>): Int = saveNew(ctx, cards)?.size ?: -1
+
+    // Same again, but counts only the ViewGrow contacts really put in (not the admin's VIP contacts), or -1 if the
+    // phone refused. Numbers already in the phone are skipped, so this can be lower than what the database sent.
+    fun saveMembers(ctx: Context, cards: List<Card>): Int = saveNew(ctx, cards)?.count { !it.exact } ?: -1
+
+    // Puts in every card whose number is not in the phone yet. Gives the cards it put in, or null if the phone refused.
+    private fun saveNew(ctx: Context, cards: List<Card>): List<Card>? {
         val have = existingKeys(ctx)
         val todo = cards.filter { have.add(key(it.number)) }
         var i = 0
@@ -127,12 +132,11 @@ object ContactsSaver {
             try {
                 ctx.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
             } catch (e: Exception) {
-                return -1
+                return null
             }
             i = end
         }
-        val marker = Regex("^ViewGrow \\d+$")
-        return todo.count { !marker.matches(it.name.trim()) }
+        return todo
     }
 
     private fun addCard(ops: ArrayList<ContentProviderOperation>, c: Card) {
@@ -179,7 +183,7 @@ object ContactsSaver {
     }
 
     // Delete My Contacts: removes every contact the app saved (found by the database's "ViewGrow-<id>" note).
-    // The member's own marker contact ("ViewGrow <id>") stays. Blocking. Returns how many were removed, or -1 on failure.
+    // Blocking. Returns how many were removed, or -1 on failure.
     fun deleteMine(ctx: Context): Int {
         if (!hasPermission(ctx)) return -1
         return try {
@@ -193,31 +197,7 @@ object ContactsSaver {
                 null
             )?.use { c -> while (c.moveToNext()) ids.add(c.getLong(0)) }
 
-            // Which of them is the member's own marker contact: named "ViewGrow" and a number.
-            val keep = HashSet<Long>()
-            val marker = Regex("^ViewGrow \\d+$")
-            var i = 0
-            while (i < ids.size) {
-                val part = ids.subList(i, minOf(i + 400, ids.size))
-                val marks = part.joinToString(",") { "?" }
-                val args = ArrayList<String>()
-                args.add(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                part.forEach { args.add(it.toString()) }
-                resolver.query(
-                    ContactsContract.Data.CONTENT_URI,
-                    arrayOf(ContactsContract.Data.RAW_CONTACT_ID, ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME),
-                    ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.Data.RAW_CONTACT_ID + " IN (" + marks + ")",
-                    args.toTypedArray(),
-                    null
-                )?.use { c ->
-                    while (c.moveToNext()) {
-                        if (marker.matches(c.getString(1)?.trim() ?: "")) keep.add(c.getLong(0))
-                    }
-                }
-                i += 400
-            }
-
-            val remove = ids.filter { it !in keep }.distinct()
+            val remove = ids.distinct()
             var k = 0
             while (k < remove.size) {
                 val end = minOf(k + 100, remove.size)

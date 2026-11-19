@@ -1,6 +1,7 @@
 package com.viewgrow.app
 
 import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -30,11 +31,33 @@ object Alerts {
         return NotificationManagerCompat.from(ctx).areNotificationsEnabled()
     }
 
-    fun channel(ctx: Context, id: String, name: String) {
+    fun channel(ctx: Context, id: String, name: String, importance: Int = NotificationManager.IMPORTANCE_DEFAULT) {
         if (Build.VERSION.SDK_INT >= 26) {
-            val ch = NotificationChannel(id, name, NotificationManager.IMPORTANCE_DEFAULT)
+            val ch = NotificationChannel(id, name, importance)
             ctx.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
         }
+    }
+
+    // The notification every ViewGrow alert starts from: the ViewGrow icon and green, a title, the text and what a
+    // tap does. bigText = false keeps the text on one line. Each alert adds only what is special about it.
+    fun builder(ctx: Context, channel: String, title: String, text: String, tap: PendingIntent, bigText: Boolean = true): NotificationCompat.Builder {
+        val b = NotificationCompat.Builder(ctx, channel)
+            .setSmallIcon(R.drawable.ic_notif)
+            .setColor(ContextCompat.getColor(ctx, R.color.green))
+            .setContentTitle(title)
+            .setContentText(text)
+            .setAutoCancel(true)
+            .setContentIntent(tap)
+        if (bigText) b.setStyle(NotificationCompat.BigTextStyle().bigText(text))
+        return b
+    }
+
+    // Shows it. False when the phone would not let the app show it (notifications off).
+    fun post(ctx: Context, id: Int, n: Notification): Boolean = try {
+        NotificationManagerCompat.from(ctx).notify(id, n)
+        true
+    } catch (e: SecurityException) {
+        false
     }
 
     // Tapping the notification opens the app. extra (if any) tells MainActivity what to show.
@@ -85,21 +108,8 @@ object LimitAlert {
             title = "You have used $pct% of your contact limit"
             text = "%,d of %,d contacts used. Raise your limit before it is full.".format(total, limit)
         }
-        val n = NotificationCompat.Builder(app, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notif)
-            .setColor(ContextCompat.getColor(app, R.color.green))
-            .setContentTitle(title)
-            .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setAutoCancel(true)
-            .setContentIntent(Alerts.openApp(app, 5, EXTRA_UPGRADE))
-            .build()
-        return try {
-            NotificationManagerCompat.from(app).notify(NOTIFICATION_ID, n)
-            true
-        } catch (e: SecurityException) {
-            false
-        }
+        val n = Alerts.builder(app, CHANNEL, title, text, Alerts.openApp(app, 5, EXTRA_UPGRADE)).build()
+        return Alerts.post(app, NOTIFICATION_ID, n)
     }
 }
 
@@ -150,28 +160,31 @@ object WeeklySummary {
         app.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
     }
 
+    // New contacts in the last 7 days, from the database (web_history: one row per day with its count).
+    private fun weekCount(): Int {
+        val r = Api.request("web_history", org.json.JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)
+            .put("p_offset", 0).put("p_limit", DAYS))
+        val j = r.json?.takeIf { it.optBoolean("ok") } ?: return 0
+        val items = j.optJSONArray("items") ?: return 0
+        val from = DayText.iso(java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -(DAYS - 1)) })
+        var n = 0
+        for (i in 0 until items.length()) {
+            val o = items.optJSONObject(i) ?: continue
+            if (o.optString("day") >= from) n += o.optInt("count")
+        }
+        return n
+    }
+
     fun fire(ctx: Context) {
         val app = ctx.applicationContext
         Store.init(app)
         if (!Store.loggedIn || Store.syncPaused || Store.banned) return
-        val n = HistoryLog.countSince(app, DAYS)
+        val n = weekCount()
         if (n <= 0 || !Alerts.canPost(app)) return
         Alerts.channel(app, CHANNEL, "Weekly summary")
         val title = if (n == 1) "1 new contact this week" else "%,d new contacts this week".format(n)
         val text = "That is how many ViewGrow saved to your phone in the last 7 days."
-        val note = NotificationCompat.Builder(app, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notif)
-            .setColor(ContextCompat.getColor(app, R.color.green))
-            .setContentTitle(title)
-            .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setAutoCancel(true)
-            .setContentIntent(Alerts.openApp(app, 6, null))
-            .build()
-        try {
-            NotificationManagerCompat.from(app).notify(NOTIFICATION_ID, note)
-        } catch (e: SecurityException) {
-            // Notifications are off for the app. Nothing to show.
-        }
+        val note = Alerts.builder(app, CHANNEL, title, text, Alerts.openApp(app, 6, null)).build()
+        Alerts.post(app, NOTIFICATION_ID, note)
     }
 }

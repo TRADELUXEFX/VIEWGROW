@@ -6,32 +6,26 @@ import org.json.JSONObject
 // the token (encrypted, in Store.password) and sends it in place of the password on every call. The database renews
 // it while it is used and ends it after 90 days without use, at log out, or when the admin sets a new password
 // (the member then gets SESSION_EXPIRED and logs in again). Database side: migration 20261117140000_login_tokens.sql.
-//
-// Until that migration is applied, web_login does not exist (HTTP_404) and the app keeps working the old way:
-// it keeps the password, exactly as before.
+// There is no older way to log in: a log in that gets no token is a failed log in.
 object Session {
     const val PREFIX = "vgs_"
 
     fun isToken(s: String) = s.startsWith(PREFIX)
 
-    // Log in with the number and password. done gets the database's answer: the web_login answer (status + token),
-    // or, if web_login does not exist yet, the web_status answer.
+    // Log in with the number and password. done gets the database's web_login answer (status + token).
     fun logIn(phone: String, password: String, done: (ApiResult) -> Unit) {
         val args = JSONObject().put("p_phone", phone).put("p_pin", password).put("p_device", "android")
-        Api.call("web_login", args) { r ->
-            if (r.error == "HTTP_404") Api.call("web_status", JSONObject().put("p_phone", phone).put("p_pin", password), done)
-            else done(r)
-        }
+        Api.call("web_login", args, done)
     }
 
-    // What to keep after a successful log in: the token if the database sent one, otherwise the password.
-    fun credential(answer: JSONObject?, password: String): String {
+    // The login token in a web_login answer, or "" when there is none (the log in did not work).
+    fun token(answer: JSONObject?): String {
         val t = answer?.optString("token").orEmpty()
-        return if (isToken(t)) t else password
+        return if (isToken(t)) t else ""
     }
 
-    // Phones that logged in before tokens kept the password. Trade it for a token once, in the background,
-    // and forget the password. Nothing happens if the database has no web_login yet or there is no connection.
+    // A member let back in after a ban has the password saved (the Banned screen needed it to ask again). Trade it for
+    // a token once, in the background, and forget the password. Nothing happens if there is no connection.
     fun upgrade() {
         if (!Store.loggedIn || isToken(Store.password)) return
         val phone = Store.phone

@@ -159,15 +159,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
         if (!j.optBoolean("ok")) {
             syncNowPending = false
-            val code = j.optString("code")
-            // Banned and Blocked get their own full screens.
-            if (AccountGate.handle(activity as? MainActivity, j)) return
-            if (code == "WRONG_PIN" || code == "SESSION_EXPIRED" || code == "NOT_FOUND" || code == "INVALID_PHONE" || code == "ACCOUNT_DELETED") {
-                Ui.toast(v, Api.loginMessage(j))
-                (activity as? MainActivity)?.onLoggedOut()
-            } else if (status == null) {
-                showProblem("Could not check. Please try again.")
-            }
+            // Banned, Blocked and logged-out answers are handled in one place (AccountGate).
+            if (AccountGate.handle(activity as? MainActivity, j, v)) return
+            if (status == null) showProblem("Could not check. Please try again.")
             return
         }
         status = j

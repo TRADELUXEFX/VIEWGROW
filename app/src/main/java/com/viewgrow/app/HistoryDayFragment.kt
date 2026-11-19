@@ -35,9 +35,35 @@ class HistoryDayFragment : Fragment(R.layout.fragment_history_day) {
         view.findViewById<ImageView>(R.id.back).setOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
-        people = HistoryLog.entries(requireContext(), day)
         Fonts.apply(view)
         render()
+        load(day)
+    }
+
+    private var loaded = false
+    private var failed = false
+
+    // The people of this day come from the database (web_day_contacts: web_received, so only VG contacts).
+    private fun load(day: String) {
+        val args = org.json.JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password).put("p_day", day)
+        Api.call("web_day_contacts", args) { r ->
+            if (!isAdded || view == null) return@call
+            val j = r.json
+            if (j != null && !j.optBoolean("ok") && AccountGate.handle(activity as? MainActivity, j, view)) return@call
+            if (j == null || !j.optBoolean("ok")) { failed = true; loaded = true; render(); return@call }
+            val arr = j.optJSONArray("items")
+            val list = ArrayList<HistoryLog.Entry>()
+            if (arr != null) for (i in 0 until arr.length()) {
+                val o = arr.optJSONObject(i) ?: continue
+                val number = o.optString("phone")
+                if (number.isBlank()) continue
+                list.add(HistoryLog.Entry(o.optString("name"), number))
+            }
+            people = list
+            failed = false
+            loaded = true
+            render()
+        }
     }
 
     private fun render() {
@@ -60,8 +86,11 @@ class HistoryDayFragment : Fragment(R.layout.fragment_history_day) {
             list.addView(row)
         }
         val empty = v.findViewById<TextView>(R.id.day_empty)
-        if (people.isEmpty()) {
-            empty.text = "No names saved on this phone for this day."
+        if (!loaded) {
+            empty.text = "Loading..."
+            empty.visibility = View.VISIBLE
+        } else if (people.isEmpty()) {
+            empty.text = if (failed) "Could not load this day. Go back and try again." else "No contacts for this day."
             empty.visibility = View.VISIBLE
         } else {
             empty.visibility = View.GONE

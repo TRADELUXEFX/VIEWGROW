@@ -18,7 +18,7 @@ import org.json.JSONObject
 // so withMissedDays fills it in.
 // Tap a day to open it (HistoryDayFragment) and see the people. The Days | People
 // toggle sits in the green header. Days comes from the database (web_history), 20 days at a time.
-// People lists everyone this phone saved (HistoryLog), once each, newest first, with a chat button.
+// People lists everyone received (web_people), once each, newest first, with a chat button.
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
     companion object {
@@ -36,11 +36,11 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Fonts.apply(view)
-        view.findViewById<TextView>(R.id.hist_foot).setOnClickListener { if (footTaps) load() }
+        view.findViewById<TextView>(R.id.hist_foot).setOnClickListener { if (footTaps) { if (mode == 1) loadPeople() else load() } }
         view.findViewById<TextView>(R.id.tog_days).setOnClickListener { setMode(0) }
         view.findViewById<TextView>(R.id.tog_people).setOnClickListener { setMode(1) }
         showToggle()
-        if (mode == 1) render()
+        if (mode == 1) { render(); if (!peopleLoadedOnce) loadPeople() }
         fillTotal()
         if (Status.last == null) {
             val args = JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)
@@ -75,6 +75,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         mode = m
         showToggle()
         render()
+        if (m == 1 && !peopleLoadedOnce) loadPeople()
     }
 
     // The selected side is a white pill with dark green text; the other side is plain white text on the glass.
@@ -127,14 +128,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             val j = r.json
             if (j == null) { setFoot(Api.netMessage(r.error) + " Tap to try again.", true); return@call }
             if (!j.optBoolean("ok")) {
-                val code = j.optString("code")
-                if (AccountGate.handle(activity as? MainActivity, j)) return@call
-                if (code == "WRONG_PIN" || code == "SESSION_EXPIRED" || code == "NOT_FOUND" || code == "ACCOUNT_DELETED") {
-                    Ui.toast(v, Api.loginMessage(j))
-                    (activity as? MainActivity)?.onLoggedOut()
-                } else {
-                    setFoot("Could not load. Tap to try again.", true)
-                }
+                if (AccountGate.handle(activity as? MainActivity, j, v)) return@call
+                setFoot("Could not load. Tap to try again.", true)
                 return@call
             }
             val items = j.optJSONArray("items")
@@ -249,10 +244,37 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         }
     }
 
-    // People: everyone saved on this phone, once each, with a chat button.
+    // People: everyone received, once each, newest first, from the database (web_people), 50 at a time.
+    private val peopleList = ArrayList<HistoryLog.Person>()
+    private var peopleTotal = 0
+    private var peopleLoading = false
+    private var peopleLoadedOnce = false
+
+    private fun loadPeople() {
+        if (peopleLoading) return
+        peopleLoading = true
+        setFoot("Loading...", false)
+        val args = JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)
+            .put("p_offset", peopleList.size).put("p_limit", 50)
+        Api.call("web_people", args) { r ->
+            peopleLoading = false
+            if (!isAdded || view == null) return@call
+            val j = r.json
+            if (j != null && !j.optBoolean("ok") && AccountGate.handle(activity as? MainActivity, j, view)) return@call
+            if (j == null || !j.optBoolean("ok")) { setFoot("Could not load. Tap to try again.", true); return@call }
+            peopleTotal = j.optInt("total", 0)
+            val items = j.optJSONArray("items")
+            if (items != null) for (i in 0 until items.length()) {
+                val o = items.optJSONObject(i) ?: continue
+                peopleList.add(HistoryLog.Person(o.optString("name"), o.optString("phone"), o.optString("day")))
+            }
+            peopleLoadedOnce = true
+            if (mode == 1) render()
+        }
+    }
+
     private fun renderPeople(list: LinearLayout, inflater: LayoutInflater) {
-        val people = HistoryLog.people(list.context)
-        for (p in people) {
+        for (p in peopleList) {
             val row = inflater.inflate(R.layout.item_history_contact, list, false)
             row.findViewById<TextView>(R.id.c_name).text = if (p.name.isBlank()) HistoryLog.display(p.number) else p.name
             TextFit.shrinkToFit(row.findViewById(R.id.c_name), 14)
@@ -265,7 +287,13 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             Fonts.apply(row)
             list.addView(row)
         }
-        if (people.isNotEmpty()) setFoot("", false) else setFoot("No one saved on this phone yet.", false)
+        when {
+            peopleLoading -> setFoot("Loading...", false)
+            !peopleLoadedOnce -> {}
+            peopleList.isEmpty() -> setFoot("No contacts yet.", false)
+            peopleList.size < peopleTotal -> setFoot("Load more", true)
+            else -> setFoot("", false)
+        }
     }
 
     // Opens the WhatsApp chat (wa.me), in WhatsApp or WhatsApp Business, whichever the phone has.

@@ -1,124 +1,18 @@
 package com.viewgrow.app
 
-import android.content.Context
-import org.json.JSONArray
-import org.json.JSONObject
 import java.util.Calendar
 import java.util.Locale
 
-// What this phone saved on each day: the name and number of every contact the sync put in the phone.
-// The History day screen reads it. The database still decides who gets which contacts; this is only
-// the phone's own record of what it received, kept so the member can see names and numbers per day.
+// History reads everything from the database (web_history, web_day_contacts, web_people). Nothing about
+// who was received is kept on the phone. This object only holds small helpers for showing numbers.
 object HistoryLog {
     class Entry(val name: String, val number: String)
 
-    // One person across all the days this phone has a record of, with the latest day they were saved.
+    // One person with the day they were received.
     class Person(val name: String, val number: String, val last: String)
-
-    private const val FILE = "viewgrow_history"
-    private const val KEY = "days"
-
-    private fun prefs(ctx: Context) = ctx.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-
-    private fun read(ctx: Context): JSONObject {
-        val s = prefs(ctx).getString(KEY, null) ?: return JSONObject()
-        return try { JSONObject(s) } catch (e: Exception) { JSONObject() }
-    }
-
-    private fun key(number: String): String = number.filter { it.isDigit() }.takeLast(10)
-
-    // The member's own marker contact from the database: named "ViewGrow" or "ViewGrow <id>", with a
-    // placeholder number (+234000 and the id). It is only there so Delete My Contacts can find the others.
-    // It is never shown anywhere in History, so it is left out when writing and when reading.
-    private val markerName = Regex("^ViewGrow(\\s+\\d+)?$", RegexOption.IGNORE_CASE)
-    private fun isMarker(name: String, number: String): Boolean =
-        markerName.matches(name.trim()) || number.filter { it.isDigit() }.startsWith("234000")
 
     // Today as yyyy-MM-dd on the phone's clock.
     fun today(): String = DayText.iso(Calendar.getInstance())
-
-    // Adds the contacts of one sync to that day. The member's own marker contact ("ViewGrow" or "ViewGrow <id>") is left out,
-    // and a number already logged for the day is not added twice.
-    @Synchronized
-    fun add(ctx: Context, cards: List<ContactsSaver.Card>, day: String) {
-        val all = read(ctx)
-        val arr = all.optJSONArray(day) ?: JSONArray()
-        val seen = HashSet<String>()
-        for (i in 0 until arr.length()) seen.add(key(arr.getJSONObject(i).optString("p")))
-        var added = 0
-        for (c in cards) {
-            if (isMarker(c.name, c.number)) continue
-            val k = key(c.number)
-            if (k.isEmpty() || !seen.add(k)) continue
-            arr.put(JSONObject().put("n", if (c.name == c.number) "" else c.name).put("p", c.number))
-            added++
-        }
-        if (added == 0) return
-        all.put(day, arr)
-        prefs(ctx).edit().putString(KEY, all.toString()).apply()
-    }
-
-    fun entries(ctx: Context, day: String): List<Entry> {
-        val arr = read(ctx).optJSONArray(day) ?: return emptyList()
-        val out = ArrayList<Entry>()
-        for (i in 0 until arr.length()) {
-            val o = arr.optJSONObject(i) ?: continue
-            if (isMarker(o.optString("n"), o.optString("p"))) continue
-            out.add(Entry(o.optString("n"), o.optString("p")))
-        }
-        return out
-    }
-
-    // Every different person saved on this phone, newest first. Someone saved on several days is listed once.
-    fun people(ctx: Context): List<Person> {
-        class Acc(var name: String, var number: String, var last: String)
-        val all = read(ctx)
-        val map = LinkedHashMap<String, Acc>()
-        val keys = all.keys()
-        while (keys.hasNext()) {
-            val day = keys.next()
-            val arr = all.optJSONArray(day) ?: continue
-            for (i in 0 until arr.length()) {
-                val o = arr.optJSONObject(i) ?: continue
-                val number = o.optString("p")
-                val k = key(number)
-                if (k.isEmpty()) continue
-                val name = o.optString("n")
-                if (isMarker(name, number)) continue
-                val a = map[k]
-                if (a == null) {
-                    map[k] = Acc(name, number, day)
-                } else {
-                    if (a.name.isBlank() && name.isNotBlank()) a.name = name
-                    if (day > a.last) { a.last = day; a.number = number }
-                }
-            }
-        }
-        return map.values.map { Person(it.name, it.number, it.last) }
-            .sortedWith(compareByDescending<Person> { it.last }.thenBy { it.name.lowercase() })
-    }
-
-    // How many contacts this phone saved in the last `days` days, today included (for the weekly summary).
-    fun countSince(ctx: Context, days: Int): Int {
-        val all = read(ctx)
-        val from = DayText.iso(Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -(days - 1)) })
-        var n = 0
-        val keys = all.keys()
-        while (keys.hasNext()) {
-            val day = keys.next()
-            if (day < from) continue
-            val arr = all.optJSONArray(day) ?: continue
-            for (i in 0 until arr.length()) {
-                val o = arr.optJSONObject(i) ?: continue
-                if (!isMarker(o.optString("n"), o.optString("p"))) n++
-            }
-        }
-        return n
-    }
-
-    fun clear(ctx: Context) {
-        prefs(ctx).edit().clear().apply()
-    }
 
     // 0803 411 2290 style for Nigerian numbers. Anything else is shown as it came.
     fun display(number: String): String {

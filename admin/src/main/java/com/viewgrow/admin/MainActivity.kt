@@ -240,7 +240,9 @@ class MainActivity : AppCompatActivity() {
         w.addJavascriptInterface(Bridge(), "VGAdminApp")
         w.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
-                pageHost = Uri.parse(url ?: "").host ?: ""
+                // Only a secure (https) page can be "ours": a plain http page, or one with no address, gets no answers.
+                val u = Uri.parse(url ?: "")
+                pageHost = if (u.scheme == "https") (u.host ?: "") else ""
             }
             override fun onPageFinished(view: WebView, url: String?) {
                 view.evaluateJavascript("window.vgAppTop && window.vgAppTop($topDp)", null)

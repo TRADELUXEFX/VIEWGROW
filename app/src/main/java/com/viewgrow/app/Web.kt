@@ -15,7 +15,6 @@ object Web {
     // menu of their own, so a member who opens one from the app only sees the app's rules.
     const val TERMS = "https://viewgrow.site/android/terms/"
     const val PRIVACY = "https://viewgrow.site/android/privacy/"
-    const val CONTACT = "https://viewgrow.site/android/contact/"
     const val DELETE_ACCOUNT = "https://viewgrow.site/android/delete-account/"
 
     // True when the page opened. False when the phone has no browser to open it with.

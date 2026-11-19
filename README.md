@@ -43,7 +43,7 @@ It signs up and logs in with the same WhatsApp number and password as the websit
 - **Admin's number saved** (`AdminContactSaver.kt`). Once Contacts is allowed, the admin's WhatsApp number is saved as "ViewGrow Admin", once per number, so the member can see the admin's status. Not removed by Delete My Contacts. The contacts disclosure and the app's Privacy Policy say so.
 - **VIP contacts saved** (`VipContactSaver.kt`, called from `AdminContactSaver.kt`). The admin's list (admin page, Settings > VIP contacts; database function `web_vip_numbers`, migration `20261119160000_vip_contacts.sql`) is saved on the member's phone when Contacts is allowed, at Home open and at every background sync (asked at most every 15 minutes). Each VIP keeps the exact name the admin typed: no " VG", no company tag, no ViewGrow note, so Delete My Contacts and a ban leave it alone. Saved once per number (`Store.vipSaved`). The contacts disclosure and both Privacy Policies say so.
 - **Chat button.** A floating button on Home, History and Profile opens the admin on WhatsApp.
-- **Security.** Log in sends the password once and keeps a login token instead (`Session.kt`, database migration `20261117140000_login_tokens.sql`), encrypted with the Android Keystore (`SecretBox.kt`). Before that migration is applied the app keeps the password, as before. Internet only over HTTPS.
+- **Security.** Log in sends the password once and keeps a login token instead (`Session.kt`, database migration `20261117140000_login_tokens.sql`), encrypted with the Android Keystore (`SecretBox.kt`). Internet only over HTTPS.
 
 ## Rules for whoever edits this repo
 - Send the FULL updated zip (every file, paths from the repo root). Uploading a zip never deletes anything, so remove old files by hand.

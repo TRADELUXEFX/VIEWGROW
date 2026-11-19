@@ -97,8 +97,14 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
                 val nm = j.optString("name", name)
                 // Account made: log in once to get a login token, so the password is not kept on the phone.
                 Session.logIn(num, password) { lr ->
-                    val lj = lr.json
-                    Store.logIn(num, if (lj != null && lj.optBoolean("ok")) Session.credential(lj, password) else password, nm)
+                    val token = Session.token(lr.json)
+                    if (token.isEmpty()) {
+                        // The account is made but this first log in did not work: the number is filled in on Log in.
+                        Store.phone = num
+                        if (isAdded) Ui.showError(error, "Your account is ready. Please tap Log in below.")
+                        return@logIn
+                    }
+                    Store.logIn(num, token, nm)
                     if (isAdded) (activity as? MainActivity)?.onLoggedIn()
                 }
                 return@call

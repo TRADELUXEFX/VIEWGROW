@@ -88,8 +88,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         // Load the admin's settings right away, so by the time Log in, Sign up or Home opens they are usually ready.
         Remote.load { }
-        // Phones that logged in before login tokens: trade the saved password for a token once (Session.kt).
-        Session.upgrade()
 
         // Edge to edge: the green header runs behind the status bar.
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -171,8 +169,6 @@ class MainActivity : AppCompatActivity() {
             { refreshAfterPurchase() }
         )
         BillingManager.retryOpenPurchases(this)
-        // Ask Google Play for the pack prices now, so the Increase my contact limit pop-up shows them at once.
-        BillingManager.prefetch(this)
         // Opened from the "permission is off" notification: go straight to the fix, no pop-up first.
         if (intent?.getBooleanExtra(PermissionWatch.EXTRA_FIX, false) == true) {
             intent.removeExtra(PermissionWatch.EXTRA_FIX)
@@ -500,6 +496,8 @@ class MainActivity : AppCompatActivity() {
         Session.upgrade()
         SyncScheduler.schedule(this)
         ReshareReminder.show(this)
+        // Packs this member paid for but that were never confirmed (see BillingManager.retryOpenPurchases).
+        BillingManager.retryOpenPurchases(this)
         if (PermissionsFragment.anythingToAsk(this)) showPermissions() else showTab(0)
     }
 
@@ -515,7 +513,6 @@ class MainActivity : AppCompatActivity() {
         SyncScheduler.cancel(this)
         ReshareReminder.cancel(this)
         Status.last = null
-        HistoryLog.clear(this)
         Release.clear()
         if (goWelcome) showWelcome()
     }

@@ -1,6 +1,7 @@
 package com.viewgrow.app
 
 import android.content.Context
+import android.view.View
 import org.json.JSONObject
 
 // Banned and Blocked, the two "you can't go on" states. (Idea from VG Contact.)
@@ -22,7 +23,6 @@ object Ban {
         if (!reason.isNullOrBlank()) Store.banReason = reason
         SyncScheduler.cancel(app)
         ReshareReminder.cancel(app)
-        HistoryLog.clear(app)
         Status.last = null
         Release.clear()
     }
@@ -57,10 +57,17 @@ object Ban {
 
 // What a screen does when the database answers "ok: false" with a code that stops the account.
 object AccountGate {
-    // Returns true when it took over (a Banned or Blocked screen is now showing).
-    fun handle(main: MainActivity?, j: JSONObject): Boolean {
+    // Returns true when it took over: a Banned or Blocked screen is now showing, or the member was logged out
+    // (wrong password, session ended, number not found, invalid number, account deleted) with the reason shown
+    // on `view` when one is given. Every screen uses this one place, so logging out behaves the same everywhere.
+    fun handle(main: MainActivity?, j: JSONObject, view: View? = null): Boolean {
         if (main == null) return false
         return when (j.optString("code")) {
+            "WRONG_PIN", "SESSION_EXPIRED", "NOT_FOUND", "INVALID_PHONE", "ACCOUNT_DELETED" -> {
+                if (view != null) Ui.toast(view, Api.loginMessage(j))
+                main.onLoggedOut()
+                true
+            }
             "BANNED" -> {
                 Ban.mark(main, j.optString("reason"))
                 main.showBanned()

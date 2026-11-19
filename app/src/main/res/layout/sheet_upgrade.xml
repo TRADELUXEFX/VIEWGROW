@@ -88,11 +88,24 @@
             android:layout_marginBottom="2dp"
             android:text="CHOOSE HOW MUCH ROOM TO ADD" />
 
-        <LinearLayout
-            android:id="@+id/up_packs"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:id="@+id/up_packs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+            <!-- Shown while the prices are being asked from Google Play (UpgradeSheet.kt). -->
+            <ProgressBar
+                android:id="@+id/up_loading"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:indeterminateTint="@color/green" />
+        </FrameLayout>
 
         <!-- One-time payment reassurance. -->
         <TextView

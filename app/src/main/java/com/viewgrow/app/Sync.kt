@@ -1,17 +1,11 @@
 package com.viewgrow.app
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -58,7 +52,7 @@ object Sync {
         }
     }
 
-    // How many of the member's received contacts the database listed on the last restore check (marker card not counted).
+    // How many of the member's received contacts the database listed on the last restore check.
     @Volatile var lastRestoreTotal: Int = 0
 
     private fun restoreMissing(ctx: Context): Int {
@@ -68,8 +62,9 @@ object Sync {
         val j = r.json ?: return -1
         if (!j.optBoolean("ok")) return -1
         val cards = ContactsSaver.parse(j.optString("vcf"))
-        lastRestoreTotal = cards.count { !Regex("^ViewGrow \\d+$").matches(it.name.trim()) }
-        return ContactsSaver.saveCounting(ctx, cards)
+        lastRestoreTotal = cards.size
+        // The admin's VIP contacts are put back too (named as the admin typed them, no VG).
+        return ContactsSaver.saveCounting(ctx, cards + VipContactSaver.allCards(ctx))
     }
 
     // On a background thread only.
@@ -106,11 +101,12 @@ object Sync {
         if (pj.optString("status") != "ready") return SyncResult(false, 0, "Nothing to save right now. Check back later.")
 
         val cards = ContactsSaver.parse(pj.optString("vcf"))
-        if (!ContactsSaver.save(ctx, cards)) {
+        val added = ContactsSaver.saveMembers(ctx, cards)
+        if (added < 0) {
             return SyncResult(false, 0, "Could not save to your phone. Please try again.")
         }
-        // The phone keeps its own record of who was saved today, for the History day screen.
-        HistoryLog.add(ctx, cards, HistoryLog.today())
+        // What the phone really received (numbers it already had are skipped), kept until the database confirms.
+        Store.unannouncedSaved = Store.unannouncedSaved + added
 
         val c = Api.request(
             "web_confirm_download",
@@ -122,7 +118,8 @@ object Sync {
             return SyncResult(false, 0, "Saved, but could not confirm. Please open the app again.")
         }
 
-        val count = pj.optInt("count", maxOf(0, cards.size - 1))
+        val count = Store.unannouncedSaved
+        Store.unannouncedSaved = 0
         Store.lastSyncCount = count
         Store.lastSyncAt = System.currentTimeMillis()
         Reminder.restart(ctx)
@@ -143,32 +140,13 @@ object Notifier {
             Store.morningCount = Store.morningCount + count
             return
         }
-        if (Build.VERSION.SDK_INT >= 26) {
-            val ch = NotificationChannel(CHANNEL, "Contacts saved", NotificationManager.IMPORTANCE_DEFAULT)
-            ctx.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
-        }
+        Alerts.channel(ctx, CHANNEL, "Contacts saved")
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
-        val open = PendingIntent.getActivity(
-            ctx, 0,
-            Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
         val title = if (count == 1) "1 contact saved" else "$count contacts saved"
-        val n = NotificationCompat.Builder(ctx, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notif)
-            .setColor(ContextCompat.getColor(ctx, R.color.green))
-            .setContentTitle(title)
-            .setContentText("They are in your phone now, tagged " + ContactsSaver.TAG + ".")
-            .setAutoCancel(true)
-            .setContentIntent(open)
-            .build()
-        try {
-            NotificationManagerCompat.from(ctx).notify(1001, n)
-        } catch (e: SecurityException) {
-            // Notifications are off for the app. The contacts are saved anyway.
-        }
+        val n = Alerts.builder(ctx, CHANNEL, title, "They are in your phone now, tagged " + ContactsSaver.TAG + ".", Alerts.openApp(ctx, 0, null), bigText = false).build()
+        Alerts.post(ctx, 1001, n)
     }
 }
 

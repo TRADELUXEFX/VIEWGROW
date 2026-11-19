@@ -100,7 +100,9 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
                 Ui.showError(error, Api.loginMessage(j))
                 return@logIn
             }
-            Store.logIn(phone, Session.credential(j, password), j.optString("name"))
+            val token = Session.token(j)
+            if (token.isEmpty()) { Ui.showError(error, "Could not log in. Please try again."); return@logIn }
+            Store.logIn(phone, token, j.optString("name"))
             (activity as? MainActivity)?.onLoggedIn()
         }
     }

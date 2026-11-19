@@ -1,15 +1,11 @@
 package com.viewgrow.app
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ListenableWorker
 import androidx.work.OneTimeWorkRequestBuilder
@@ -49,9 +45,14 @@ object StatusPush {
     // Joins the topics. Called with the Reshare reminder (logged in, not banned). Also tells the database, at most
     // every 6 hours, that this member uses the app, which gives the id for the member's own topic.
     fun start(ctx: Context) {
-        try { FirebaseMessaging.getInstance().subscribeToTopic(TOPIC) } catch (e: Exception) { }
-        val id = Store.userId
-        if (id > 0) try { FirebaseMessaging.getInstance().subscribeToTopic(userTopic(id)) } catch (e: Exception) { }
+        // Joining a topic lasts, so it is repeated only once a week (this runs on every app open and every sync).
+        val now = System.currentTimeMillis()
+        if (now - Store.topicsJoinedAt > 7L * 24L * 3600L * 1000L) {
+            try { FirebaseMessaging.getInstance().subscribeToTopic(TOPIC) } catch (e: Exception) { }
+            val id = Store.userId
+            if (id > 0) try { FirebaseMessaging.getInstance().subscribeToTopic(userTopic(id)) } catch (e: Exception) { }
+            Store.topicsJoinedAt = now
+        }
         AppSeen.ping(ctx)
     }
 
@@ -61,6 +62,7 @@ object StatusPush {
         val id = Store.userId
         if (id > 0) try { FirebaseMessaging.getInstance().unsubscribeFromTopic(userTopic(id)) } catch (e: Exception) { }
         Store.userId = 0L
+        Store.topicsJoinedAt = 0L
         val nm = ctx.applicationContext.getSystemService(NotificationManager::class.java)
         nm?.cancel(NOTIFICATION_ID)
         nm?.cancel(MSG_ID)
@@ -106,21 +108,15 @@ object StatusPush {
 
     private fun showStatus(app: Context) {
         if (!Alerts.canPost(app)) return
-        if (Build.VERSION.SDK_INT >= 26) {
-            // High importance: it pops up, because it is the one moment that matters for the day.
-            val ch = NotificationChannel(CHANNEL, "Status is up", NotificationManager.IMPORTANCE_HIGH)
-            app.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
-        }
+        // High importance: it pops up, because it is the one moment that matters for the day.
+        Alerts.channel(app, CHANNEL, "Status is up", NotificationManager.IMPORTANCE_HIGH)
         post(app, CHANNEL, NOTIFICATION_ID, "Today's status is up 📣",
             "Reshare it now to be on tonight's list for new status viewers.", adminTap(app, 9, reshare = true))
     }
 
     private fun showMessage(app: Context, title: String, body: String, open: String, url: String = "") {
         if (title.isBlank() || body.isBlank() || !Alerts.canPost(app)) return
-        if (Build.VERSION.SDK_INT >= 26) {
-            val ch = NotificationChannel(CHANNEL_MSG, "Messages from the admin", NotificationManager.IMPORTANCE_HIGH)
-            app.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
-        }
+        Alerts.channel(app, CHANNEL_MSG, "Messages from the admin", NotificationManager.IMPORTANCE_HIGH)
         val tap = when (open) {
             "admin" -> adminTap(app, 10, reshare = false)
             // The link the admin typed (https only): opens in the browser, or the app that owns that link.
@@ -132,21 +128,8 @@ object StatusPush {
     }
 
     private fun post(app: Context, channel: String, id: Int, title: String, text: String, tap: PendingIntent) {
-        val n = NotificationCompat.Builder(app, channel)
-            .setSmallIcon(R.drawable.ic_notif)
-            .setColor(ContextCompat.getColor(app, R.color.green))
-            .setContentTitle(title)
-            .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(tap)
-            .build()
-        try {
-            NotificationManagerCompat.from(app).notify(id, n)
-        } catch (e: SecurityException) {
-            // Notifications are off for the app.
-        }
+        val n = Alerts.builder(app, channel, title, text, tap).setPriority(NotificationCompat.PRIORITY_HIGH).build()
+        Alerts.post(app, id, n)
     }
 }
 

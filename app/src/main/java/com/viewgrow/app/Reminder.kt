@@ -1,14 +1,10 @@
 package com.viewgrow.app
 
 import android.Manifest
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ListenableWorker
@@ -68,10 +64,7 @@ object Reminder {
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
-        if (Build.VERSION.SDK_INT >= 26) {
-            val ch = NotificationChannel(CHANNEL, "Reminders", NotificationManager.IMPORTANCE_DEFAULT)
-            ctx.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
-        }
+        Alerts.channel(ctx, CHANNEL, "Reminders")
         val title: String
         val message: String
         if (!ContactsSaver.hasPermission(ctx)) {
@@ -81,24 +74,7 @@ object Reminder {
             title = "New contacts may be waiting"
             message = "Not synced in $DAYS days. Open the app to save new contacts."
         }
-        val open = PendingIntent.getActivity(
-            ctx, 0,
-            Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        val n = NotificationCompat.Builder(ctx, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notif)
-            .setColor(ContextCompat.getColor(ctx, R.color.green))
-            .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setAutoCancel(true)
-            .setContentIntent(open)
-            .build()
-        try {
-            ctx.getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, n)
-        } catch (e: SecurityException) {
-            // Notifications are off for the app. Nothing to do.
-        }
+        val n = Alerts.builder(ctx, CHANNEL, title, message, Alerts.openApp(ctx, 0, null)).build()
+        Alerts.post(ctx, NOTIFICATION_ID, n)
     }
 }

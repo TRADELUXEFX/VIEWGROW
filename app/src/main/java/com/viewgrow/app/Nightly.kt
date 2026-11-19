@@ -5,9 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ListenableWorker
@@ -151,20 +148,8 @@ object Nightly {
     private fun show(app: Context, title: String, text: String, tap: PendingIntent) {
         if (!Alerts.canPost(app)) return
         Alerts.channel(app, CHANNEL, "Morning update")
-        val n = NotificationCompat.Builder(app, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notif)
-            .setColor(ContextCompat.getColor(app, R.color.green))
-            .setContentTitle(title)
-            .setContentText(text)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setAutoCancel(true)
-            .setContentIntent(tap)
-            .build()
-        try {
-            NotificationManagerCompat.from(app).notify(NOTIFICATION_ID, n)
-        } catch (e: SecurityException) {
-            // Notifications are off for the app. Nothing to show.
-        }
+        val n = Alerts.builder(app, CHANNEL, title, text, tap).build()
+        Alerts.post(app, NOTIFICATION_ID, n)
     }
 }
 

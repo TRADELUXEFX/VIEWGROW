@@ -4,19 +4,14 @@ import android.content.Context
 import android.content.SharedPreferences
 
 // What the phone remembers: who is logged in. The number, and the login token the database gave at log in
-// (Session.kt), which every database call sends. Phones from before login tokens kept the password here until
-// Session.upgrade() trades it for a token. Nothing leaves the phone except in those calls.
+// (Session.kt), which every database call sends. Nothing leaves the phone except in those calls.
 object Store {
     private lateinit var p: SharedPreferences
 
     fun init(ctx: Context) {
         p = ctx.applicationContext.getSharedPreferences("viewgrow", Context.MODE_PRIVATE)
-        // Older versions kept the password as plain text: encrypt it once and remove the plain copy.
-        val legacy = p.getString("password", null)
-        if (legacy != null) {
-            val enc = if (legacy.isNotEmpty()) SecretBox.encrypt(legacy) else null
-            p.edit().remove("password").apply { if (enc != null) putString("password_enc", enc) }.apply()
-        }
+        // A plain-text password left by a very old test version is wiped, not used: that phone logs in again.
+        if (p.contains("password")) p.edit().remove("password").apply()
     }
 
     // The number as typed or as the database returned it. Kept after log out, to fill the Log in box.
@@ -24,7 +19,7 @@ object Store {
         get() = p.getString("phone", "") ?: ""
         set(v) { p.edit().putString("phone", v).apply() }
 
-    // The login token (or, on phones from before tokens, the password until it is traded). Kept encrypted (SecretBox).
+    // The login token (after a ban is lifted, briefly the password until it is traded for a token). Kept encrypted (SecretBox).
     // If the phone's Keystore cannot be used nothing is kept and the member logs in again.
     // Decrypted once and kept in memory (until it changes): the app reads it many times per screen, and decrypting
     // each time froze the screen white for seconds on some phones (the blank screen after the setup steps).
@@ -81,6 +76,12 @@ object Store {
     var lastSyncCount: Int
         get() = p.getInt("last_sync_count", 0)
         set(v) { p.edit().putInt("last_sync_count", v).apply() }
+
+    // Contacts really put in the phone since the database last confirmed a save. A save whose confirmation failed
+    // is counted with the next one, so the "contacts saved" number is what the phone actually received.
+    var unannouncedSaved: Int
+        get() = p.getInt("unannounced_saved", 0)
+        set(v) { p.edit().putInt("unannounced_saved", v).apply() }
 
     // The last time an AUTOMATIC sync finished cleanly. The 3-day reminder (Reminder.kt) uses it with lastSyncAt.
     var lastBgSyncAt: Long
@@ -168,6 +169,11 @@ object Store {
         get() = p.getLong("user_id", 0L)
         set(v) { p.edit().putLong("user_id", v).apply() }
 
+    // The last time the phone joined the Firebase topics (StatusPush.kt). Joining lasts, so it is repeated only once a week.
+    var topicsJoinedAt: Long
+        get() = p.getLong("topics_joined_at", 0L)
+        set(v) { p.edit().putLong("topics_joined_at", v).apply() }
+
     // The last time the app told the database "this member uses the app" (AppSeen in StatusPush.kt).
     var appSeenAt: Long
         get() = p.getLong("app_seen_at", 0L)
@@ -176,7 +182,12 @@ object Store {
     val loggedIn: Boolean get() = phone.isNotEmpty() && password.isNotEmpty()
 
     fun logIn(phone: String, password: String, name: String) {
-        p.edit().putString("phone", phone).putString("name", name).apply()
+        // A different member on this phone starts with the normal sync settings, not the last member's pause or interval.
+        val before = this.phone.filter { it.isDigit() }.takeLast(10)
+        val now = phone.filter { it.isDigit() }.takeLast(10)
+        val e = p.edit().putString("phone", phone).putString("name", name)
+        if (before.isNotEmpty() && before != now) e.remove("sync_paused").remove("sync_hours")
+        e.apply()
         this.password = password
     }
 
@@ -187,9 +198,9 @@ object Store {
 
     // Forgets the password and name. The number stays so the Log in box is filled next time.
     fun logOut() {
-        p.edit().remove("password").remove("password_enc").remove("name").remove("last_sync_at").remove("last_sync_count")
+        p.edit().remove("password").remove("password_enc").remove("name").remove("last_sync_at").remove("last_sync_count").remove("unannounced_saved")
             .remove("first_sync_at") /* left by older versions */.remove("last_bg_sync_at").remove("perm_alerted")
-            .remove("last_total").remove("last_limit").remove("limit_alerted")
+            .remove("topics_joined_at").remove("last_total").remove("last_limit").remove("limit_alerted")
             .remove("morning_count").remove("missed_notice_for").remove("app_seen_at").apply()
     }
 }

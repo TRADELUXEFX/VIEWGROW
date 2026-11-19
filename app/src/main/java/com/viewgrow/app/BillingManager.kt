@@ -39,8 +39,23 @@ object BillingManager {
     private var appContext: Context? = null
     private val details = HashMap<String, ProductDetails>()
     private val inFlight = HashSet<String>()
+    // After this many "no" answers from the database the app stops asking about the same purchase.
+    private const val MAX_REFUSALS = 3
+
     private var onLimitRaised: (() -> Unit)? = null
     private var onMessage: ((String) -> Unit)? = null
+
+    // What the app remembers about each open purchase (by its token): "ok_<token>" = the database confirmed it and
+    // only the consume step is left; "no_<token>" = how many times the database refused it.
+    private fun state(ctx: Context) = ctx.applicationContext.getSharedPreferences("viewgrow_purchase_state", Context.MODE_PRIVATE)
+
+    // A code for the member a purchase is made for. Google keeps it with the purchase, so a payment is never sent to
+    // the database under a different member's login. It is a one-way code, not the phone number.
+    private fun accountTag(phone: String): String {
+        val digits = phone.filter { it.isDigit() }.takeLast(10)
+        val h = java.security.MessageDigest.getInstance("SHA-256").digest(("viewgrow:" + digits).toByteArray(Charsets.UTF_8))
+        return h.take(16).joinToString("") { "%02x".format(it) }
+    }
 
     // Screens that want to hear about results (a toast, a refresh of Home).
     fun listen(messages: (String) -> Unit, limitRaised: () -> Unit) {
@@ -83,36 +98,6 @@ object BillingManager {
         })
     }
 
-    // The last prices Google Play sent, kept in memory and on the phone, so the pop-up can show them at once
-    // instead of waiting for Google Play to answer. They are refreshed every time Google Play answers.
-    private var cached: Map<Int, String>? = null
-    private fun prefs(ctx: Context) = ctx.applicationContext.getSharedPreferences("viewgrow_prices", Context.MODE_PRIVATE)
-
-    fun cachedPrices(ctx: Context): Map<Int, String>? {
-        cached?.let { return it }
-        val s = prefs(ctx).getString("prices", null) ?: return null
-        return try {
-            val j = JSONObject(s)
-            val m = HashMap<Int, String>()
-            for (size in PRODUCT_IDS.keys) { val p = j.optString(size.toString()); if (p.isNotEmpty()) m[size] = p }
-            if (m.size == PRODUCT_IDS.size) { cached = m; m } else null
-        } catch (e: Exception) { null }
-    }
-
-    private fun saveCache(ctx: Context, m: Map<Int, String>) {
-        if (m.size != PRODUCT_IDS.size) return
-        cached = m
-        val j = JSONObject()
-        for ((k, v) in m) j.put(k.toString(), v)
-        prefs(ctx).edit().putString("prices", j.toString()).apply()
-    }
-
-    // Asks Google Play for the prices as soon as the app opens (logged in), so they are ready before the pop-up is.
-    fun prefetch(ctx: Context) {
-        if (!Store.loggedIn || Store.banned) return
-        loadPrices(ctx) { }
-    }
-
     // Asks Google Play for the three packs. done gets pack size -> price text (empty map if Play is not available).
     // If the first try gets nothing (Google Play slow to connect), it tries once more after 2 seconds.
     fun loadPrices(ctx: Context, done: (Map<Int, String>) -> Unit) {
@@ -140,7 +125,6 @@ object BillingManager {
                         out[size] = price
                     }
                 }
-                saveCache(ctx, out)
                 done(out)
             }
         }, { done(emptyMap()) })
@@ -152,7 +136,7 @@ object BillingManager {
         val d = details[id]
         val c = client
         if (d == null || c == null || !c.isReady) {
-            // The price on screen may have come from the saved copy. Get the pack details from Google Play, then open it.
+            // The pack details are not loaded (yet). Get them from Google Play, then open it.
             loadPrices(activity) { got ->
                 if (got.isNotEmpty() && details[id] != null && client?.isReady == true) open(activity, id)
                 else onMessage?.invoke("Google Play is not available right now. Try again in a moment.")
@@ -165,11 +149,12 @@ object BillingManager {
     private fun open(activity: Activity, id: String) {
         val d = details[id] ?: return
         val c = client ?: return
-        val params = BillingFlowParams.newBuilder()
+        val builder = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(
                 listOf(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(d).build())
             )
-            .build()
+        if (Store.loggedIn) builder.setObfuscatedAccountId(accountTag(Store.phone))
+        val params = builder.build()
         val r = c.launchBillingFlow(activity, params)
         if (r.responseCode != BillingClient.BillingResponseCode.OK && r.responseCode != BillingClient.BillingResponseCode.USER_CANCELED) {
             onMessage?.invoke("Could not open Google Play. Try again in a moment.")
@@ -177,15 +162,22 @@ object BillingManager {
     }
 
     // Looks for purchases that were paid but not yet confirmed with the database (the app closed, no
-    // network, the check failed). Called when the app opens, so a paid pack is never lost.
-    fun retryOpenPurchases(ctx: Context) {
+    // network, the check failed), so a paid pack is never lost. It runs once each time the app starts and when a
+    // member logs in, again when the Increase my contact limit pop-up opens (force), and again on the next app
+    // open after a check that got no answer. A payment made while the app is open is handled at once (updates).
+    fun retryOpenPurchases(ctx: Context, force: Boolean = false) {
         if (!Store.loggedIn) return
+        val who = Store.phone
+        if (!force && who == lastRetryFor) return
+        lastRetryFor = who
         connect(ctx, { c ->
             c.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build()) { r, list ->
                 if (r.responseCode == BillingClient.BillingResponseCode.OK) list.forEach { handle(it) }
             }
         }, {})
     }
+
+    @Volatile private var lastRetryFor = ""
 
     private fun handle(p: Purchase) {
         when (p.purchaseState) {
@@ -200,6 +192,15 @@ object BillingManager {
     private fun verify(p: Purchase) {
         val token = p.purchaseToken
         if (!Store.loggedIn || !inFlight.add(token)) return
+        val ctx = appContext
+        // Paid for under another member's login: leave it open until that member logs in. (Purchases made before
+        // this code was added carry no tag and are checked as before.)
+        val owner = p.accountIdentifiers?.obfuscatedAccountId
+        if (!owner.isNullOrEmpty() && owner != accountTag(Store.phone)) { inFlight.remove(token); return }
+        // The database already said ok for this one; only the consume step is left. Quiet, no second "Payment received".
+        if (ctx != null && state(ctx).getBoolean("ok_$token", false)) { inFlight.remove(token); consume(token); return }
+        // The database refused this one several times already: stop asking.
+        if (ctx != null && state(ctx).getInt("no_$token", 0) >= MAX_REFUSALS) { inFlight.remove(token); return }
         val phone = Store.phone
         val args = JSONObject()
             .put("p_phone", Store.phone)
@@ -211,6 +212,7 @@ object BillingManager {
             inFlight.remove(token)
             val j = r.json
             if (j != null && j.optBoolean("ok")) {
+                ctx?.let { state(it).edit().putBoolean("ok_$token", true).remove("no_$token").apply() }
                 // Written down for Profile, Purchase history (only after the database said ok).
                 val productId = p.products.firstOrNull() ?: ""
                 val pack = PRODUCT_IDS.entries.firstOrNull { it.value == productId }?.key ?: 0
@@ -222,15 +224,25 @@ object BillingManager {
                 onLimitRaised?.invoke()
             } else if (j == null || j.optString("code") == "SESSION_EXPIRED") {
                 // No answer, or logged out: the purchase stays open and is checked again after the next log in.
+                if (j == null) lastRetryFor = "" // no answer: the next app open checks again
                 onMessage?.invoke(if (j == null) "We could not confirm your payment yet. It will be checked again when you open the app."
                                   else "Please log in again. Your payment will be checked as soon as you do.")
             } else {
-                onMessage?.invoke("We could not confirm your payment. Message the admin with your Google Play order number.")
+                // The database said no. Ask again the next few times the app opens, then stop. Say it on the first
+                // and the last try, so the member is told without being nagged.
+                val n = (ctx?.let { state(it).getInt("no_$token", 0) } ?: 0) + 1
+                ctx?.let { state(it).edit().putInt("no_$token", n).apply() }
+                if (n == 1) onMessage?.invoke("We could not confirm your payment. Message the admin with your Google Play order number.")
+                else if (n >= MAX_REFUSALS) onMessage?.invoke("We have stopped checking your payment. Message the admin with your Google Play order number so they can fix it.")
             }
         }
     }
 
     private fun consume(token: String) {
-        client?.consumeAsync(ConsumeParams.newBuilder().setPurchaseToken(token).build()) { _, _ -> }
+        client?.consumeAsync(ConsumeParams.newBuilder().setPurchaseToken(token).build()) { r, _ ->
+            // Done: forget the notes kept for this purchase.
+            val c = appContext
+            if (c != null && r.responseCode == BillingClient.BillingResponseCode.OK) state(c).edit().remove("ok_$token").remove("no_$token").apply()
+        }
     }
 }

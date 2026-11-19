@@ -20,9 +20,10 @@ import com.google.android.material.button.MaterialButton
 // The "Increase my contact limit" pop-up. Opened from the button on Home, from the red bar and the limit reached card,
 // and from the Help page.
 // Used so far, then: pick one pack, see the price, press Buy. Google Play then takes over and shows its own
-// payment sheet. The prices come from Google Play (BillingManager), never from the app. The middle pack
-// carries the "Recommended" badge and starts picked. While prices load they show "...", and if Google Play
-// cannot be reached they show a dash and Buy is switched off.
+// payment sheet. The prices come from Google Play (BillingManager), never from the app. They are asked for
+// only when this pop-up opens: a loading spinner shows over the packs, then the packs and prices appear. The
+// middle pack carries the "Recommended" badge and starts picked. If Google Play cannot be reached the prices
+// show a dash and Buy is switched off.
 object UpgradeSheet {
     val packs = intArrayOf(1000, 3000, 5000)
     private const val RECOMMENDED = 1
@@ -73,10 +74,10 @@ object UpgradeSheet {
         val buy = v.findViewById<MaterialButton>(R.id.up_buy)
         var picked = RECOMMENDED // the recommended (middle) pack starts picked
         // Pack size -> price from Google Play. null while loading, empty if Google Play is not available.
-        // Starts with the prices Google Play sent last time (kept on the phone), so they show at once.
-        var prices: Map<Int, String>? = BillingManager.cachedPrices(ctx)
+        var prices: Map<Int, String>? = null
         var showing = true
         val rows = v.findViewById<LinearLayout>(R.id.up_packs)
+        val loading = v.findViewById<View>(R.id.up_loading)
         val views = ArrayList<View>()
 
         // Everything paint() needs is looked up once, now, in the pop-up's own mode. Tapping a pack then only swaps these
@@ -103,6 +104,9 @@ object UpgradeSheet {
             for ((i, row) in views.withIndex()) {
                 row.findViewById<TextView>(R.id.pack_price).text = prices?.get(packs[i]) ?: if (prices == null) LOADING else NO_PRICE
             }
+            // Loading: the spinner shows over the packs (they keep their space, so the pop-up does not jump). Then the packs.
+            loading.visibility = if (prices == null) View.VISIBLE else View.GONE
+            rows.visibility = if (prices == null) View.INVISIBLE else View.VISIBLE
             val price = prices?.get(packs[picked])
             buy.text = "Get +" + "%,d".format(packs[picked]) + " limit" + (if (price != null) " \u00B7 $price" else "")
             buy.isEnabled = price != null
@@ -152,12 +156,16 @@ object UpgradeSheet {
         }
         dialog.behavior.skipCollapsed = true
         dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        // Real prices from Google Play, in the member's own currency.
+        // Real prices from Google Play, in the member's own currency. Asked for now, when the pop-up opens, and nowhere else.
         BillingManager.loadPrices(ctx) { got ->
             if (!showing) return@loadPrices
+            // A pack the member paid for earlier but was never confirmed would block buying that pack again: check now.
+            BillingManager.retryOpenPurchases(ctx, force = true)
             // A failed refresh does not wipe prices that are already showing.
             if (got.isNotEmpty() || prices == null) { prices = got; paint() }
         }
+        // If Google Play never answers, the spinner must not spin forever: after 12 seconds show the "not available" dashes.
+        v.postDelayed({ if (showing && prices == null) { prices = emptyMap(); paint() } }, 12000L)
         buy.setOnClickListener {
             val act = activityOf(ctx)
             if (act == null || prices?.get(packs[picked]) == null) {

@@ -1,14 +1,9 @@
 package com.viewgrow.app
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 
 // Tells the member when a permission is off. Android closes the app the moment a permission is
 // switched off in Settings, so the app cannot hear it happen. It looks at two moments only:
@@ -56,33 +51,14 @@ object PermissionWatch {
         if (!NotificationManagerCompat.from(app).areNotificationsEnabled()) return
         val key = off.joinToString()
         if (Store.permAlerted == key) return
-        if (Build.VERSION.SDK_INT >= 26) {
-            val ch = NotificationChannel(CHANNEL, "Permission alerts", NotificationManager.IMPORTANCE_HIGH)
-            app.getSystemService(NotificationManager::class.java)?.createNotificationChannel(ch)
-        }
-        val open = PendingIntent.getActivity(
-            app, 0,
-            Intent(app, MainActivity::class.java).putExtra(EXTRA_FIX, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
+        Alerts.channel(app, CHANNEL, "Permission alerts", NotificationManager.IMPORTANCE_HIGH)
+        // Its own request code (14): the other notifications use 0, and Android would treat them as the same button.
+        val open = Alerts.openApp(app, 14, EXTRA_FIX)
         val title = if (off.size == 1) "${off[0]} is off" else "Some permissions are off"
         val message = off.joinToString(", ") + (if (off.size == 1) " is" else " are") +
             " off, so ViewGrow may stop saving your contacts. Tap to fix it."
-        val n = NotificationCompat.Builder(app, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notif)
-            .setColor(ContextCompat.getColor(app, R.color.green))
-            .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(open)
-            .build()
-        try {
-            NotificationManagerCompat.from(app).notify(NOTIFICATION_ID, n)
-            Store.permAlerted = key
-        } catch (e: SecurityException) {
-            // Notifications are off for the app. Home still shows the box.
-        }
+        val n = Alerts.builder(app, CHANNEL, title, message, open).setPriority(NotificationCompat.PRIORITY_HIGH).build()
+        // Only remembered as warned once it was really shown. If notifications are off, Home still shows the box.
+        if (Alerts.post(app, NOTIFICATION_ID, n)) Store.permAlerted = key
     }
 }
