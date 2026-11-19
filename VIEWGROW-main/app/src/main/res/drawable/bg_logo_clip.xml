@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Rounded square behind the ViewGrow logo in the green header. The image is clipped to it. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/white" />
-    <corners android:radius="14dp" />
-</shape>
