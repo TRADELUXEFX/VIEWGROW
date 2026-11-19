@@ -6,7 +6,7 @@ Last updated 16 Nov 2026. This is only the database side (Supabase). Everything 
 
 The database is a set of **tables** (the filing cabinets) and **functions** (the staff who are allowed to open the cabinets). Visitors, the website and the app can never open a cabinet themselves. They can only ask a function to do something, and the function checks the rules first. All the rules live in the functions and in the table settings, not in the website or the app.
 
-## The tables (15 filing cabinets)
+## The tables (16 filing cabinets)
 
 **Members and their activity**
 
@@ -36,6 +36,7 @@ The database is a set of **tables** (the filing cabinets) and **functions** (the
 |---|---|
 | web_settings | Sign-up open or closed, sign-ups per address (3), default limit (500), the admin's contact options, message templates, and the admin key (scrambled). |
 | web_signup_log | The internet address and time of each sign-up, used for the 3-a-day limit. |
+| web_vip_contacts | The admin's VIP contacts (a name and a number each) that the app saves on members' phones. Nobody can read or write it directly; only the VIP functions can. |
 | web_admin_attempts | Wrong admin-key tries per connection and any temporary lock. |
 
 ## How the tables connect
@@ -56,8 +57,8 @@ These cannot be broken even by a mistake in the code:
 
 ## The functions, in groups
 
-- **Public (anyone may call; they check the password inside):** web_register, web_status, web_boot, web_history, web_set_name, web_prepare_download, web_confirm_download, web_delete_account, web_public_config, web_next_release, web_app_seen (live 16 Nov 2026). Also web_last_release (live 16 Nov 2026) (for the app's morning message: last night's release, how many people, and whether you were in it; reads only).
-- **Admin (anyone may call, but each one checks the admin key first):** stats, pool, users, new members file (web_admin_new_members and _done, live 16 Nov 2026), ban, reset password, set limits, log verified (today or a chosen day), un-log, grant re-download, delete user, settings, backup, release get, set and now, save list now.
+- **Public (anyone may call; they check the password inside):** web_vip_numbers (the VIP list for the app), web_register, web_status, web_boot, web_history, web_set_name, web_prepare_download, web_confirm_download, web_delete_account, web_public_config, web_next_release, web_app_seen (live 16 Nov 2026). Also web_last_release (live 16 Nov 2026) (for the app's morning message: last night's release, how many people, and whether you were in it; reads only).
+- **Admin (anyone may call, but each one checks the admin key first):** VIP contacts (web_admin_vip_list, _save, _delete), stats, pool, users, new members file (web_admin_new_members and _done, live 16 Nov 2026), ban, reset password, set limits, log verified (today or a chosen day), un-log, grant re-download, delete user, settings, backup, release get, set and now, save list now.
 - **Internal (blocked for the public, used by other functions):** the password check (_web_auth), the day clock (_web_today), the limit and received counters, picking contacts (_web_candidates, _web_pick), the release helpers, and the nightly jobs (web_nightly_snapshot, web_take_snapshot). Also web_status_core and web_register_core, web_purchase_precheck and web_apply_purchase.
 
 ## How things happen (step by step in the database)

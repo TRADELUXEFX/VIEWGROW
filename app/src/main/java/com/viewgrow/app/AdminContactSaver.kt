@@ -12,6 +12,9 @@ import java.util.concurrent.Executors
 //   unless the admin's number changes.
 // - Skipped if the number is already in the phone under any name (ContactsSaver.save never adds a number twice).
 // - It has no "ViewGrow-" note, so Delete My Contacts and a ban leave it alone, like a contact the member saved.
+//
+// The same moments also save the admin's VIP contacts (VipContactSaver.kt): the numbers and names the admin sets in
+// Settings > VIP contacts on the admin page.
 object AdminContactSaver {
     private const val NAME = "ViewGrow Admin"
     private val pool = Executors.newSingleThreadExecutor()
@@ -27,6 +30,11 @@ object AdminContactSaver {
         val app = ctx.applicationContext
         Store.init(app)
         if (!Store.loggedIn || Store.banned || !ContactsSaver.hasPermission(app)) return
+        saveAdmin(app)
+        VipContactSaver.saveNow(app)
+    }
+
+    private fun saveAdmin(app: Context) {
         val target = Store.adminTarget
         // Only a WhatsApp number (digits). A Telegram or other link cannot be saved as a contact.
         if (target.isEmpty() || !target.all { it.isDigit() } || target.length < 10) return

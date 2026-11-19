@@ -141,6 +141,17 @@ object Store {
         get() = p.getString("admin_saved_for", "") ?: ""
         set(v) { p.edit().putString("admin_saved_for", v).apply() }
 
+    // The VIP numbers (digits, with country code) the app already put on this phone (VipContactSaver.kt). A VIP is
+    // saved once per number, so if the member deletes it, it is not put back. Kept after log out, like adminSavedFor.
+    var vipSaved: Set<String>
+        get() = HashSet(p.getStringSet("vip_saved", emptySet()) ?: emptySet())
+        set(v) { p.edit().putStringSet("vip_saved", HashSet(v)).apply() }
+
+    // The last time the VIP list was fetched and saved cleanly (ms), so screens do not ask the database every time.
+    var vipCheckedAt: Long
+        get() = p.getLong("vip_checked_at", 0L)
+        set(v) { p.edit().putLong("vip_checked_at", v).apply() }
+
     // The last time "Update ViewGrow" was shown (UpdateCheck.kt), so it asks at most once a day.
     var updateAskedAt: Long
         get() = p.getLong("update_asked_at", 0L)

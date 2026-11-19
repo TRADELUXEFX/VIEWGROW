@@ -14,7 +14,9 @@ import androidx.core.content.ContextCompat
 object ContactsSaver {
     const val TAG = "VG"
 
-    class Card(val name: String, val number: String, val note: String)
+    // exact = true: saved with the name exactly as given (no " VG" added, no VG company), used for the admin's
+    // VIP contacts (VipContactSaver.kt), whose names the admin chooses.
+    class Card(val name: String, val number: String, val note: String, val exact: Boolean = false)
 
     private val markerName = Regex("^ViewGrow \\d+$")
 
@@ -145,7 +147,7 @@ object ContactsSaver {
             ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                 .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, at)
                 .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, displayName(c.name))
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, if (c.exact) c.name.trim() else displayName(c.name))
                 .build()
         )
         ops.add(
@@ -156,13 +158,15 @@ object ContactsSaver {
                 .withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE)
                 .build()
         )
-        ops.add(
-            ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, at)
-                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.Organization.COMPANY, TAG)
-                .build()
-        )
+        if (!c.exact) {
+            ops.add(
+                ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, at)
+                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
+                    .withValue(ContactsContract.CommonDataKinds.Organization.COMPANY, TAG)
+                    .build()
+            )
+        }
         if (c.note.isNotEmpty()) {
             ops.add(
                 ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)

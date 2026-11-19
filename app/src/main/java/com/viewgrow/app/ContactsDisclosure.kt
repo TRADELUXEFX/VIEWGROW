@@ -9,12 +9,12 @@ object ContactsDisclosure {
 
     // The same words appear on Step 1 of the setup (PermissionsFragment) and in this pop-up (used when Contacts is
     // turned on later, from Home), so both say exactly the same thing.
-    const val SAVE = "Adds the contacts you receive from other members to your phone (tagged VG), so they can see your WhatsApp status. It also saves the admin\u2019s number once."
+    const val SAVE = "Adds the contacts you receive from other members to your phone (tagged VG), so they can see your WhatsApp status. It also saves the admin\u2019s number, and a few extra contacts the admin chose, once."
     const val READ = "Checks the numbers already on your phone, so none is added twice, and finds ViewGrow\u2019s contacts when you tap Delete My Contacts."
     const val PRIVACY = "Your own contacts are never uploaded, shared or sold. Your name and number are shared with verified members, as you agreed at sign up."
 
     // Step 1 of the setup says the same thing in two short lines (PermissionsFragment).
-    const val STEP = "ViewGrow saves the contacts you receive, and the admin\u2019s number, to your phone. It only reads your contacts to skip duplicates and remove its own."
+    const val STEP = "ViewGrow saves the contacts you receive, the admin\u2019s number and a few contacts the admin chose, to your phone. It only reads your contacts to skip duplicates and remove its own."
     const val STEP_PRIVACY = "Your contacts never leave your phone."
 
     const val MESSAGE =

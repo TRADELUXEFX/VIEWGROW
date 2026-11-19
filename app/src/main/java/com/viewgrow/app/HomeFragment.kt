@@ -425,7 +425,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val v = view ?: return@restore
             when {
                 n > 0 -> Ui.toast(v, if (n == 1) "1 deleted contact was put back in your phone." else "$n deleted contacts were put back in your phone.")
-                n == 0 -> if (nothingMsg != null) Ui.toast(v, nothingMsg)
+                n == 0 -> if (nothingMsg != null) Ui.toast(v,
+                    if (Sync.lastRestoreTotal > 0) "All ${Sync.lastRestoreTotal} of your contacts are already in your phone. If you deleted them, empty the Contacts recycle bin and try again."
+                    else nothingMsg)
                 else -> if (nothingMsg != null) Ui.toast(v, "Could not check your contacts. Please try again.")
             }
         }

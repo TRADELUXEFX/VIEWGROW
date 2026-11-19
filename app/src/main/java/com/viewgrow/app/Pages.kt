@@ -57,7 +57,7 @@ So you stay logged in, the app keeps your number, your name and a login code (no
 
 Your phone contacts
 The app asks for permission to read and write contacts. Before Android asks, step 1 of the setup shows you what it does with them:
-• Save: it adds the contacts you receive to your phone, tagged VG. It also saves the admin's WhatsApp number once, as ViewGrow Admin, so you can see the admin's status. If you delete that contact, the app does not add it again.
+• Save: it adds the contacts you receive to your phone, tagged VG. It also saves the admin's WhatsApp number once, as ViewGrow Admin, so you can see the admin's status, and any extra contacts the admin has chosen, with the names the admin gave them. If you delete one of these contacts, the app does not add it again.
 • Read: it checks the numbers already in your phone, only on the phone itself, to avoid saving the same contact twice and to find the contacts ViewGrow added when you tap Delete My Contacts (or if the account is banned).
 It never uploads, shares or sells your own phone contacts. If you say no, the app still opens, but it cannot save contacts.
 

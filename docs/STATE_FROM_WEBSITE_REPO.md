@@ -1,6 +1,6 @@
 # ViewGrow: current state (website, database, Android app)
 
-Last updated: 17 Nov 2026. This file is private (the supabase/ folder is blocked by netlify.toml). **Update it with every change.**
+Last updated: 19 Nov 2026 (member-facing wording: no "VIP", plain words). This file is private (the supabase/ folder is blocked by netlify.toml). **Update it with every change.**
 
 ## Rules for anyone (human or AI) changing anything
 1. **Read this file, `schema.md` and `changelog.md` first.** Search them for the name of anything you are about to create. If it is already there, change it; do not write a second version.
@@ -39,6 +39,7 @@ Last updated: 17 Nov 2026. This file is private (the supabase/ folder is blocked
 Run `check_live_matches_claims.sql` (read only, 8 queries; run each one in its own tab). All 8 passed on 16 Nov 2026. It tests that every function the app and site call exists, the 10pm clock and nightly job, the release schedule, the deleted-number block, row-level security and leftovers.
 
 ## Open items
+00000000. 19 Nov 2026: VIP contacts (admin Settings screen + app saves them on members' phones). Left: run the check and migrations/20261119160000_vip_contacts.sql, deploy the website zip, build the app, then test: add a VIP on the admin page, open the app on a test phone with Contacts allowed, check the contact appears with the exact name. See changelog.
 0000000. 17 Nov 2026: website v62 adds the bottom bar, History (green / amber / red days), the opened day with chat buttons and Profile. Migration 20261117120000 applied and confirmed (web_day_contacts, web_people). Left: deploy the website zip, then test: History, tap a day, chat button, Profile links, dark mode button on Profile, back button.
 000000. 17 Nov 2026: website v61 restyles the member dashboard like the app Home (see changelog). Left: deploy the website zip and test log in, Import contacts, Increase my contact limit, chat button and dark mode.
 00000. 17 Nov 2026: website v60 adds saved messages and the app / admin-chat link icons to Message all members. 20261117100000 applied and confirmed; notify-status redeployed (open "admin"). Left: deploy the website zip, then test: Save, Saved list (tap a row to use it), trash, app icon, chat icon.

@@ -58,13 +58,18 @@ object Sync {
         }
     }
 
+    // How many of the member's received contacts the database listed on the last restore check (marker card not counted).
+    @Volatile var lastRestoreTotal: Int = 0
+
     private fun restoreMissing(ctx: Context): Int {
         Store.init(ctx)
         if (!Store.loggedIn || Store.banned || !ContactsSaver.hasPermission(ctx)) return -1
         val r = Api.request("web_app_restore", JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password))
         val j = r.json ?: return -1
         if (!j.optBoolean("ok")) return -1
-        return ContactsSaver.saveCounting(ctx, ContactsSaver.parse(j.optString("vcf")))
+        val cards = ContactsSaver.parse(j.optString("vcf"))
+        lastRestoreTotal = cards.count { !Regex("^ViewGrow \\d+$").matches(it.name.trim()) }
+        return ContactsSaver.saveCounting(ctx, cards)
     }
 
     // On a background thread only.
