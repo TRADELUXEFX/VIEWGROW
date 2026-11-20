@@ -13,9 +13,13 @@ object ContactsDisclosure {
     const val READ = "Checks the numbers already on your phone, so none is added twice, and finds ViewGrow\u2019s contacts when you tap Delete My Contacts."
     const val PRIVACY = "Your own contacts are never uploaded, shared or sold. Your name and number are shared with verified members, as you agreed at sign up."
 
-    // Step 1 of the setup says the same thing in two short lines (PermissionsFragment).
-    const val STEP = "ViewGrow saves the contacts you receive, the admin\u2019s number and a few contacts the admin chose, to your phone. It only reads your contacts to skip duplicates and remove its own."
-    const val STEP_PRIVACY = "Your contacts never leave your phone."
+    // Step 1 of the setup (PermissionsFragment): a "why we ask" line, three short rows and one privacy line.
+    const val STEP_WHY_LABEL = "Why we ask:"
+    const val STEP_WHY = " for other members to see your status, their phone must save your number, and yours must save theirs."
+    const val STEP_ROW_1 = "Saves new contacts, the admin\u2019s number and a few contacts the admin chose, labelled VG"
+    const val STEP_ROW_2 = "Checks your phone so nobody is saved twice"
+    const val STEP_ROW_3 = "Lets you delete all VG contacts any time"
+    const val STEP_PRIVACY = "Your own contacts are never uploaded and never deleted from your phone."
 
     const val MESSAGE =
         "ViewGrow uses your phone's Contacts permission for two things:\n\n" +

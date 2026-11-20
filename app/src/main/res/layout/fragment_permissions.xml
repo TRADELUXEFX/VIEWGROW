@@ -84,7 +84,7 @@
                 android:background="@drawable/bg_card"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:padding="28dp">
+                android:padding="22dp">
                 <ImageView
                     android:id="@+id/step_icon"
                     android:layout_width="88dp"
@@ -102,31 +102,117 @@
                     android:textColor="@color/text"
                     android:textSize="14.5sp" />
 
-                <!-- Step 1 only: one quiet privacy line under the text (Google Play's prominent disclosure is the text
-                     above plus this line, shown right before Android's own Allow box). -->
+                <!-- Step 1 only: what ViewGrow does with Contacts, as three short rows plus one privacy line (Google Play's
+                     prominent disclosure, shown right before Android's own Allow box). -->
                 <LinearLayout
                     android:id="@+id/step_details"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="14dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical"
                     android:visibility="gone">
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_lock"
-                        app:tint="@color/green_text" />
-                    <TextView
-                        android:id="@+id/step_privacy"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:tag="medium"
-                        android:textColor="@color/green_text"
-                        android:textSize="12.5sp" />
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_row_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingTop="12dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="12dp">
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_check_white"
+                            app:tint="@color/green_text" />
+                        <TextView
+                            android:id="@+id/perm_row_1"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:textColor="@color/text"
+                            android:textSize="13.5sp" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_row_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingTop="12dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="12dp">
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_check_white"
+                            app:tint="@color/green_text" />
+                        <TextView
+                            android:id="@+id/perm_row_2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:textColor="@color/text"
+                            android:textSize="13.5sp" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_row_card"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingTop="12dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="12dp">
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_check_white"
+                            app:tint="@color/green_text" />
+                        <TextView
+                            android:id="@+id/perm_row_3"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:textColor="@color/text"
+                            android:textSize="13.5sp" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_notice_green"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_lock"
+                            app:tint="@color/green_text" />
+                        <TextView
+                            android:id="@+id/step_privacy"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:tag="medium"
+                            android:textColor="@color/green_text"
+                            android:textSize="12.5sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

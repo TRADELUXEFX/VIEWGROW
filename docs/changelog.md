@@ -17,6 +17,11 @@ select
 ```
 - Result on 19 Nov 2026: true, true, true, true, true, true.
 
+## App update (20 Nov 2026): Step 1 (Contacts) screen redesign, no database change
+- Status: app files only (PermissionsFragment, ContactsDisclosure, fragment_permissions.xml). Needs a new app build.
+- Step 1 now opens with "Why we ask:", then three short rows (saves new contacts labelled VG; checks your phone so nobody is saved twice; lets you delete all VG contacts any time) and a green privacy box ("Your own contacts are never deleted from your phone."). "Agree and allow" and "Not now" are unchanged.
+- The first row says what is saved: new contacts, the admin's number and a few contacts the admin chose (labelled VG), so the screen matches the Privacy Policy and the Play declaration. The green box reads "Your own contacts are never uploaded and never deleted from your phone." The pop-up used when Contacts is turned on later from Home (ContactsDisclosure.MESSAGE) is unchanged.
+
 ## App update (19 Nov 2026): Last sync line, "Sync contacts" button, VG on People names, no database change
 - Status: app files only (HomeFragment, HomeViews, Store, Sync, HistoryFragment, HistoryDayFragment). Needs a new app build; nothing to run in the database.
 - Home: the header tag next to the phone number now shows the last sync ("Synced just now", "Synced 5m ago", "Synced 2h ago", "Synced yesterday", "Synced 19 Nov"; amber "Syncing…" while it runs, "Not synced yet" before the first one) instead of "Verified", because only verified members can sync. It counts up by itself and tapping it syncs. Not verified members still see "Not verified". The separate "Last sync" line under the button is gone. Store.lastCheckAt is saved after any successful sync or restore.

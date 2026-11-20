@@ -4,10 +4,14 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.StyleSpan
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -97,7 +101,7 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
                 v.findViewById<TextView>(R.id.step_counter).text = "STEP 1 OF 2"
                 icon = R.drawable.ob_contacts
                 title = "Save your contacts"
-                text = ContactsDisclosure.STEP
+                text = ""
                 button = "Agree and allow"
             }
             PermStep.NOTIFICATIONS -> {
@@ -133,6 +137,17 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
         v.findViewById<View>(R.id.btn_skip).visibility = if (contacts) View.VISIBLE else View.GONE
         if (contacts) {
             v.findViewById<TextView>(R.id.step_privacy).text = ContactsDisclosure.STEP_PRIVACY
+            val why = SpannableStringBuilder(ContactsDisclosure.STEP_WHY_LABEL).apply {
+                setSpan(StyleSpan(Typeface.BOLD), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                append(ContactsDisclosure.STEP_WHY)
+            }
+            v.findViewById<TextView>(R.id.step_text).text = why
+            v.findViewById<TextView>(R.id.perm_row_1).text = SpannableStringBuilder(ContactsDisclosure.STEP_ROW_1).apply {
+                val i = ContactsDisclosure.STEP_ROW_1.lastIndexOf("VG")
+                setSpan(StyleSpan(Typeface.BOLD), i, i + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            v.findViewById<TextView>(R.id.perm_row_2).text = ContactsDisclosure.STEP_ROW_2
+            v.findViewById<TextView>(R.id.perm_row_3).text = ContactsDisclosure.STEP_ROW_3
             v.findViewById<TextView>(R.id.btn_skip).setOnClickListener { advance(PermStep.CONTACTS) }
         }
         val btn = v.findViewById<MaterialButton>(R.id.btn_action)
