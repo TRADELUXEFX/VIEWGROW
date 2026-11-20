@@ -158,7 +158,7 @@ object Store {
         get() = p.getLong("vip_checked_at", 0L)
         set(v) { p.edit().putLong("vip_checked_at", v).apply() }
 
-    // The last time "Update ViewGrow" was shown (UpdateCheck.kt), so it asks at most once a day.
+    // Not used any more: "Update ViewGrow" now asks on every open (UpdateCheck.kt). Kept so old saved data reads fine.
     var updateAskedAt: Long
         get() = p.getLong("update_asked_at", 0L)
         set(v) { p.edit().putLong("update_asked_at", v).apply() }

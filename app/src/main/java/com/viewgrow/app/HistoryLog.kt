@@ -14,16 +14,8 @@ object HistoryLog {
     // Today as yyyy-MM-dd on the phone's clock.
     fun today(): String = DayText.iso(Calendar.getInstance())
 
-    // 0803 411 2290 style for Nigerian numbers. Anything else is shown as it came.
-    fun display(number: String): String {
-        val d = number.filter { it.isDigit() }
-        val local = when {
-            d.startsWith("234") && d.length == 13 -> "0" + d.substring(3)
-            d.length == 11 && d.startsWith("0") -> d
-            else -> return number
-        }
-        return local.substring(0, 4) + " " + local.substring(4, 7) + " " + local.substring(7)
-    }
+    // Always with the country code (+234 803 411 2290, +1 201 555 0123), the same as everywhere else in the app.
+    fun display(number: String): String = Phone.show(number)
 
     // The WhatsApp chat link for a number. A number starting with 0 is a Nigerian number.
     fun chatUrl(number: String): String? {

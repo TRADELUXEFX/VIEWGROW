@@ -70,6 +70,76 @@ object MemberList {
     fun nameOf(ctx: Context, number: String): String? = all(ctx)[numberKey(number)]
 }
 
+// Each member's full number (with country code), by number key. The key is only the last 10 digits, so it cannot say
+// which country a number is from; this is what the screens show (+234 801 234 5678, +1 201 555 0123).
+object MemberNumbers {
+    private var cache: HashMap<String, String>? = null
+    private fun file(ctx: Context) = File(ctx.filesDir, "member_numbers.json")
+
+    @Synchronized
+    fun all(ctx: Context): Map<String, String> {
+        cache?.let { return it }
+        val m = HashMap<String, String>()
+        try {
+            val f = file(ctx)
+            if (f.exists()) { val o = JSONObject(f.readText()); o.keys().forEach { k -> m[k] = o.optString(k) } }
+        } catch (e: Exception) { }
+        cache = m
+        return m
+    }
+
+    @Synchronized
+    fun save(ctx: Context, m: Map<String, String>) {
+        val o = JSONObject()
+        m.forEach { (k, v) -> o.put(k, v) }
+        try { file(ctx).writeText(o.toString()) } catch (e: Exception) { }
+        cache = HashMap(m)
+    }
+
+    // A number key -> how to show it. Members saved before this list existed joined from Nigeria (sign-up was
+    // Nigeria only), so a 10 digit key with no full number is shown as +234.
+    fun show(ctx: Context, key: String): String {
+        val full = all(ctx)[key] ?: if (key.length == 10) "234$key" else key
+        return PhoneText.show(full)
+    }
+}
+
+// Numbers as they are shown: always with the country code, spaced in groups.
+object PhoneText {
+    // Every calling code (the same list as the member app). The longest one that fits wins.
+    private val codes: List<String> = ("234,233,93,355,213,376,244,54,374,297,61,43,994,973,880,375,32,501,229,975,591,387," +
+        "267,55,673,359,226,257,855,237,238,236,235,56,86,57,269,242,243,682,506,225,385,53,599,357,420,45,253,593,20," +
+        "503,240,291,372,268,251,500,298,679,358,33,594,689,241,220,995,49,350,30,299,590,502,224,245,592,509,504,852," +
+        "36,354,91,62,964,353,972,39,81,962,7,254,686,383,965,996,856,371,961,266,231,218,423,370,352,853,261,265,60," +
+        "960,223,356,692,596,222,230,262,52,691,373,377,976,382,212,258,95,264,674,977,31,687,64,505,227,683,850,389," +
+        "47,968,92,680,970,507,675,595,51,63,48,351,974,40,250,685,378,239,966,221,381,248,232,65,421,386,677,252,27," +
+        "82,211,34,94,249,597,46,41,963,886,992,255,66,670,228,690,676,216,90,993,688,256,380,971,44,598,998,678,379," +
+        "58,84,681,967,260,263,1,508,290,672").split(",").sortedByDescending { it.length }
+
+    fun show(stored: String): String {
+        // Already stored the way it is shown (+234 803 123 4567): shown exactly as the database has it.
+        val raw = stored.trim()
+        if (Regex("^\\+\\d+ \\d.*").matches(raw)) return raw
+        val d0 = stored.filter { it.isDigit() }
+        val d = when {
+            d0.length == 11 && d0.startsWith("0") -> "234" + d0.substring(1)
+            d0.length >= 11 && !d0.startsWith("0") -> d0
+            else -> return stored.trim()
+        }
+        if (d.startsWith("234") && d.length == 13) return "+234 " + d.substring(3, 6) + " " + d.substring(6, 9) + " " + d.substring(9)
+        val cc = codes.firstOrNull { d.startsWith(it) } ?: return "+$d"
+        val rest = d.substring(cc.length)
+        val sb = StringBuilder("+").append(cc)
+        var i = 0
+        while (i < rest.length) {
+            val len = if (rest.length - i <= 4) rest.length - i else 3
+            sb.append(' ').append(rest, i, i + len)
+            i += len
+        }
+        return sb.toString()
+    }
+}
+
 // The phone's own contacts.
 object PhoneContacts {
     fun allowed(ctx: Context): Boolean =
@@ -219,6 +289,9 @@ object MemberSync {
             val members = if (doFull) HashMap<String, String>() else HashMap(MemberList.all(app))
             people.forEach { (name, num) -> members[numberKey(num)] = name }
             MemberList.save(app, members)
+            val numbers = if (doFull) HashMap<String, String>() else HashMap(MemberNumbers.all(app))
+            people.forEach { (_, num) -> numbers[numberKey(num)] = num.trim() }
+            MemberNumbers.save(app, numbers)
 
             val before = PhoneContacts.keys(app)
             val saved = PhoneContacts.saveNew(app, people)

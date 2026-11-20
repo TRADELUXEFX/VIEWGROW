@@ -261,7 +261,8 @@ class ShotsActivity : AppCompatActivity() {
         return d[b.length]
     }
 
-    private fun show(key: String) = if (key.length == 10) "0" + key.substring(0, 3) + " " + key.substring(3, 6) + " " + key.substring(6) else key
+    // Always with the country code: +234 801 234 5678, +1 201 555 0123.
+    private fun show(key: String) = MemberNumbers.show(applicationContext, key)
 
     // ---------- Check screen ----------
     // The green header holds "Log", the day (tap to change it) and three tabs: Ready, Check and Skipped.

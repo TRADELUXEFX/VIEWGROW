@@ -102,35 +102,120 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
 
     private val util: PhoneNumberUtil by lazy { PhoneNumberUtil.createInstance(ctx.applicationContext) }
 
+    // Set while the box is being rewritten here, so the watcher does not react to its own change.
+    private var busy = false
+    // Backspace (or Delete) that removed only a space: the digit next to it should go too.
+    private var dropDigitAt = -1
+
     init {
         showButton()
         button.setOnClickListener { open() }
         box.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                if (busy || s == null) return
+                dropDigitAt = -1
+                // One character deleted, and it was a space: without this the formatting would put the space
+                // straight back and the key would seem to do nothing.
+                if (count == 1 && after == 0 && start < s.length && !s[start].isDigit() && s[start] != '+') {
+                    val cursor = box.selectionStart
+                    dropDigitAt = if (cursor == start + 1) {
+                        // Backspace: the digit before the space.
+                        var j = start - 1
+                        while (j >= 0 && !s[j].isDigit()) j--
+                        j
+                    } else {
+                        // Delete key: the digit after the space (it moves up one place once the space is gone).
+                        var j = start + 1
+                        while (j < s.length && !s[j].isDigit()) j++
+                        if (j < s.length) j - 1 else -1
+                    }
+                }
+            }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                if (s == null) return
-                val now = s.toString()
+                if (busy || s == null) return
+                var now = s.toString()
+                var cursor = box.selectionStart.coerceIn(0, now.length)
+                if (dropDigitAt in now.indices) {
+                    now = now.removeRange(dropDigitAt, dropDigitAt + 1)
+                    cursor = dropDigitAt
+                }
+                dropDigitAt = -1
+                val atEnd = cursor >= now.length
+                val digitsBefore = now.take(cursor).count { it.isDigit() }
                 val out = reformat(now)
-                if (out != now) s.replace(0, s.length, out)
+                if (out == s.toString()) return
+                busy = true
+                s.replace(0, s.length, out)
+                busy = false
+                val c = if (atEnd) out.length else caretAfterDigits(out, digitsBefore)
+                box.setSelection(c.coerceIn(0, box.text.length))
             }
         })
+    }
+
+    // The cursor goes back after the same number of digits, so typing or deleting in the middle does not jump to the end.
+    private fun caretAfterDigits(s: String, n: Int): Int {
+        if (n <= 0) return if (s.startsWith("+")) 1 else 0
+        var seen = 0
+        for (i in s.indices) if (s[i].isDigit() && ++seen == n) return i + 1
+        return s.length
     }
 
     // Nigeria (and anything typed with a +): the usual spaces. Other countries: the number is spaced the way that
     // country writes it, and no more digits are accepted than that country has.
     private fun reformat(now: String): String {
         if (country.iso == "NG" || now.trimStart().startsWith("+")) return Phone.format(now)
-        return try {
-            var d = now.filter { it.isDigit() }
-            while (d.isNotEmpty() && tooLong(d)) d = d.dropLast(1)
-            val f = util.getAsYouTypeFormatter(country.iso)
-            var out = ""
-            for (c in d) out = f.inputDigit(c)
-            out
+        var d = now.filter { it.isDigit() }.take(15 - country.dial.length)
+        while (d.isNotEmpty() && tooLong(d)) d = d.dropLast(1)
+        return spaceDigits(d)
+    }
+
+    // How a country spaces its numbers, taken once from its real example number and then used for every digit typed,
+    // so the spaces never jump around (UK: 07400 123456, US: 201 555 0123, Ghana: 024 123 4567 or 24 123 4567).
+    // The library's own as-you-type formatter is not used: for many countries it gives no spaces until the number is
+    // complete (Ghana, Kenya, South Africa, the UK typed without its 0) and then changes the whole layout at once.
+    private class Groups(val pre: String, val withPre: List<Int>, val noPre: List<Int>)
+    private val groupCache = HashMap<String, Groups>()
+
+    private fun groupsFor(iso: String): Groups = groupCache.getOrPut(iso) {
+        val plain = listOf(3, 3, 4)
+        try {
+            val n = util.getExampleNumberForType(iso, PhoneNumberUtil.PhoneNumberType.MOBILE)
+                ?: return@getOrPut Groups("", plain, plain)
+            val nat = util.format(n, PhoneNumberUtil.PhoneNumberFormat.NATIONAL)
+            val nsn = util.getNationalSignificantNumber(n)
+            val all = nat.filter { it.isDigit() }
+            if (!all.endsWith(nsn)) return@getOrPut Groups("", plain, plain)
+            val parts = nat.split(Regex("\\D+")).filter { it.isNotEmpty() }.map { it.length }
+            val pre = all.substring(0, all.length - nsn.length)
+            var cut = pre.length
+            val rest = ArrayList<Int>()
+            for (len in parts) {
+                val k = minOf(cut, len); cut -= k
+                if (len - k > 0) rest.add(len - k)
+            }
+            Groups(pre, parts, if (rest.isEmpty()) plain else rest)
         } catch (e: Exception) {
-            now.filter { it.isDigit() }.take(15)
+            Groups("", plain, plain)
         }
+    }
+
+    // Digits -> spaced the country's way. A space appears as soon as the next group starts (201 5, not 2015).
+    // Digits past the last group stay on the last group.
+    private fun spaceDigits(d: String): String {
+        val g = groupsFor(country.iso)
+        val groups = if (g.pre.isNotEmpty() && d.startsWith(g.pre)) g.withPre else g.noPre
+        val sb = StringBuilder()
+        var i = 0
+        for (k in groups.indices) {
+            if (i >= d.length) break
+            val len = if (k == groups.lastIndex) d.length - i else minOf(groups[k], d.length - i)
+            if (sb.isNotEmpty()) sb.append(' ')
+            sb.append(d, i, i + len)
+            i += len
+        }
+        return sb.toString()
     }
 
     private fun tooLong(digits: String): Boolean = try {
@@ -139,10 +224,10 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
         false
     }
 
-    // A real example for the country, shown in the empty box (UK: 07400 123456).
+    // A real example for the country, shown in the empty box (UK: 07400 123456, US: 201 555 0123, no brackets or dashes).
     private fun exampleFor(c: Countries.C): String = try {
         val n = util.getExampleNumberForType(c.iso, PhoneNumberUtil.PhoneNumberType.MOBILE)
-        if (n == null) "Phone number" else util.format(n, PhoneNumberUtil.PhoneNumberFormat.NATIONAL)
+        if (n == null) "Phone number" else util.format(n, PhoneNumberUtil.PhoneNumberFormat.NATIONAL).replace(Regex("[^0-9+]+"), " ").trim()
     } catch (e: Exception) {
         "Phone number"
     }
@@ -164,12 +249,12 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
         box.hint = if (country.iso == "NG") "0801 234 5678" else exampleFor(country)
     }
 
+    // A new country starts with an empty box: a number typed for one country is not a number for another.
     private fun pick(c: Countries.C) {
+        val changed = c.iso != country.iso
         country = c
         showButton()
-        val now = box.text.toString()
-        val out = reformat(now)
-        if (out != now) box.setText(out)
+        if (changed) box.setText("")
     }
 
     // Fill from a saved number: the right country and the rest of the number.
@@ -182,12 +267,14 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
                 country = c
                 showButton()
                 box.setText(digits.substring(c.dial.length))
+                box.setSelection(box.text.length)
                 return
             }
         }
         country = Countries.nigeria
         showButton()
-        box.setText(Phone.show(stored))
+        box.setText(Phone.local(stored))
+        box.setSelection(box.text.length)
     }
 
     // What the database gets. Nigeria: as typed. A number typed with + is kept. Another country: + calling code + number

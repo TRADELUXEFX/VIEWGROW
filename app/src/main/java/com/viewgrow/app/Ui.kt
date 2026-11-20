@@ -172,6 +172,57 @@ object Ui {
         btn.setImageResource(if (AppTheme.isDark(root.context)) R.drawable.ic_sun else R.drawable.ic_moon)
         btn.setOnClickListener { AppTheme.toggle(root.context) }
         TextFit.shrinkToFit(root.findViewById(R.id.user_name), 18)
+        keepBadgeWhole(root)
+    }
+
+    // The number and the Verified pill stay side by side. On a narrow phone both get a little smaller so they still fit
+    // (+234 803 123 4567 is longer than the old 0803 123 4567). Only if even that does not fit (a very small screen) does
+    // the pill move under the number, so it is never squeezed or cut off.
+    // The widths are worked out from the text, without changing the views, and a change is made only when the result
+    // differs from what is on screen, so the layout never goes round in circles.
+    private fun keepBadgeWhole(root: View) {
+        val phone = root.findViewById<TextView>(R.id.user_phone) ?: return
+        val badge = root.findViewById<TextView>(R.id.badge) ?: return
+        val line = phone.parent as? android.widget.LinearLayout ?: return
+        val column = line.parent as? View ?: return
+        if (column.getTag(R.id.badge) != null) return          // set up once per screen
+        column.setTag(R.id.badge, -1)
+        val ctx = root.context
+        val dm = ctx.resources.displayMetrics
+        fun px(sp: Float) = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, sp, dm)
+        fun textW(tv: TextView, sp: Float): Float {
+            val p = android.text.TextPaint(tv.paint); p.textSize = px(sp)
+            return p.measureText(tv.text.toString())
+        }
+        fun width(phoneSp: Float, badgeSp: Float, gapDp: Int): Float {
+            val icon = badge.compoundDrawablesRelative[0]?.intrinsicWidth ?: 0
+            return textW(phone, phoneSp) + phone.paddingStart + phone.paddingEnd + dp(ctx, gapDp) +
+                textW(badge, badgeSp) + badge.paddingStart + badge.paddingEnd + icon + badge.compoundDrawablePadding + dp(ctx, 2)
+        }
+        column.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            if (badge.visibility != View.VISIBLE || column.width == 0) return@addOnLayoutChangeListener
+            val room = column.width.toFloat()
+            // 0 = full size side by side, 1 = a little smaller side by side, 2 = pill under the number (last resort).
+            val state = when {
+                width(12.5f, 10.5f, 8) <= room -> 0
+                width(11f, 9.5f, 6) <= room -> 1
+                else -> 2
+            }
+            if (column.getTag(R.id.badge) == state) return@addOnLayoutChangeListener
+            column.setTag(R.id.badge, state)
+            line.post {
+                val small = state == 1
+                phone.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, if (small) 11f else 12.5f)
+                badge.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, if (small) 9.5f else 10.5f)
+                (badge.layoutParams as? android.widget.LinearLayout.LayoutParams)?.let {
+                    it.marginStart = when (state) { 0 -> dp(ctx, 8); 1 -> dp(ctx, 6); else -> 0 }
+                    it.topMargin = if (state == 2) dp(ctx, 4) else 0
+                    badge.layoutParams = it
+                }
+                line.orientation = if (state == 2) android.widget.LinearLayout.VERTICAL else android.widget.LinearLayout.HORIZONTAL
+                line.gravity = if (state == 2) android.view.Gravity.START else android.view.Gravity.CENTER_VERTICAL
+            }
+        }
     }
 }
 

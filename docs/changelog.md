@@ -2,6 +2,45 @@
 
 Each change is one migration file. Newest first.
 
+## App update (21 Nov 2026): Verified pill stays beside the number
+- Status: app file only (Ui.kt). Needs a new app build.
+- Replaces the earlier change that moved the pill under the number. Now: full size side by side when it fits; a little
+  smaller (number 11sp, pill 9.5sp) side by side on narrow phones; the pill moves under the number only if even that
+  does not fit. Widths are worked out from the text, and the layout is changed only when the result changes.
+
+## App update (21 Nov 2026): "Update ViewGrow" pop-up on every open, no database change
+- Status: app files only (UpdateCheck.kt, MainActivity.kt, Store.kt). Needs a new app build. Members get the new behaviour once they install this version.
+- Before: after the pop-up showed once, it waited 24 hours, whatever was tapped, and it only showed to logged-in members.
+- Now: it asks Google Play each time the app is opened (start, or coming back after 30 seconds or more away) and shows the pop-up while the app is out of date. "Later" closes it until the next open. Also shown before log in; never on the Banned screen. Never two checks or two pop-ups at once.
+- Still depends on Google Play on the phone knowing about the new version, which can take some hours after publishing.
+
+## App fix (21 Nov 2026): example number in the empty box has no brackets or dashes
+- Status: app file only (CountryField.kt). The grey example in an empty number box is spaced like typed numbers: US 201 555 0123 (was (201) 555-0123).
+
+## App fix (21 Nov 2026): Verified pill no longer squeezed on narrow phones
+- Status: app file only (Ui.kt). Needs a new app build.
+- Home and Profile header: when the number and the Verified pill do not fit on one line (the +234 form is longer than 0803...), the pill moves under the number instead of being squeezed or cut off.
+
+## App update (21 Nov 2026): country flag in front of numbers in History, no database change
+- Status: app files only (Phone.kt, HistoryFragment.kt, HistoryDayFragment.kt). Needs a new app build.
+- Phone.withFlag(number): the country's flag (drawn by the phone, like the country picker) in front of the number. Used under each person's name in History and in a day's people.
+
+## 20261121000000: phone numbers stored with + and spaces, APPLIED 20 Nov 2026
+- Database change (see the website repo's supabase/changelog.md). Every number is now stored as +234 803 123 4567. The app already shows a stored number as it is and strips spaces wherever it compares numbers or opens WhatsApp.
+
+## Planned: numbers stored as "+234 803 123 4567" (app side ready, database not changed yet)
+- Status: app files only (Phone.kt, admin Members.kt). Works with both the current digits-only numbers and the planned spaced form.
+- A number that already starts with + and has spaces is shown exactly as the database has it. The admin app keeps the member's number as the database sends it.
+
+## App update (20 Nov 2026): every number shows its country code, no database change
+- Status: app files only. Member app: Phone.kt, HistoryLog.kt, CountryField.kt, MainActivity.kt. Admin app: Members.kt, ShotsActivity.kt. Needs new builds of both.
+- Member app: Phone.show now shows every number with its country code (+234 801 234 5678, +1 201 555 0123), spaced the country's way. Used on Profile, History and each day's people, the banned/locked screen and the delete-account message. Phone.local keeps 0801 234 5678 for the Nigeria number box.
+- Admin app: the screenshot check showed only the last 10 digits (0801 234 5678), so a foreign member's country was lost. The member sync now also keeps each member's full number (member_numbers.json) and the check shows it with its code. Members synced before this update show as +234 until their number is synced again (sign-up was Nigeria only before).
+
+## App update (20 Nov 2026): number box fixes, no database change
+- Status: app file only (CountryField.kt). Needs a new app build.
+- Same three fixes as the website: a new country empties the number box; spaces follow the country's layout from the first digit (taken from its example number) instead of the as-you-type formatter, which ran digits together for many countries; backspace after a space deletes the digit before it, and the cursor stays in place when editing mid-number.
+
 ## App update (20 Nov 2026): A to Z strip animation, no database change
 - Status: app file only (CountryField.kt). Needs a new app build.
 - While a finger is on the A to Z strip, a big green letter bubble shows beside it and fades out shortly after the finger lifts. The highlighted letter on the strip pops in (small to full size) each time it changes. The list still jumps straight to the letter (no slow scroll), so it keeps up with the finger.

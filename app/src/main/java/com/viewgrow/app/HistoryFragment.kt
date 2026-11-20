@@ -280,7 +280,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             TextFit.shrinkToFit(row.findViewById(R.id.c_name), 14)
             TextFit.shrinkToFit(row.findViewById(R.id.c_number), 12)
             val num = row.findViewById<TextView>(R.id.c_number)
-            if (p.name.isBlank()) num.visibility = View.GONE else num.text = HistoryLog.display(p.number)
+            if (p.name.isBlank()) num.visibility = View.GONE else num.text = Phone.withFlag(p.number)
             if (p.banned) {
                 row.findViewById<View>(R.id.c_banned).visibility = View.VISIBLE
                 row.findViewById<TextView>(R.id.c_name).maxWidth = (row.resources.displayMetrics.density * 120).toInt()

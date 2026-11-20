@@ -46,8 +46,76 @@ object Phone {
         return if (d.length >= 11 && !d.startsWith("234") && !d.startsWith("0")) "+$d" else t
     }
 
-    // 2348012345678 -> 0801 234 5678. Anything that is not a Nigerian number is shown as it is.
+    // The full number in digits, with its country code: 08012345678 -> 2348012345678, +1 201... -> 1201...
+    // Empty when it cannot be told (too short).
+    fun fullDigits(stored: String): String {
+        val d = stored.filter { it.isDigit() }
+        return when {
+            d.length == 11 && d.startsWith("0") -> "234" + d.substring(1)
+            d.length >= 11 && !d.startsWith("0") -> d
+            else -> ""
+        }
+    }
+
+    private var app: android.content.Context? = null
+    private val util: io.michaelrocks.libphonenumber.android.PhoneNumberUtil? by lazy {
+        app?.let { io.michaelrocks.libphonenumber.android.PhoneNumberUtil.createInstance(it) }
+    }
+
+    // Called once when the app opens, so numbers can be spaced the way each country writes them.
+    fun init(ctx: android.content.Context) { if (app == null) app = ctx.applicationContext }
+
+    // How a number is shown everywhere in the app: always with its country code, so it is clear where the person is from.
+    // 2348012345678 or 0801 234 5678 -> +234 801 234 5678, 12015550123 -> +1 201 555 0123.
+    // Anything that is not a full number is shown as it came.
     fun show(stored: String): String {
+        // Already stored the way it is shown (+234 803 123 4567): shown exactly as the database has it.
+        val raw = stored.trim()
+        if (Regex("^\\+\\d+ \\d.*").matches(raw)) return raw
+        val d = fullDigits(stored)
+        if (d.isEmpty()) return stored.trim()
+        if (d.startsWith("234") && d.length == 13) {
+            return "+234 " + d.substring(3, 6) + " " + d.substring(6, 9) + " " + d.substring(9)
+        }
+        try {
+            val u = util
+            if (u != null) {
+                val n = u.parse("+$d", null)
+                val out = u.format(n, io.michaelrocks.libphonenumber.android.PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL)
+                // Only spaces between the groups (no dashes or brackets), the same look as Nigerian numbers.
+                return out.replace(Regex("[^0-9+]+"), " ").trim()
+            }
+        } catch (e: Exception) { }
+        val c = Countries.forDigits(d) ?: return "+$d"
+        val rest = d.substring(c.dial.length)
+        val sb = StringBuilder("+").append(c.dial)
+        var i = 0
+        while (i < rest.length) {
+            val len = if (rest.length - i <= 4) rest.length - i else 3
+            sb.append(' ').append(rest, i, i + len)
+            i += len
+        }
+        return sb.toString()
+    }
+
+    // A number in a people list: the country's flag in front, then the number (🇳🇬  +234 803 123 4567).
+    // The country comes from the number itself; a number whose country cannot be told is shown without a flag.
+    fun withFlag(stored: String): String {
+        val shown = show(stored)
+        val d = fullDigits(stored)
+        if (d.isEmpty()) return shown
+        val u = util
+        val fromLib: String? = if (u == null) null else try {
+            u.getRegionCodeForNumber(u.parse("+$d", null))?.takeIf { it.length == 2 && it != "ZZ" }
+        } catch (e: Exception) { null }
+        val iso = fromLib ?: Countries.forDigits(d)?.iso
+        if (iso == null) return shown
+        val flag = iso.uppercase().map { String(Character.toChars(0x1F1E6 + (it - 'A'))) }.joinToString("")
+        return "$flag  $shown"
+    }
+
+    // For the number box on the Nigeria setting: 2348012345678 -> 0801 234 5678 (what a member types).
+    fun local(stored: String): String {
         var d = stored.filter { it.isDigit() }
         if (stored.trim().startsWith("+") && !d.startsWith("234")) return stored.trim()
         if (d.startsWith("234") && d.length == 13) d = "0" + d.substring(3)

@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Store.init(applicationContext)
+        Phone.init(applicationContext)
         AppTheme.apply(this)
         val splashStart = System.currentTimeMillis()
         installSplashScreen().setKeepOnScreenCondition {
@@ -161,8 +162,8 @@ class MainActivity : AppCompatActivity() {
         // this just clears the old notification and the "already warned" flag once it is back on.
         PermissionWatch.onAppOpen(this)
         ReshareReminder.show(this)
-        // A newer version on Google Play: offer it, at most once a day (UpdateCheck.kt).
-        if (Store.loggedIn && !Store.banned) UpdateCheck.check(this)
+        // A newer version on Google Play: offer it each time the app is opened while out of date (UpdateCheck.kt).
+        if (!Store.banned) UpdateCheck.check(this)
         // Packs paid for but not yet confirmed with the database are tried again here.
         BillingManager.listen(
             { msg -> android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show() },
@@ -307,7 +308,14 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         // The billing helper lives as long as the app, so it must not keep this screen alive.
         BillingManager.stopListening()
+        UpdateCheck.onScreenGone()
         super.onDestroy()
+    }
+
+    // The app went to the background: the next open (after 30 seconds away) asks Google Play about updates again.
+    override fun onStop() {
+        super.onStop()
+        UpdateCheck.onLeave()
     }
 
     override fun onPause() {
