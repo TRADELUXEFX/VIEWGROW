@@ -29,6 +29,7 @@ function b64url(data: string | Uint8Array): string {
 async function googleAccessToken(): Promise<string> {
   const sa = JSON.parse(Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON") ?? "{}");
   if (!sa.client_email || !sa.private_key) throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON is missing or incomplete");
+  console.log("service account in use:", sa.client_email); // email only, never the key
   const now = Math.floor(Date.now() / 1000);
   const unsigned =
     b64url(JSON.stringify({ alg: "RS256", typ: "JWT" })) + "." +

@@ -15,6 +15,7 @@ import org.json.JSONObject
 class LogInFragment : Fragment(R.layout.fragment_login) {
 
     private val passwordRule = Regex("^[A-Za-z0-9]{6,30}$")
+    private lateinit var country: CountryField
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val phone = view.findViewById<EditText>(R.id.phone)
@@ -22,11 +23,20 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
         val button = view.findViewById<Button>(R.id.btn_login)
         val main = activity as? MainActivity
 
-        Phone.attach(phone)
+        country = CountryField(requireContext(), view.findViewById(R.id.country), phone)
         // The big green header shrinks while the keyboard is open, so the form has room.
         view.findViewById<android.view.ViewGroup>(R.id.hero)?.let { KeyboardAware.compactHeader(view, it) }
-        if (Store.phone.isNotEmpty()) phone.setText(Phone.show(Store.phone))
+        if (Store.phone.isNotEmpty()) country.set(Store.phone)
         Ui.passwordEye(password, view.findViewById(R.id.eye))
+        // Password box: a little taller than before, with a lock icon in front (same as Sign up).
+        val eye = view.findViewById<View>(R.id.eye)
+        password.layoutParams = password.layoutParams.also { it.height = Ui.dp(requireContext(), 56) }
+        eye.layoutParams = eye.layoutParams.also { it.height = Ui.dp(requireContext(), 56) }
+        password.compoundDrawablePadding = Ui.dp(requireContext(), 12)
+        password.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_lock, 0, 0, 0)
+        androidx.core.widget.TextViewCompat.setCompoundDrawableTintList(
+            password, androidx.core.content.ContextCompat.getColorStateList(requireContext(), R.color.green_text)
+        )
         Fonts.apply(view)
 
         Ui.linkText(
@@ -40,7 +50,7 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
         Remote.load { if (isAdded && view.parent != null) showForgot(view) }
 
         button.setOnClickListener {
-            submit(view, phone.text.toString().trim(), password.text.toString().trim())
+            submit(view, country.value(), password.text.toString().trim())
         }
     }
 
@@ -50,7 +60,7 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
         if (!Remote.adminExpected()) { forgot.visibility = View.GONE; return }
         forgot.visibility = View.VISIBLE
         Ui.linkText(forgot, "Forgot your password? Message the admin", listOf("Message the admin" to {
-            val text = "Hi, I forgot my ViewGrow password. Please reset it. My number is " + phone.text.toString().trim()
+            val text = "Hi, I forgot my ViewGrow password. Please reset it. My number is " + country.value()
             val link = Remote.adminLink(text)
             if (link == null) {
                 Ui.toast(view, "Could not open the link. Check your internet and try again.")

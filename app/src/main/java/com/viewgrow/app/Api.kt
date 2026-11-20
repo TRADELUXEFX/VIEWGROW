@@ -82,7 +82,7 @@ object Api {
             code == "WRONG_PIN" && left > 0 ->
                 "Wrong password. $left " + (if (left == 1) "try" else "tries") + " left before it locks."
             code == "WRONG_PIN" -> "Wrong password, or this account cannot log in right now. Message the admin for help."
-            code == "INVALID_PHONE" -> "Enter a valid Nigerian number."
+            code == "INVALID_PHONE" -> "Enter a valid number. Pick your country, then type your number."
             code == "NOT_FOUND" -> "This number is not registered yet. Tap Sign up below."
             code == "BANNED" -> "This account has been banned."
             code == "SESSION_EXPIRED" -> "You were logged out. Please log in again."

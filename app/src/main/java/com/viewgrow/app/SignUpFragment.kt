@@ -14,6 +14,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
 
     private val passwordRule = Regex("^[A-Za-z0-9]{6,30}$")
     private var busy = false
+    private lateinit var country: CountryField
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val name = view.findViewById<EditText>(R.id.name)
@@ -22,10 +23,19 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         val button = view.findViewById<Button>(R.id.btn_signup)
         val main = activity as? MainActivity
 
-        Phone.attach(phone)
+        country = CountryField(requireContext(), view.findViewById(R.id.country), phone)
         // The big green header shrinks while the keyboard is open, so the form has room.
         view.findViewById<android.view.ViewGroup>(R.id.hero)?.let { KeyboardAware.compactHeader(view, it) }
         Ui.passwordEye(password, view.findViewById(R.id.eye))
+        // Password box: a little taller than before, with a lock icon in front (same look as the name box).
+        val eye = view.findViewById<View>(R.id.eye)
+        password.layoutParams = password.layoutParams.also { it.height = Ui.dp(requireContext(), 56) }
+        eye.layoutParams = eye.layoutParams.also { it.height = Ui.dp(requireContext(), 56) }
+        password.compoundDrawablePadding = Ui.dp(requireContext(), 12)
+        password.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_lock, 0, 0, 0)
+        androidx.core.widget.TextViewCompat.setCompoundDrawableTintList(
+            password, androidx.core.content.ContextCompat.getColorStateList(requireContext(), R.color.green_text)
+        )
         Fonts.apply(view)
 
         // Signing up means accepting the Terms and Privacy Policy, and agreeing that other members
@@ -53,7 +63,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         applyOpen(view)
 
         button.setOnClickListener {
-            submit(view, name.text.toString().trim(), phone.text.toString().trim(), password.text.toString().trim())
+            submit(view, name.text.toString().trim(), country.value(), password.text.toString().trim())
         }
     }
 
@@ -72,8 +82,9 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         Ui.showError(error, null)
 
         if (name.length < 2) { Ui.showError(error, "Please enter your name."); return }
+        country.problem()?.let { Ui.showError(error, it); return }
         if (phone.filter { it.isDigit() }.length < 10) {
-            Ui.showError(error, "Enter a valid Nigerian number, e.g. 0801 234 5678."); return
+            Ui.showError(error, "Enter a valid number. Pick your country, then type your number."); return
         }
         if (password.length < 6) { Ui.showError(error, "Your password needs at least 6 characters."); return }
         if (!passwordRule.matches(password)) { Ui.showError(error, "Your password can only use letters and numbers."); return }
@@ -120,7 +131,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
 
     private fun messageFor(code: String): String = when (code) {
         "NAME_REQUIRED" -> "Please enter your name."
-        "INVALID_PHONE" -> "Enter a valid Nigerian number, e.g. 0801 234 5678."
+        "INVALID_PHONE" -> "Enter a valid number. Pick your country, then type your number."
         "CONSENT_REQUIRED" -> "Please accept the terms to continue."
         "CHECK_DETAILS" -> "We could not create this account. If you already have one, tap Log in below, or message the admin."
         "ACCOUNT_DELETED" -> "This number belongs to a deleted account. To use it again, message the admin to reactivate it."

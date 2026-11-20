@@ -17,7 +17,7 @@ object Store {
     // The number as typed or as the database returned it. Kept after log out, to fill the Log in box.
     var phone: String
         get() = p.getString("phone", "") ?: ""
-        set(v) { p.edit().putString("phone", v).apply() }
+        set(v) { p.edit().putString("phone", Phone.forServer(v)).apply() }
 
     // The login token (after a ban is lifted, briefly the password until it is traded for a token). Kept encrypted (SecretBox).
     // If the phone's Keystore cannot be used nothing is kept and the member logs in again.
@@ -190,7 +190,7 @@ object Store {
         // A different member on this phone starts with the normal sync settings, not the last member's pause or interval.
         val before = this.phone.filter { it.isDigit() }.takeLast(10)
         val now = phone.filter { it.isDigit() }.takeLast(10)
-        val e = p.edit().putString("phone", phone).putString("name", name)
+        val e = p.edit().putString("phone", Phone.forServer(phone)).putString("name", name)
         if (before.isNotEmpty() && before != now) e.remove("sync_paused").remove("sync_hours")
         e.apply()
         this.password = password

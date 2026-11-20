@@ -2,6 +2,42 @@
 
 Each change is one migration file. Newest first.
 
+## App update (20 Nov 2026): A to Z strip animation, no database change
+- Status: app file only (CountryField.kt). Needs a new app build.
+- While a finger is on the A to Z strip, a big green letter bubble shows beside it and fades out shortly after the finger lifts. The highlighted letter on the strip pops in (small to full size) each time it changes. The list still jumps straight to the letter (no slow scroll), so it keeps up with the finger.
+
+## App update (20 Nov 2026): Log in matches Sign up layout, no database change
+- Status: app file only (fragment_login.xml). Needs a new app build.
+- The "Log in" button now sits at the bottom of the screen with "New here? Sign up" under it, the same place as the Sign up button and "Already a member? Log in". Icons, 56dp boxes and label spacing were already the same.
+
+## App update (20 Nov 2026): Sign up polish, no database change
+- Status: app files only (fragment_signup.xml, SignUpFragment.kt, drawable/ic_user_line.xml). Needs a new app build.
+- Log in gets the same: lock icon in the password box, taller boxes (56dp), more space above the labels (fragment_login.xml, LogInFragment.kt).
+- Same header, colours and button. The name box has a person icon and the password box a lock icon (both in the app's green). Boxes are a little taller (56dp) and the labels have more space above them, so the form fills the screen better.
+
+## App update (20 Nov 2026): full-screen country picker, no database change
+- Status: app files only (CountryField.kt, layout/dialog_country.xml, layout/item_country.xml, drawable/bg_country_row.xml, bg_country_row_on.xml, bg_country_search.xml, ic_search.xml, ic_clear.xml, values/themes.xml). Needs a new app build.
+- The country list is now a full-screen page instead of a small pop-up: green header with a Back arrow and "Choose your country", a search box inside the green header (country name or code, with a clear button), one rounded card per country (flag, name, calling code), the chosen country first with a green check, and an A to Z strip on the right that jumps through the list (the current letter is highlighted). Light and dark mode both follow the app colours.
+- List: sorted A to Z with accents ignored (Åland is with the A's). Added Åland, Jersey, Guernsey, Isle of Man, Saint Barthélemy, Saint Martin, Saint Pierre and Miquelon, Saint Helena, Svalbard, Western Sahara, Norfolk Island, Christmas Island, Cocos Islands and Caribbean Netherlands. When a saved number is read back, the main country wins for shared codes (UK over Jersey, Guernsey and Isle of Man; Finland over Åland; and so on).
+
+## App update (20 Nov 2026): country button on Sign up and Log in, no database change
+- Status: app files only (CountryField.kt new, fragment_signup.xml, fragment_login.xml, SignUpFragment.kt, LogInFragment.kt, Api.kt). Needs a new app build; the database change (migration 20261120230000) must already be applied.
+- The number box now has a country button in front of it (flag, calling code, an arrow). Tapping it opens a scrollable list of all countries with flags and a search box (country name or code). Nigeria is first and the default, and works exactly as before (0801 234 5678). Another country: the member types the number and the app sends + calling code + number (a leading 0 is dropped). A number typed with + is sent as typed. All +1 countries share the code 1 (type the area code and number).
+- Log in: the saved number fills the right country and number.
+- Per country rules (library io.michaelrocks:libphonenumber-android 8.13.50, added to app/build.gradle, keep rule in proguard-rules.pro): after picking a country the box takes only as many digits as that country has, spaces them the way that country writes numbers, and shows a real example (UK: 07400 123456). Sign up checks the length for the chosen country before sending. Nigeria is unchanged.
+
+## Sign up from any country (20 Nov 2026): migration 20261120230000 + app update
+- Status: NOT APPLIED YET. Run supabase/migrations/20261120230000_signup_any_country.sql in the Supabase SQL Editor (the admin runs it himself), then release the new app build after the Play closed test is finished.
+- Database: only web_register_core changes. It refused every number that was not Nigerian (13 digits, 234...). Now it allows anything public._web_norm accepts: Nigerian numbers as before, other countries only with + and the country code (11 to 15 digits), stored as digits. All other lines are the live function as read on 20 Nov 2026. Login already worked for any number _web_norm accepts.
+- App (Phone.kt, Store.kt, Session.kt, SignUpFragment.kt, Api.kt): Phone.forServer gives a foreign number its + back when it is saved on the phone (Store.phone, Store.logIn) and at log in (Session.logIn), because the database answers sign-up with plain digits and a foreign number without + is INVALID_PHONE. Nigerian numbers are not changed by it.
+- App (details): the number box keeps a +country-code number as typed (up to 15 digits). A number with no + that is not Nigerian is still refused, with a message saying to start with + and the country code. Nigerian numbers work as before.
+- Known and accepted: vg_phone_key compares the LAST 10 digits (used for the deleted-numbers check), so a foreign number whose last 10 digits equal a deleted Nigerian number would be told ACCOUNT_DELETED. Very unlikely.
+- Read-only check after running (true = applied):
+```sql
+select position('not like ''234%''' in pg_get_functiondef('public.web_register_core(text,text,boolean,text)'::regprocedure)) = 0 as any_country_230000;
+```
+- Checked on 20 Nov 2026 before the change: 23 members, all Nigerian numbers.
+
 ## Migration check (19 Nov 2026): which SQL is applied
 - Order to run, oldest first: 20261118220000, 20261118230000, 20261119150000, 20261119160000, 20261119170000, 20261119180000, 20261119190000.
 - All applied: 20261118220000, 20261118230000, 20261119150000, 20261119160000, 20261119170000, 20261119180000, 20261119190000. Nothing left to run (confirmed by the read-only check on 19 Nov 2026, all six columns true).

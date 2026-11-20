@@ -6,12 +6,15 @@ import android.widget.EditText
 
 // WhatsApp numbers: how the boxes format them while typing, and how they are shown.
 // The database accepts both 0801 234 5678 and +234 801 234 5678 and stores 2348012345678.
+// A number from another country must start with + and the country code (e.g. +447911123456); it is stored as digits.
 object Phone {
 
     // Spaces are added as you type. Local: 0XXX XXX XXXX (11 digits). International: +234 XXX XXX XXXX (13 digits).
     fun format(raw: String): String {
         val plus = raw.trimStart().startsWith("+")
         var d = raw.filter { it.isDigit() }
+        // Another country (+44..., +233...): kept as typed, up to 15 digits, no spaces (the country code length differs).
+        if (plus && !d.startsWith("234")) return "+" + d.take(15)
         if (plus || d.startsWith("234")) {
             d = d.take(13)
             val cc = d.take(3)
@@ -33,9 +36,20 @@ object Phone {
         return sb.toString()
     }
 
+    // What the phone keeps and sends to the database. A Nigerian number stays as it is (0801..., 234801...). A number from
+    // another country always gets its + back, because the database only accepts a foreign number that starts with +
+    // (the database answers sign-up with plain digits, so without this every later call would be INVALID_PHONE).
+    fun forServer(raw: String): String {
+        val t = raw.trim()
+        if (t.isEmpty() || t.startsWith("+")) return t
+        val d = t.filter { it.isDigit() }
+        return if (d.length >= 11 && !d.startsWith("234") && !d.startsWith("0")) "+$d" else t
+    }
+
     // 2348012345678 -> 0801 234 5678. Anything that is not a Nigerian number is shown as it is.
     fun show(stored: String): String {
         var d = stored.filter { it.isDigit() }
+        if (stored.trim().startsWith("+") && !d.startsWith("234")) return stored.trim()
         if (d.startsWith("234") && d.length == 13) d = "0" + d.substring(3)
         return if (d.length == 11) d.substring(0, 4) + " " + d.substring(4, 7) + " " + d.substring(7) else stored
     }

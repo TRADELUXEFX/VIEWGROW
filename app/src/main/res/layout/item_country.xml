@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One country in the full-screen picker: flag, name, calling code, and a check when it is the chosen one. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="18dp"
+    android:paddingEnd="40dp"
+    android:paddingBottom="8dp">
+    <LinearLayout
+        android:id="@+id/cty_card"
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:background="@drawable/bg_country_row"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+        <TextView
+            android:id="@+id/cty_flag"
+            android:layout_width="38dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="26sp" />
+        <TextView
+            android:id="@+id/cty_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:tag="semibold"
+            android:textColor="@color/dark"
+            android:textSize="15.5sp" />
+        <TextView
+            android:id="@+id/cty_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:tag="semibold"
+            android:textColor="@color/green_text"
+            android:textSize="15sp" />
+        <ImageView
+            android:id="@+id/cty_check"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/bg_green_circle"
+            android:importantForAccessibility="no"
+            android:padding="6dp"
+            android:src="@drawable/ic_check_white"
+            android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

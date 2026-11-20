@@ -34,6 +34,21 @@
         <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
     </style>
 
+    <!-- Full-screen page for the country picker: edge to edge, slides in like a screen. -->
+    <style name="Theme.ViewGrow.FullScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/green</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/dark</item>
+        <item name="colorControlActivated">@color/green</item>
+        <item name="android:windowBackground">@color/surface</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Activity</item>
+    </style>
+
     <!-- Filled green pill. Add app:backgroundTint to change the colour. -->
     <style name="AppButton" parent="Widget.MaterialComponents.Button">
         <item name="android:elevation">0dp</item>

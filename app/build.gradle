@@ -73,6 +73,8 @@ gradle.taskGraph.whenReady { graph ->
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.13.1'
+    // Phone number rules for every country (how many digits, how to space them, an example number).
+    implementation 'io.michaelrocks:libphonenumber-android:8.13.50'
     implementation 'androidx.core:core-splashscreen:1.0.1'
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
