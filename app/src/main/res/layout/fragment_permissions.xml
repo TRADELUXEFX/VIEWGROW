@@ -66,13 +66,16 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- Scrolls only as a last resort: PermissionsFragment.fit() makes the step fit the screen first. -->
     <ScrollView
+        android:id="@+id/step_scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:fillViewport="true"
         android:scrollbars="none">
         <LinearLayout
+            android:id="@+id/step_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -228,18 +231,4 @@
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="24dp" />
 
-    <!-- Step 1 only: say no and move on (the app never blocks anyone). -->
-    <TextView
-        android:id="@+id/btn_skip"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="-14dp"
-        android:layout_marginBottom="14dp"
-        android:gravity="center"
-        android:minHeight="44dp"
-        android:tag="semibold"
-        android:text="Not now"
-        android:textColor="@color/text2"
-        android:textSize="14sp"
-        android:visibility="gone" />
 </LinearLayout>

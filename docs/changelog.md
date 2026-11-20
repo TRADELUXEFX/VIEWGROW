@@ -2,6 +2,31 @@
 
 Each change is one migration file. Newest first.
 
+## App update (21 Nov 2026): "Stay notified" (step 2) laid out like step 1
+- Status: app files only (PermissionsFragment.kt, new drawable ic_bell_small.xml). Needs a new app build.
+- Step 2 was one long paragraph. Now it has the same layout as step 1: "Why we ask: so you know when something happens,
+  without having to open the app.", three rows (New contacts saved to your phone / The admin's status is up, and
+  announcements / Your contact limit, a weekly summary and reminders) and a green line with a bell: "You can turn
+  notifications off any time in your phone's Settings." Same notifications covered as before. Fits the screen the same
+  way as step 1 (checked on a copy of the layout at 360x640, 360x780 and 412x915).
+- Google Play: removing "Not now" from step 1 keeps the prominent disclosure rules: the disclosure comes right before
+  Android's own Allow box, "Agree and allow" is the affirmative action, and "Don't allow" there is respected (the app
+  moves on and keeps working).
+
+## App update (21 Nov 2026): "Not now" removed from the "Save your contacts" step
+- Status: app files only (fragment_permissions.xml, PermissionsFragment.kt). Needs a new app build.
+- Owner's choice: the button only took space. Saying no still works: "Agree and allow" opens Android's own box, where
+  "Don't allow" is the way to say no, and the app moves on to the next step either way.
+
+## App update (21 Nov 2026): "Save your contacts" step fits the screen, no scrolling
+- Status: app files only (PermissionsFragment.kt, fragment_permissions.xml). Needs a new app build.
+- The step (header, card with the three rows and the privacy line, Agree and allow, Not now) was taller than most phones
+  (about 880dp against about 670dp on a common phone), so the card had to be scrolled.
+- Now PermissionsFragment.fit() checks after layout and, only when needed, uses a compact version (smaller icon, less
+  space, slightly smaller text), then a tighter one without the icon. Same words, same buttons. Big phones keep the full
+  design. Scrolling stays only as a last resort for a very small screen. Checked on a copy of the layout at 360x640,
+  360x780 and 412x915: fits on all three.
+
 ## App update (21 Nov 2026): Verified pill stays beside the number
 - Status: app file only (Ui.kt). Needs a new app build.
 - Replaces the earlier change that moved the pill under the number. Now: full size side by side when it fits; a little
