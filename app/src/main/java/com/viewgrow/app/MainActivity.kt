@@ -169,6 +169,7 @@ class MainActivity : AppCompatActivity() {
             { refreshAfterPurchase() }
         )
         BillingManager.retryOpenPurchases(this)
+        BillingManager.prefetch(this)
         // Opened from the "permission is off" notification: go straight to the fix, no pop-up first.
         if (intent?.getBooleanExtra(PermissionWatch.EXTRA_FIX, false) == true) {
             intent.removeExtra(PermissionWatch.EXTRA_FIX)
@@ -498,6 +499,7 @@ class MainActivity : AppCompatActivity() {
         ReshareReminder.show(this)
         // Packs this member paid for but that were never confirmed (see BillingManager.retryOpenPurchases).
         BillingManager.retryOpenPurchases(this)
+        BillingManager.prefetch(this)
         if (PermissionsFragment.anythingToAsk(this)) showPermissions() else showTab(0)
     }
 

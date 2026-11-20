@@ -121,8 +121,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             timer.text = now
             if (timer.isShown) Anim.tick(timer)
         }
-        // "Last sync" counts up by itself (just now, 5 min ago...).
-        view?.findViewWithTag<View>(HomeViews.LAST_SYNC_TAG)?.let { val row = it.parent as? View; if (row != null) HomeViews.updateLastSync(row, syncNowPending || syncing, Store.lastCheckAt) }
+        // The header tag counts up by itself (Synced just now, Synced 5m ago...). Only for verified members.
+        if (status != null && status?.optString("state") != "NOT_VERIFIED") {
+            HomeViews.applySyncBadge(v.findViewById(R.id.badge), syncNowPending || syncing, Store.lastCheckAt)
+        }
         // The release time has passed: ask the database again.
         if (Release.expired() && System.currentTimeMillis() - lastLoad > 15000) reload()
     }
@@ -233,7 +235,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             val sync = HomeViews.syncButton(ctx) { syncNow() }
             body.addView(sync)
             if (syncNowPending || syncing) spin((sync as LinearLayout).getChildAt(0))
-            body.addView(HomeViews.lastSyncRow(ctx, syncNowPending || syncing, Store.lastCheckAt))
             body.addView(HomeViews.upgradeButton(ctx) { UpgradeSheet.show(ctx, total, limitN) })
         }
 
@@ -316,8 +317,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun setBadge(v: View, verified: Boolean) {
         Ui.setBadge(v, verified)
-        // The Verified pill shines once, the first time Home opens.
-        if (verified && !intro) v.findViewById<ShineTextView>(R.id.badge).shine()
+        val badge = v.findViewById<ShineTextView>(R.id.badge)
+        if (verified) {
+            // Only verified members can sync, so the tag shows the sync instead of "Verified"; tapping it syncs.
+            HomeViews.applySyncBadge(badge, syncNowPending || syncing, Store.lastCheckAt)
+            badge.setOnClickListener { syncNow() }
+        } else {
+            badge.setOnClickListener(null)
+            badge.isClickable = false
+        }
+        // The tag shines once, the first time Home opens.
+        if (verified && !intro) badge.shine()
     }
 
     // 312/500 with the /500 smaller, and the gauge on the right. The gauge turns red at 90% and over.

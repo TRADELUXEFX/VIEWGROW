@@ -37,6 +37,38 @@ object BillingManager {
 
     private var client: BillingClient? = null
     private var appContext: Context? = null
+
+    // Prices are fetched when the app opens and kept for the session, so the pop-up opens with them already in place.
+    // NOT_AVAILABLE = Google Play answered but has no such products for this install (not installed from Google Play,
+    // or the product IDs are not active in the Play Console): waiting or asking again will not help.
+    // TRY_AGAIN = no answer, no connection, or a temporary Google Play error: asking again can work.
+    enum class Problem { NONE, TRY_AGAIN, NOT_AVAILABLE }
+    @Volatile var problem: Problem = Problem.NONE
+        private set
+    @Volatile private var cachedPrices: Map<Int, String>? = null
+    @Volatile private var prefetching = false
+
+    // The prices already fetched this session, or null if there are none yet.
+    fun cachedPrices(): Map<Int, String>? = cachedPrices?.takeIf { it.isNotEmpty() }
+
+    // Fetches the prices in the background as soon as the app opens (and again after login). If Google Play does not
+    // answer it asks again quietly, up to 3 more times, a few seconds apart. Does nothing once prices are kept.
+    fun prefetch(ctx: Context) {
+        if (cachedPrices() != null || prefetching) return
+        prefetching = true
+        val app = ctx.applicationContext
+        val main = android.os.Handler(android.os.Looper.getMainLooper())
+        fun attempt(n: Int) {
+            loadPrices(app) { got ->
+                if (got.isEmpty() && problem == Problem.TRY_AGAIN && n < 3) {
+                    main.postDelayed({ attempt(n + 1) }, 5000L * (n + 1))
+                } else {
+                    prefetching = false
+                }
+            }
+        }
+        attempt(0)
+    }
     private val details = HashMap<String, ProductDetails>()
     private val inFlight = HashSet<String>()
     // After this many "no" answers from the database the app stops asking about the same purchase.
@@ -83,17 +115,28 @@ object BillingManager {
         appContext = app
         val existing = client
         if (existing != null && existing.isReady) { whenReady(existing); return }
-        val c = existing ?: BillingClient.newBuilder(app)
+        // A client that never finished connecting is dropped and made again: asking it to connect a second time
+        // can leave the price pop-up waiting for an answer that never comes.
+        try { existing?.endConnection() } catch (e: Exception) { }
+        val c = BillingClient.newBuilder(app)
             .setListener(updates)
             .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
             .build()
         client = c
+        var answered = false
         c.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(r: BillingResult) {
+                if (answered) return
+                answered = true
                 if (r.responseCode == BillingClient.BillingResponseCode.OK) whenReady(c) else failed()
             }
             override fun onBillingServiceDisconnected() {
-                // Connects again the next time it is needed.
+                // Google Play dropped the connection (this happens often). Forget it, so the next ask makes a new one.
+                if (client === c) client = null
+                // Lost before it answered: say so now, so nobody waits. 
+                if (answered) return
+                answered = true
+                failed()
             }
         })
     }
@@ -124,10 +167,15 @@ object BillingManager {
                         val size = PRODUCT_IDS.entries.firstOrNull { it.value == d.productId }?.key ?: continue
                         out[size] = price
                     }
+                    // Google Play answered but listed none of our products: not something asking again fixes.
+                    problem = if (out.isEmpty()) Problem.NOT_AVAILABLE else Problem.NONE
+                } else {
+                    problem = if (r.responseCode == BillingClient.BillingResponseCode.ITEM_UNAVAILABLE) Problem.NOT_AVAILABLE else Problem.TRY_AGAIN
                 }
+                if (out.isNotEmpty()) cachedPrices = out
                 done(out)
             }
-        }, { done(emptyMap()) })
+        }, { problem = Problem.TRY_AGAIN; done(emptyMap()) })
     }
 
     // Opens Google Play's own payment sheet for the pack.

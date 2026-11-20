@@ -74,7 +74,8 @@ object UpgradeSheet {
         val buy = v.findViewById<MaterialButton>(R.id.up_buy)
         var picked = RECOMMENDED // the recommended (middle) pack starts picked
         // Pack size -> price from Google Play. null while loading, empty if Google Play is not available.
-        var prices: Map<Int, String>? = null
+        // Starts with the prices the app already fetched when it opened, so the pop-up shows them straight away.
+        var prices: Map<Int, String>? = BillingManager.cachedPrices()
         var showing = true
         val rows = v.findViewById<LinearLayout>(R.id.up_packs)
         val loading = v.findViewById<View>(R.id.up_loading)
@@ -109,8 +110,13 @@ object UpgradeSheet {
             rows.visibility = if (prices == null) View.INVISIBLE else View.VISIBLE
             val price = prices?.get(packs[picked])
             buy.text = "Get +" + "%,d".format(packs[picked]) + " limit" + (if (price != null) " \u00B7 $price" else "")
-            buy.isEnabled = price != null
+            val noPrices = prices?.isEmpty() == true
+            val notHere = noPrices && BillingManager.problem == BillingManager.Problem.NOT_AVAILABLE
+            buy.isEnabled = price != null || (noPrices && !notHere)
             buy.alpha = if (price != null) 1f else 0.5f
+            // Two different problems get two different words: asking again can fix the first, never the second.
+            if (notHere) buy.text = "Not available in this version of the app"
+            else if (noPrices) buy.text = "Couldn\u2019t reach Google Play. Tap to try again"
         }
 
         for ((i, n) in packs.withIndex()) {
@@ -156,19 +162,32 @@ object UpgradeSheet {
         }
         dialog.behavior.skipCollapsed = true
         dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
-        // Real prices from Google Play, in the member's own currency. Asked for now, when the pop-up opens, and nowhere else.
-        BillingManager.loadPrices(ctx) { got ->
-            if (!showing) return@loadPrices
-            // A pack the member paid for earlier but was never confirmed would block buying that pack again: check now.
-            BillingManager.retryOpenPurchases(ctx, force = true)
-            // A failed refresh does not wipe prices that are already showing.
-            if (got.isNotEmpty() || prices == null) { prices = got; paint() }
+        // Real prices from Google Play, in the member's own currency. Already fetched when the app opened (BillingManager.prefetch);
+        // asked again now in the background, and asked first if the app opening did not get them.
+        var attempt = 0
+        fun loadNow() {
+            val mine = ++attempt
+            BillingManager.loadPrices(ctx) { got ->
+                if (!showing || mine != attempt) return@loadPrices
+                // A pack the member paid for earlier but was never confirmed would block buying that pack again: check now.
+                BillingManager.retryOpenPurchases(ctx, force = true)
+                // A failed refresh does not wipe prices that are already showing.
+                if (got.isNotEmpty() || prices == null) { prices = got; paint() }
+            }
+            // If Google Play never answers, the spinner must not spin forever: after 6 seconds show the "not available" dashes.
+            v.postDelayed({ if (showing && mine == attempt && prices == null) { prices = emptyMap(); paint() } }, 6000L)
         }
-        // If Google Play never answers, the spinner must not spin forever: after 12 seconds show the "not available" dashes.
-        v.postDelayed({ if (showing && prices == null) { prices = emptyMap(); paint() } }, 12000L)
+        loadNow()
         buy.setOnClickListener {
             val act = activityOf(ctx)
-            if (act == null || prices?.get(packs[picked]) == null) {
+            if (prices?.isEmpty() == true && BillingManager.problem == BillingManager.Problem.NOT_AVAILABLE) {
+                Toast.makeText(ctx, "Install ViewGrow from Google Play to buy more room.", Toast.LENGTH_LONG).show()
+            } else if (prices?.isEmpty() == true) {
+                // Google Play did not answer: tapping the button asks again.
+                prices = null
+                paint()
+                loadNow()
+            } else if (act == null || prices?.get(packs[picked]) == null) {
                 Toast.makeText(ctx, "Google Play is not available right now.", Toast.LENGTH_SHORT).show()
             } else {
                 dialog.dismiss()

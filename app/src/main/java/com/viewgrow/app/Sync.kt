@@ -63,8 +63,9 @@ object Sync {
         if (!j.optBoolean("ok")) return -1
         val cards = ContactsSaver.parse(j.optString("vcf"))
         lastRestoreTotal = cards.size
-        // The admin's VIP contacts are put back too (named as the admin typed them, no VG).
-        return ContactsSaver.saveCounting(ctx, cards + VipContactSaver.allCards(ctx))
+        // The admin's VIP contacts are put back too (named as the admin typed them, no VG), but only the member's own
+        // people are counted: the "Saved N contacts" message must match "Contacts received".
+        return ContactsSaver.saveMembers(ctx, cards + VipContactSaver.allCards(ctx))
     }
 
     // On a background thread only.
