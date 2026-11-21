@@ -1,0 +1,67 @@
+name: Database backup
+
+on:
+  schedule:
+    - cron: '17 1 * * *'   # 02:17 in Lagos, every night
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_PASSWORD: ${{ secrets.BACKUP_PASSWORD }}
+    steps:
+      - name: Check the two secrets are set
+        run: |
+          if [ -z "$DB_URL" ] || [ -z "$BACKUP_PASSWORD" ]; then
+            echo "::error::Add the secrets SUPABASE_DB_URL and BACKUP_PASSWORD."
+            exit 1
+          fi
+          if [ ${#BACKUP_PASSWORD} -lt 16 ]; then
+            echo "::error::BACKUP_PASSWORD is too short. Use 16 characters or more."
+            exit 1
+          fi
+
+      - name: Install the PostgreSQL 17 tools
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Make the backup and lock it
+        id: dump
+        run: |
+          set -euo pipefail
+          day=$(TZ=Africa/Lagos date +%Y-%m-%d)
+          out="viewgrow-db-$day.dump.enc"
+          umask 077
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --schema=public --no-owner --no-privileges --format=custom --file="$RUNNER_TEMP/db.dump"
+          size=$(stat -c %s "$RUNNER_TEMP/db.dump")
+          if [ "$size" -lt 20000 ]; then
+            echo "::error::The backup is suspiciously small ($size bytes). Nothing was saved."
+            exit 1
+          fi
+          /usr/lib/postgresql/17/bin/pg_restore --list "$RUNNER_TEMP/db.dump" | grep -q "TABLE DATA public web_users" || { echo "::error::The backup has no members table."; exit 1; }
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$RUNNER_TEMP/db.dump" -out "$out" -pass env:BACKUP_PASSWORD
+          rm -f "$RUNNER_TEMP/db.dump"
+          echo "file=$out" >> "$GITHUB_OUTPUT"
+          echo "Backup $out: $(stat -c %s "$out") bytes (locked)." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep it for 30 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.dump.outputs.file }}
+          path: ${{ steps.dump.outputs.file }}
+          retention-days: 30
+          if-no-files-found: error
