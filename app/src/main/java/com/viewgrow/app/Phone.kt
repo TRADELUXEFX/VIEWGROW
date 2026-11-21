@@ -29,10 +29,18 @@ object Phone {
             }
             return sb.toString()
         }
-        d = d.take(11)
-        val sb = StringBuilder(d.take(4))
-        if (d.length > 4) sb.append(' ').append(d.substring(4, minOf(7, d.length)))
-        if (d.length > 7) sb.append(' ').append(d.substring(7))
+        // With the 0 (0810 870 9629): groups of 4, 3, 4 and 11 digits. Without it (810 870 9629): groups of 3, 3, 4 and 10 digits.
+        if (d.startsWith("0")) {
+            d = d.take(11)
+            val sb = StringBuilder(d.take(4))
+            if (d.length > 4) sb.append(' ').append(d.substring(4, minOf(7, d.length)))
+            if (d.length > 7) sb.append(' ').append(d.substring(7))
+            return sb.toString()
+        }
+        d = d.take(10)
+        val sb = StringBuilder(d.take(3))
+        if (d.length > 3) sb.append(' ').append(d.substring(3, minOf(6, d.length)))
+        if (d.length > 6) sb.append(' ').append(d.substring(6))
         return sb.toString()
     }
 

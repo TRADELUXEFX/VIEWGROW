@@ -203,8 +203,8 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
 
     // Digits -> spaced the country's way. A space appears as soon as the next group starts (201 5, not 2015).
     // Digits past the last group stay on the last group.
-    private fun spaceDigits(d: String): String {
-        val g = groupsFor(country.iso)
+    private fun spaceDigits(d: String, iso: String = country.iso): String {
+        val g = groupsFor(iso)
         val groups = if (g.pre.isNotEmpty() && d.startsWith(g.pre)) g.withPre else g.noPre
         val sb = StringBuilder()
         var i = 0
@@ -227,7 +227,8 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
     // A real example for the country, shown in the empty box (UK: 07400 123456, US: 201 555 0123, no brackets or dashes).
     private fun exampleFor(c: Countries.C): String = try {
         val n = util.getExampleNumberForType(c.iso, PhoneNumberUtil.PhoneNumberType.MOBILE)
-        if (n == null) "Phone number" else util.format(n, PhoneNumberUtil.PhoneNumberFormat.NATIONAL).replace(Regex("[^0-9+]+"), " ").trim()
+        // Shown without the leading 0 / 8, spaced the same way the box spaces what the member types.
+        if (n == null) "Phone number" else spaceDigits(util.getNationalSignificantNumber(n), c.iso)
     } catch (e: Exception) {
         "Phone number"
     }
@@ -246,7 +247,7 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
 
     private fun showButton() {
         button.text = country.flag + " +" + country.dial + " \u25BE"
-        box.hint = if (country.iso == "NG") "0801 234 5678" else exampleFor(country)
+        box.hint = if (country.iso == "NG") "801 234 5678" else exampleFor(country)
     }
 
     // A new country starts with an empty box: a number typed for one country is not a number for another.
@@ -281,9 +282,20 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
     // (a leading 0, like 07911 in the UK, is dropped).
     fun value(): String {
         val t = box.text.toString().trim()
-        if (t.isEmpty() || t.startsWith("+") || country.iso == "NG") return t
+        if (t.isEmpty() || t.startsWith("+")) return t
         var d = t.filter { it.isDigit() }
-        if (country.dial != "1" && d.startsWith("0")) d = d.drop(1)
+        // Nigeria typed without the 0 (810 870 9629): the 0 goes back on, so the database gets 0810 870 9629 as always.
+        if (country.iso == "NG") {
+            return if (d.length == 10 && !d.startsWith("0")) "0" + d.take(3) + " " + d.substring(3, 6) + " " + d.substring(6) else t
+        }
+        if (country.dial != "1") {
+            // The library removes the country's own leading digits (0, 8, 06, 80) and keeps a 0 that belongs to the number (Benin, Ivory Coast).
+            try {
+                val n = util.parse(d, country.iso)
+                if (n.countryCode.toString() == country.dial) return "+" + country.dial + util.getNationalSignificantNumber(n)
+            } catch (e: Exception) { }
+            if (d.startsWith("0")) d = d.drop(1)
+        }
         return "+" + country.dial + d
     }
 
