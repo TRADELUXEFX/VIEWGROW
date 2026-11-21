@@ -242,6 +242,55 @@ object ContactsSaver {
         }
     }
 
+    // Members who moved to a new number (Swaps.kt): the ViewGrow contact with the old number gets the new number, keeping
+    // its name. Pairs are applied in order, so a number changed twice (A to B, then B to C) ends on C. Only contacts the
+    // app saved (VG); a contact the member saved themselves is never touched. Blocking. Returns how many numbers were
+    // changed, or -1 on failure.
+    fun swapNumbers(ctx: Context, pairs: List<Pair<String, String>>): Int {
+        if (pairs.isEmpty()) return 0
+        if (!hasPermission(ctx)) return -1
+        return try {
+            val vg = vgRawIds(ctx)
+            if (vg.isEmpty()) return 0
+            // Every phone number row on a VG contact: data row id -> its current number.
+            val now = HashMap<Long, String>()
+            ctx.contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                arrayOf(ContactsContract.CommonDataKinds.Phone._ID, ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID, ContactsContract.CommonDataKinds.Phone.NUMBER),
+                null, null, null
+            )?.use { c ->
+                while (c.moveToNext()) if (c.getLong(1) in vg) now[c.getLong(0)] = c.getString(2) ?: ""
+            }
+            val changed = HashMap<Long, String>()
+            for ((old, new) in pairs) {
+                val k = key(old)
+                if (k.isEmpty() || key(new).isEmpty()) continue
+                for ((id, num) in now) if (key(num) == k) { now[id] = new; changed[id] = new }
+            }
+            val list = changed.entries.toList()
+            var i = 0
+            while (i < list.size) {
+                val end = minOf(i + 100, list.size)
+                val ops = ArrayList<ContentProviderOperation>()
+                for (n in i until end) {
+                    val (id, num) = list[n]
+                    ops.add(
+                        ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
+                            .withSelection(ContactsContract.Data._ID + "=?", arrayOf(id.toString()))
+                            .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, num)
+                            .withValue(ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER, "+" + num.filter { it.isDigit() })
+                            .build()
+                    )
+                }
+                ctx.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
+                i = end
+            }
+            list.size
+        } catch (e: Exception) {
+            -1
+        }
+    }
+
     // Delete My Contacts: removes every contact the app saved (found by the VG company; contacts saved before
     // the note was dropped are also found by their "ViewGrow-<id>" note). "ViewGrow Admin" is never removed.
     // Blocking. Returns how many were removed, or -1 on failure.

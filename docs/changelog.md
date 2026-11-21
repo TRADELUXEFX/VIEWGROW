@@ -2,10 +2,20 @@
 
 Each change is one migration file. Newest first.
 
+## Person icon instead of letters (21 Nov 2026)
+- Status: website only (admin.js, style.css). Upload the website zip. Reports, the full report and Number changes show the same person icon as the rest of ViewGrow (green; red when banned; grey when closed), not the first letters of the name.
+
+## Change phone number (21 Nov 2026)
+- Status: database applied by owner on 21 Nov 2026 (`supabase/migrations/20261121080000_phone_change.sql`); check returned true | true | true. One transaction, safe to run twice. Check after: `select to_regclass('public.web_phone_changes') is not null, to_regclass('public.web_phone_swaps') is not null, to_regprocedure('public.web_admin_phone_change_decide(text,bigint,text,text)') is not null;` expect `true | true | true`. Rehearsed on Postgres 16 with stand-in tables: wrong password, number taken / deleted / admin's / same / invalid, someone else already asked, approve, double approve, refuse with reason, cancel, a member who had both numbers, a number changed twice (chain), and running twice.
+- How it works: the member asks (app Profile, or website Profile, "Change phone number"). The admin sees it on Today, "Number changes" (red count), checks the new number with the chat button (pre-filled WhatsApp message to the NEW number), then Approve or Refuse (optional reason the member sees). Approve moves everything to the new number in one go: account, web_received, web_snapshot_contacts, pending contact files (web_downloads.picked), the member's purchases, reports about them; removes the new number from web_gone; ends their logins (they log in with the new number and the same password). History, verified days, limit and name stay. The old number becomes free.
+- Other members' phones (app): web_swaps_for_me gives each member only changes for people they were given; the background check (Swaps.kt, next to Departed) changes the saved VG contact's number (ContactsSaver.swapNumbers). Contacts the member saved themselves are never touched. Website members who imported a file keep the old number until their next file.
+- Files: database 20261121080000_phone_change.sql; admin page admin.html, admin.js, style.css; website app.html, index.js, screens.css; app PhoneChangeSheet.kt, sheet_phone_change.xml, Swaps.kt, ContactsSaver.kt, Store.kt (swapSince), Sync.kt, ProfileFragment.kt, fragment_profile.xml.
+- Not built here (no Android build tools): build the app and check Profile, Change phone number.
+
 ## Admin password, automatic backups, crash reports (21 Nov 2026)
 - Status: database applied by owner on 21 Nov 2026 (`supabase/migrations/20261121070000_admin_change_key.sql`); check returned true | 0. Safe to run twice. Check after: `select to_regprocedure('public.web_admin_change_key(text,text)') is not null, (select count(*) from pg_proc where proname = 'web_admin_set_key');` expect `true | 0`. Rehearsed on Postgres 16: wrong key refused, too short, same key, change works, old key stops working, run twice.
 - Admin page (admin.html, admin.js, style.css): Settings has a new row, Admin password: current password, new password twice (10 to 72 characters, eye button to show). The page keeps working with the new password; other devices must sign in again. Admin app (MainActivity.kt): new keyChanged bridge, so the app on the same phone keeps the new password.
-- Automatic backups (app repo, `.github/workflows/backup.yml`): every night at 02:17 Lagos, and with "Run workflow". pg_dump of the public schema, checked (size, members table), locked with openssl (AES-256, BACKUP_PASSWORD) and kept 30 days under the run's Artifacts. Set up: add secrets SUPABASE_DB_URL (Supabase > Connect > Session pooler string with the database password) and BACKUP_PASSWORD (16+ characters, keep it safe). How to open a backup is at the top of the file. Rehearsed locally: dump, check, lock, unlock gives the same file.
+- Automatic backups (set up 21 Nov 2026, first run Success, 198 KB) (app repo, `.github/workflows/backup.yml`, added by hand on GitHub because deploy.yml drops .github from zips): every night at 02:17 Lagos, and with "Run workflow". pg_dump of the public schema, checked (size, members table), locked with openssl (AES-256, BACKUP_PASSWORD) and kept 30 days under the run's Artifacts. Set up: add secrets SUPABASE_DB_URL (Supabase > Connect > Session pooler string with the database password) and BACKUP_PASSWORD (16+ characters, keep it safe). How to open a backup is at the top of the file. Rehearsed locally: dump, check, lock, unlock gives the same file.
 - Crash reports (member app): Firebase Crashlytics (plugin 3.0.2, library from the Firebase BoM). Sends a report when the app crashes; no name, number, password or contacts. App Privacy Policy (tools/legal.py, /android/privacy/, Pages.kt) has a new Crash reports section. To do: build the app, open Firebase console > Crashlytics once, and in Play Console Data safety add App info and performance > Crash logs and Diagnostics (collected, not shared, purpose Analytics / App functionality).
 - One practice crash report (CrashCheck.kt, called from Home): only when logged in as the owner's number 0810 870 9629, only once per phone (Store.crashCheckSent), nothing on screen (a non-fatal report). It makes the Crashlytics page show the dashboard. Members never send it.
 - Not built here (no Android build tools): build both apps and check they compile.
@@ -687,3 +697,41 @@ Status: captured with `supabase db pull` (see README)
 - The admin's "Message all members" sheet has an optional Link field. With a link, tapping the notification opens it; without one it opens the app, as before.
 - Edge Function `notify-status` (kind "all") accepts `url` (https only; anything else is refused with BAD_LINK) and sends `open: "link"` + `url`. Redeploy this function in Supabase.
 - Member app reads `url` in `StatusPush.kt`. Older app versions ignore it and just open the app. No database change.
+
+## 21 Nov 2026 — check everything
+- Ran supabase/check_everything.sql: 150 checks, 0 problems, 0 missing. 5 warnings (leftover table permissions), fixed by 20261121090000_tidy_table_grants.sql.
+- Fix applied and re-checked: 144 OK, 0 problems, 0 warnings.
+- Added supabase/check_everything_part2.sql: function code vs files, leftovers, guards, rules in the data, and rule tests that are undone at the end.
+- Part 2 result (21 Nov 2026): 39 of 40 rule tests passed; the 1 fail was the test itself (compared with _web_fmt, sign-up uses _web_norm), fixed in the check.
+- Found 4 functions improved in the dashboard with no file (_web_auth_pin, web_admin_user, web_day_contacts, web_people): recorded as migrations/20261121095000_record_live_functions.sql (record only, not to run). web_admin_change_key and web_admin_phone_change_decide differed only by comments.
+- 20261121100000_tidy_leftovers.sql: deleted_numbers gets an id primary key; drops 5 unused functions (_web_contacts, _web_days, web_admin_contact_set, web_admin_user_limit, web_setup). Undo: rollback/tidy_leftovers_rollback.sql. Status: given to owner, not applied yet.
+- The 29 released days with no saved list are days nobody was verified (normal). 19, 20 and 22 Oct show a saved count of 1 with no row: a member later deleted; harmless.
+- The 29 released days with no saved list are days nobody was verified (normal). 19, 20 and 22 Oct show a saved count of 1 with no row: a member later deleted; harmless.
+- Applied 21 Nov 2026: 20261121100000_tidy_leftovers.sql (check: true | 0). deleted_numbers has an id primary key; 5 unused functions removed. 20261121090000_tidy_table_grants.sql applied earlier the same day (re-check WARN 0).
+- Part 2 re-run: 149 OK, 0 real problems. The one failed test (Login token is accepted) was the test: 12 log ins inside one transaction share one clock time, so the "keep the newest 10" step could drop the token being tested. Test reordered; the app is not affected (real log ins happen at different times).
+- Both checks (check_everything.sql, check_everything_part2.sql) are safe to re-run any time.
+- Part 2 re-run with the fixed test (21 Nov 2026, owner): 155 checks, OK 150, PROBLEM 0, MISSING 0, WARN 0, INFO 5. Rule tests: passed 40, failed 0. "Login token is accepted" now passes.
+- The 5 INFO rows are notes, not problems:
+  - 18: 14 functions made in the dashboard have no code file (_web_clean, _web_client_ip, _web_name_key, _web_name_suggestions, _web_pin_new, _web_vcf_esc, web_admin_ban, web_admin_contacts_set, web_admin_delete_user, web_admin_grant_redownload, web_admin_pool_days, web_admin_run_snapshot, web_admin_unlog_verified, web_public_config). To do later: save their live versions into the project, as was done for the 4 functions above, so a rebuild from the files would not miss them.
+  - 19: web_banned_devices.user_id and web_purchases.user_id are not linked to web_users, so rows stay if a user is deleted. For banned devices that is probably wanted (a ban should survive deleting an account). For purchases it is an owner decision: keep as records on purpose, or remove with the user.
+  - 20: 50 contacts given in total, 0 members at their limit; 0 expired login tokens stored (clean-up works).
+  - 20: last saved list is 20 Nov, last released day 20 Nov (checked on 21 Nov, before the 10pm job). To check on 22 Nov: the last saved list should be 21 Nov. If it still says 20 Nov, the nightly job missed a night.
+
+## 21 Nov 2026 — purchases follow the member (owner's decision: remove)
+- Status: APPLIED by the owner on 21 Nov 2026 (migrations/20261121110000_purchases_follow_user.sql); check returned true | 0. Check after: `select exists (select 1 from pg_constraint where conname = 'web_purchases_user_id_fkey' and confdeltype = 'c'), (select count(*) from public.web_purchases p where not exists (select 1 from public.web_users u where u.id = p.user_id));` expect `true | 0`. Undo (link only): rollback/purchases_follow_user_rollback.sql.
+- Why: Delete my account already removed purchases, but the admin's Delete user did not, so rows were left behind (INFO item 19 of the part 2 check). Now web_purchases.user_id is linked to web_users.id with ON DELETE CASCADE, so every delete path removes them.
+- It first deletes purchase rows whose member is already gone (leftovers; cannot be restored), and stops without changing anything if the two id columns are not the same type. Not run against the real database here (table definitions are not in the project files).
+- web_banned_devices is left as it is on purpose: a ban should survive deleting an account.
+
+## 21 Nov 2026 — the 14 dashboard-only functions are now recorded
+- Status: record only, nothing changed in the database. The owner pasted the live code (read-only query); saved as migrations/20261121096000_record_live_functions_2.sql. Do not run it (running it changes nothing).
+- Functions: _web_clean, _web_client_ip, _web_name_key, _web_name_suggestions, _web_pin_new, _web_vcf_esc, web_admin_ban, web_admin_contacts_set, web_admin_delete_user, web_admin_grant_redownload, web_admin_pool_days, web_admin_run_snapshot, web_admin_unlog_verified, web_public_config. No passwords or keys in them.
+- check_everything_part2.sql now knows these 14 (code list), so INFO item 18 "Functions older than the code files" should show 0. Re-run once to confirm.
+
+## 21 Nov 2026 — part 2 re-run after the purchases link and the 14 recorded functions
+- Result (owner): 169 checks, OK 164, PROBLEM 0, MISSING 0, WARN 0, INFO 5. Rule tests: passed 40, failed 0.
+- INFO 18 (functions older than the code files): 0. INFO 19 (user_id not linked to web_users): only web_banned_devices, kept on purpose (a ban survives deleting an account).
+- Still to look at on 22 Nov: last saved list should say 21 Nov (it said 20 Nov on 21 Nov, before the 10pm job).
+
+## 21 Nov 2026 — HOW_EVERYTHING_WORKS.md rewritten
+- Status: notes only, nothing to run. The plain-words guide (docs/HOW_EVERYTHING_WORKS.md in the app repo, supabase/how_everything_works.md in the website repo, same text) was rewritten for the current state: the picture, a code map (which file is in charge of what, for the website, member app, admin app, database and other services), the member journey, tables and functions, safety rules (login tokens, device ban, one account per phone, reports and automatic ban, departed members, deleted numbers, number changes), the admin page, backups, crash reports, health checks, and where to look when something breaks. Written so a 12-year-old can follow it.

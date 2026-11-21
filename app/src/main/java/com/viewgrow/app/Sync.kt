@@ -189,6 +189,8 @@ object BackgroundSync {
         if (j.optString("state") == "PREPARING") retryWanted = true
         // Members who left or were banned come off this phone (only the contacts ViewGrow saved).
         Departed.clean(ctx)
+        // Members who moved to a new number: their saved contact gets the new number (Swaps.kt).
+        Swaps.apply(ctx)
         if (j.optString("state") == "READY") {
             val r = Sync.runBlocking(ctx)
             if (!r.ok) {

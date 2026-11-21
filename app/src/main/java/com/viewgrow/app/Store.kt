@@ -119,6 +119,11 @@ object Store {
         get() = p.getString("gone_since", "") ?: ""
         set(v) { p.edit().putString("gone_since", v).apply() }
 
+    // Members who moved to a new number: the database time of the last check (Swaps.kt), "" = never asked.
+    var swapSince: String
+        get() = p.getString("swap_since", "") ?: ""
+        set(v) { p.edit().putString("swap_since", v).apply() }
+
     // When this phone's device code was last sent to the database (Device.report), at most once a day.
     var deviceSeenAt: Long
         get() = p.getLong("device_seen_at", 0L)
@@ -232,6 +237,6 @@ object Store {
         p.edit().remove("password").remove("password_enc").remove("name").remove("last_sync_at").remove("last_sync_count").remove("unannounced_saved")
             .remove("first_sync_at") /* left by older versions */.remove("last_bg_sync_at").remove("perm_alerted")
             .remove("topics_joined_at").remove("last_total").remove("last_limit").remove("limit_alerted")
-            .remove("morning_count").remove("missed_notice_for").remove("app_seen_at").remove("device_seen_at").remove("gone_since").apply()
+            .remove("morning_count").remove("missed_notice_for").remove("app_seen_at").remove("device_seen_at").remove("gone_since").remove("swap_since").apply()
     }
 }

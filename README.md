@@ -1,7 +1,7 @@
 # ViewGrow (Android)
 
 Android version of the ViewGrow website. Native Kotlin, package `com.viewgrow.app`.
-It signs up and logs in with the same WhatsApp number and password as the website, and uses the same Supabase database (`Config.kt`). The app never decides who gets which contacts: the database does, with the same rules as the website. Plain-words guide to everything (app, website, database): `docs/HOW_EVERYTHING_WORKS.md`; the database side: `docs/DATABASE_EXPLAINED.md`. The live state of the whole project is in `docs/STATE_FROM_WEBSITE_REPO.md` (a copy of the website repo's `supabase/STATE.md`).
+It signs up and logs in with the same WhatsApp number and password as the website, and uses the same Supabase database (`Config.kt`). The app never decides who gets which contacts: the database does, with the same rules as the website. Plain-words guide to everything (app, website, database, and which file does what, updated 21 Nov 2026): `docs/HOW_EVERYTHING_WORKS.md`; the database side: `docs/DATABASE_EXPLAINED.md`. The live state of the whole project is in `docs/STATE_FROM_WEBSITE_REPO.md` (a copy of the website repo's `supabase/STATE.md`).
 
 ## Two apps in this repository
 - `app/` is **ViewGrow**, the member app (com.viewgrow.app), published on Google Play. Built by `.github/workflows/deploy.yml` ("Build member app").

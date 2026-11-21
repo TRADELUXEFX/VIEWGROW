@@ -46,6 +46,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         view.findViewById<View>(R.id.row_help).setOnClickListener { (activity as? MainActivity)?.showFaq() }
         view.findViewById<View>(R.id.row_terms).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.TERMS) }
         view.findViewById<View>(R.id.row_privacy).setOnClickListener { (activity as? MainActivity)?.showPage(Pages.PRIVACY) }
+        view.findViewById<View>(R.id.row_change_phone).setOnClickListener { (activity as? MainActivity)?.let { PhoneChangeSheet.show(it) } }
         view.findViewById<View>(R.id.row_delete_account).setOnClickListener { (activity as? MainActivity)?.showDeleteAccount() }
         view.findViewById<View>(R.id.btn_logout).setOnClickListener { (activity as? MainActivity)?.onLoggedOut() }
         // Light/dark button in the green header, next to Log out (moon in light mode, sun in dark mode).
