@@ -42,7 +42,7 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         // get this number as a status viewer. The database records that as "consent".
         Ui.linkText(
             view.findViewById(R.id.terms),
-            "By signing up you accept the Terms and Conditions and Privacy Policy, and agree that ViewGrow can share your name and number with other members, so they can see your status.",
+            "By signing up you confirm you are 18 or older, accept the Terms and Conditions and Privacy Policy, and agree that ViewGrow can share your name and number with other members, so they can see your status.",
             listOf(
                 "Terms and Conditions" to { main?.showPage(Pages.TERMS) },
                 "Privacy Policy" to { main?.showPage(Pages.PRIVACY) }
@@ -96,13 +96,13 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
             .put("p_phone", phone)
             .put("p_consent", true)
             .put("p_pin", password)
-        Api.call("web_register", args) { r ->
+        register(args) { r ->
             busy = false
-            if (!isAdded || view.parent == null) return@call
+            if (!isAdded || view.parent == null) return@register
             Ui.setBusy(button, false, "Sign up")
             applyOpen(view)
             val j = r.json
-            if (j == null) { Ui.showError(error, Api.netMessage(r.error)); return@call }
+            if (j == null) { Ui.showError(error, Api.netMessage(r.error)); return@register }
             if (j.optBoolean("ok")) {
                 val num = j.optString("phone", phone)
                 val nm = j.optString("name", name)
@@ -118,14 +118,27 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
                     Store.logIn(num, token, nm)
                     if (isAdded) (activity as? MainActivity)?.onLoggedIn()
                 }
-                return@call
+                return@register
             }
             when (val code = j.optString("code")) {
                 "NAME_TAKEN" -> showSuggestions(view, j)
                 // The admin closed sign-up while the form was open: swap to the closed screen at once.
                 "SIGNUP_CLOSED" -> { Store.signupOpen = false; applyOpen(view) }
+                // This phone was used by a banned account: the full-screen page (StopFragment.DEVICE) says why.
+                // This phone already has an account: the attempt is flagged for the admin, and the full-screen page sends them to the admin.
+                "DEVICE_HAS_ACCOUNT" -> (activity as? MainActivity)?.showAccountExists(phone) ?: Ui.showError(error, messageFor(code))
+                "ACCOUNT_DELETED" -> (activity as? MainActivity)?.showDeleted(phone) ?: Ui.showError(error, messageFor(code))
+                "DEVICE_BANNED" -> (activity as? MainActivity)?.showDeviceBanned(phone) ?: Ui.showError(error, messageFor(code))
                 else -> Ui.showError(error, messageFor(code))
             }
+        }
+    }
+
+    // Sign up with the phone's device code (web_register_device refuses a banned member's phone). If the database does
+    // not have web_register_device (not installed, or undone), the normal web_register is used, as before.
+    private fun register(args: JSONObject, done: (ApiResult) -> Unit) {
+        Api.call("web_register_device", JSONObject(args.toString()).put("p_device", Device.code())) { r ->
+            if (r.json == null && r.error == "HTTP_404") Api.call("web_register", args, done) else done(r)
         }
     }
 
@@ -134,6 +147,8 @@ class SignUpFragment : Fragment(R.layout.fragment_signup) {
         "INVALID_PHONE" -> "Enter a valid number. Pick your country, then type your number."
         "CONSENT_REQUIRED" -> "Please accept the terms to continue."
         "CHECK_DETAILS" -> "We could not create this account. If you already have one, tap Log in below, or message the admin."
+        "DEVICE_HAS_ACCOUNT" -> "This phone already has a ViewGrow account. Log in with that number, or message the admin."
+        "DEVICE_BANNED" -> "This phone can't be used to make a new account. If you think this is a mistake, message the admin."
         "ACCOUNT_DELETED" -> "This number belongs to a deleted account. To use it again, message the admin to reactivate it."
         "SIGNUP_CLOSED" -> "Sign-up is closed right now. Check back later."
         "PIN_INVALID" -> "Your password needs at least 6 characters, letters and numbers only."

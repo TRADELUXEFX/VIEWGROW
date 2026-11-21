@@ -48,6 +48,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         Ui.bindUserHeader(view)
         Fonts.apply(view)
+        CrashCheck.maybeSend()   // owner's phone only, once (CrashCheck.kt)
         // The admin's contact (for the WhatsApp buttons) comes from the website's settings.
         val buttonBefore = Remote.adminExpected()
         Remote.load {

@@ -176,6 +176,72 @@ object ContactsSaver {
         }
     }
 
+    // The ViewGrow contacts on this phone (company VG, or the old "ViewGrow-<id>" note), without "ViewGrow Admin".
+    // VIP contacts are saved with no company, so they are never in this set. Blocking.
+    private fun vgRawIds(ctx: Context): Set<Long> {
+        val resolver = ctx.contentResolver
+        val ids = HashSet<Long>()
+        resolver.query(
+            ContactsContract.Data.CONTENT_URI,
+            arrayOf(ContactsContract.Data.RAW_CONTACT_ID),
+            ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.CommonDataKinds.Organization.COMPANY + "=?",
+            arrayOf(ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE, TAG),
+            null
+        )?.use { c -> while (c.moveToNext()) ids.add(c.getLong(0)) }
+        resolver.query(
+            ContactsContract.Data.CONTENT_URI,
+            arrayOf(ContactsContract.Data.RAW_CONTACT_ID),
+            ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.CommonDataKinds.Note.NOTE + " LIKE ?",
+            arrayOf(ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE, "ViewGrow-%"),
+            null
+        )?.use { c -> while (c.moveToNext()) ids.add(c.getLong(0)) }
+        resolver.query(
+            ContactsContract.Data.CONTENT_URI,
+            arrayOf(ContactsContract.Data.RAW_CONTACT_ID),
+            ContactsContract.Data.MIMETYPE + "=? AND " + ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME + "=?",
+            arrayOf(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE, "ViewGrow Admin"),
+            null
+        )?.use { c -> while (c.moveToNext()) ids.remove(c.getLong(0)) }
+        return ids
+    }
+
+    // Members who left or were banned (Departed.kt): removes the ViewGrow contacts with these numbers. Only contacts
+    // the app saved (VG); a contact the member saved themselves with the same number is never touched.
+    // Blocking. Returns how many were removed, or -1 on failure.
+    fun deleteNumbers(ctx: Context, numbers: Collection<String>): Int {
+        if (!hasPermission(ctx) || numbers.isEmpty()) return if (numbers.isEmpty()) 0 else -1
+        return try {
+            val keys = numbers.map { key(it) }.filter { it.isNotEmpty() }.toHashSet()
+            val vg = vgRawIds(ctx)
+            if (keys.isEmpty() || vg.isEmpty()) return 0
+            val remove = HashSet<Long>()
+            ctx.contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                arrayOf(ContactsContract.CommonDataKinds.Phone.RAW_CONTACT_ID, ContactsContract.CommonDataKinds.Phone.NUMBER),
+                null, null, null
+            )?.use { c ->
+                while (c.moveToNext()) {
+                    val id = c.getLong(0)
+                    if (id in vg && key(c.getString(1) ?: "") in keys) remove.add(id)
+                }
+            }
+            val list = remove.toList()
+            var k = 0
+            while (k < list.size) {
+                val end = minOf(k + 100, list.size)
+                val ops = ArrayList<ContentProviderOperation>()
+                for (n in k until end) {
+                    ops.add(ContentProviderOperation.newDelete(ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, list[n])).build())
+                }
+                ctx.contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
+                k = end
+            }
+            list.size
+        } catch (e: Exception) {
+            -1
+        }
+    }
+
     // Delete My Contacts: removes every contact the app saved (found by the VG company; contacts saved before
     // the note was dropped are also found by their "ViewGrow-<id>" note). "ViewGrow Admin" is never removed.
     // Blocking. Returns how many were removed, or -1 on failure.

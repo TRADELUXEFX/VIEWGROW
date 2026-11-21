@@ -6,20 +6,28 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.button.MaterialButton
 import org.json.JSONObject
 
-// The two full-screen "stop" pages, one layout (fragment_stop.xml):
+// The four full-screen "stop" pages, one layout (fragment_stop.xml):
 //   BANNED  red. Account, reason, what it means, message the admin to appeal. Saved contacts come off
 //           the phone. Back leaves the app. Every time it comes into view it asks the database again, and
 //           a lifted ban takes the member back into the app by itself.
 //   BLOCKED amber. The password is locked. Number, what happened, how to get a new one, message the
 //           admin, or go back to Log in. Nothing is deleted.
+//   DEVICE  red. Sign-up refused because this phone was used by a banned account (DEVICE_BANNED, device ban,
+//           20261121020000). Why, what it means, message the admin, or go back to Log in. Nothing is deleted.
+//   DELETED grey. The account was deleted (by the member, or the number is on the deleted list: ACCOUNT_DELETED). What it means, message the
+//           admin to come back as a new member, or back to the start. Nothing is kept on the phone.
+//   EXISTS  amber. Sign-up refused because this phone already has an account (DEVICE_HAS_ACCOUNT, one account per
+//           phone, 20261121030000). The attempt is flagged for the admin. Log in instead, or message the admin.
 class StopFragment : Fragment(R.layout.fragment_stop) {
 
     companion object {
@@ -27,27 +35,62 @@ class StopFragment : Fragment(R.layout.fragment_stop) {
         private const val PHONE = "phone"
         const val BANNED = "banned"
         const val BLOCKED = "blocked"
+        const val DEVICE = "device"
+        const val EXISTS = "exists"
+        const val DELETED = "deleted"
 
         fun banned() = StopFragment().apply { arguments = Bundle().apply { putString(KIND, BANNED) } }
+
+        fun deviceBanned(phone: String) = StopFragment().apply {
+            arguments = Bundle().apply { putString(KIND, DEVICE); putString(PHONE, phone) }
+        }
+
+        fun accountExists(phone: String) = StopFragment().apply {
+            arguments = Bundle().apply { putString(KIND, EXISTS); putString(PHONE, phone) }
+        }
+
+        fun deleted(phone: String) = StopFragment().apply {
+            arguments = Bundle().apply { putString(KIND, DELETED); putString(PHONE, phone) }
+        }
 
         fun blocked(phone: String) = StopFragment().apply {
             arguments = Bundle().apply { putString(KIND, BLOCKED); putString(PHONE, phone) }
         }
     }
 
-    val isBanned: Boolean get() = arguments?.getString(KIND) != BLOCKED
+    private val kind: String get() = arguments?.getString(KIND) ?: BANNED
+
+    val isBanned: Boolean get() = kind == BANNED
 
     private val number: String
         get() = if (isBanned) Store.phone else (arguments?.getString(PHONE) ?: Store.phone)
 
+    // Account deleted has its own page (design A, fragment_deleted.xml): no coloured header, so the status bar icons
+    // turn dark in light mode while it shows, and go back to white when it closes.
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
+        if (kind == DELETED) inflater.inflate(R.layout.fragment_deleted, container, false)
+        else super.onCreateView(inflater, container, savedInstanceState)
+
+    override fun onDestroyView() {
+        if (kind == DELETED) activity?.window?.let { w -> WindowCompat.getInsetsController(w, w.decorView).isAppearanceLightStatusBars = false }
+        super.onDestroyView()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        if (isBanned) buildBanned(view) else buildBlocked(view)
+        when (kind) {
+            BLOCKED -> buildBlocked(view)
+            DEVICE -> buildDevice(view)
+            EXISTS -> buildExists(view)
+            DELETED -> buildDeleted(view)
+            else -> buildBanned(view)
+        }
         Fonts.apply(view)
         applyAdmin(view)
         Remote.load { if (isAdded && view.parent != null) applyAdmin(view) }
         view.findViewById<MaterialButton>(R.id.btn_admin).setOnClickListener { openAdmin() }
         view.findViewById<MaterialButton>(R.id.btn_back).setOnClickListener {
-            (activity as? MainActivity)?.showLogIn()
+            // A deleted number cannot log in, so its button goes back to the start screen.
+            if (kind == DELETED) (activity as? MainActivity)?.showWelcome() else (activity as? MainActivity)?.showLogIn()
         }
     }
 
@@ -158,6 +201,63 @@ class StopFragment : Fragment(R.layout.fragment_stop) {
         v.findViewById<View>(R.id.btn_back).visibility = View.VISIBLE
     }
 
+    // ---- Account deleted ----
+
+    private fun buildDeleted(v: View) {
+        // Words and buttons are in fragment_deleted.xml; only the number is filled in here.
+        showNumber(v)
+        activity?.window?.let { w -> WindowCompat.getInsetsController(w, w.decorView).isAppearanceLightStatusBars = !AppTheme.isDark(v.context) }
+    }
+
+    // ---- Sign-up blocked on this phone (device ban) ----
+
+    private fun buildDevice(v: View) {
+        v.findViewById<View>(R.id.hero).setBackgroundResource(R.drawable.bg_hero_red)
+        v.findViewById<TextView>(R.id.stop_lead).text = "On this phone, sign-up is"
+        v.findViewById<TextView>(R.id.stop_title).text = "Blocked"
+        v.findViewById<ImageView>(R.id.stop_illus).setImageResource(R.drawable.ill_phone_blocked)
+        // The number typed does not matter here (it is the phone that is blocked), so no number pill.
+        v.findViewById<View>(R.id.stop_number).visibility = View.GONE
+
+        v.findViewById<TextView>(R.id.label2).text = "WHY"
+        val why = v.findViewById<TextView>(R.id.value2)
+        why.text = "An account on this phone was banned"
+        why.setTextColor(ContextCompat.getColor(v.context, R.color.red_dark))
+
+        v.findViewById<TextView>(R.id.label3).text = "WHAT THIS MEANS"
+        val rows = v.findViewById<LinearLayout>(R.id.rows)
+        addRow(rows, "\u2715", true, "No new accounts on this phone", "Signing up with another number won\u2019t work here.")
+        addRow(rows, "?", false, "Think this is a mistake?", "Message the admin. They can check it and lift the block.")
+
+        v.findViewById<View>(R.id.stop_foot).visibility = View.GONE
+        v.findViewById<View>(R.id.stop_caption).visibility = View.GONE
+        v.findViewById<View>(R.id.btn_back).visibility = View.VISIBLE
+    }
+
+    // ---- This phone already has an account (one account per phone) ----
+
+    private fun buildExists(v: View) {
+        v.findViewById<View>(R.id.hero).setBackgroundResource(R.drawable.bg_hero_amber)
+        v.findViewById<TextView>(R.id.stop_lead).text = "One account per phone"
+        v.findViewById<TextView>(R.id.stop_title).text = "Already signed up"
+        v.findViewById<ImageView>(R.id.stop_illus).setImageResource(R.drawable.ill_phone_exists)
+        v.findViewById<View>(R.id.stop_number).visibility = View.GONE
+
+        v.findViewById<TextView>(R.id.label2).text = "WHAT HAPPENED"
+        val what = v.findViewById<TextView>(R.id.value2)
+        what.text = "This phone already has a ViewGrow account"
+        what.setTextColor(ContextCompat.getColor(v.context, R.color.amber_text))
+
+        v.findViewById<TextView>(R.id.label3).text = "WHAT TO DO"
+        val rows = v.findViewById<LinearLayout>(R.id.rows)
+        addRow(rows, "1", false, "Message the admin", "Tap the button below. The admin will check it and help you.")
+        addRow(rows, "2", false, "Or log in", "Use the number you first signed up with on this phone.")
+
+        v.findViewById<View>(R.id.stop_foot).visibility = View.GONE
+        v.findViewById<View>(R.id.stop_caption).visibility = View.GONE
+        v.findViewById<View>(R.id.btn_back).visibility = View.VISIBLE
+    }
+
     // ---- Shared ----
 
     private fun addRow(into: LinearLayout, glyph: String, red: Boolean, title: String, sub: String) {
@@ -173,6 +273,18 @@ class StopFragment : Fragment(R.layout.fragment_stop) {
 
     private fun message(): String {
         val shown = Phone.show(number)
+        if (kind == DELETED) {
+            return if (shown.isNotBlank()) "Hi, I deleted my ViewGrow account ($shown) and I would like to come back. Please let my number back in."
+            else "Hi, I deleted my ViewGrow account and I would like to come back. Please let my number back in."
+        }
+        if (kind == EXISTS) {
+            return if (shown.isNotBlank()) "Hi, I tried to sign up on ViewGrow with $shown, but it says this phone already has an account. Please help me."
+            else "Hi, I tried to sign up on ViewGrow, but it says this phone already has an account. Please help me."
+        }
+        if (kind == DEVICE) {
+            return if (shown.isNotBlank()) "Hi, I tried to sign up on ViewGrow with $shown, but it says sign-up is blocked on this phone. Please check it."
+            else "Hi, I tried to sign up on ViewGrow, but it says sign-up is blocked on this phone. Please check it."
+        }
         return if (isBanned) {
             if (shown.isNotBlank()) "Hi, my ViewGrow account ($shown) has been banned. I would like to appeal this."
             else "Hi, my ViewGrow account has been banned. I would like to appeal this."

@@ -2,6 +2,119 @@
 
 Each change is one migration file. Newest first.
 
+## Admin password, automatic backups, crash reports (21 Nov 2026)
+- Status: database applied by owner on 21 Nov 2026 (`supabase/migrations/20261121070000_admin_change_key.sql`); check returned true | 0. Safe to run twice. Check after: `select to_regprocedure('public.web_admin_change_key(text,text)') is not null, (select count(*) from pg_proc where proname = 'web_admin_set_key');` expect `true | 0`. Rehearsed on Postgres 16: wrong key refused, too short, same key, change works, old key stops working, run twice.
+- Admin page (admin.html, admin.js, style.css): Settings has a new row, Admin password: current password, new password twice (10 to 72 characters, eye button to show). The page keeps working with the new password; other devices must sign in again. Admin app (MainActivity.kt): new keyChanged bridge, so the app on the same phone keeps the new password.
+- Automatic backups (app repo, `.github/workflows/backup.yml`): every night at 02:17 Lagos, and with "Run workflow". pg_dump of the public schema, checked (size, members table), locked with openssl (AES-256, BACKUP_PASSWORD) and kept 30 days under the run's Artifacts. Set up: add secrets SUPABASE_DB_URL (Supabase > Connect > Session pooler string with the database password) and BACKUP_PASSWORD (16+ characters, keep it safe). How to open a backup is at the top of the file. Rehearsed locally: dump, check, lock, unlock gives the same file.
+- Crash reports (member app): Firebase Crashlytics (plugin 3.0.2, library from the Firebase BoM). Sends a report when the app crashes; no name, number, password or contacts. App Privacy Policy (tools/legal.py, /android/privacy/, Pages.kt) has a new Crash reports section. To do: build the app, open Firebase console > Crashlytics once, and in Play Console Data safety add App info and performance > Crash logs and Diagnostics (collected, not shared, purpose Analytics / App functionality).
+- One practice crash report (CrashCheck.kt, called from Home): only when logged in as the owner's number 0810 870 9629, only once per phone (Store.crashCheckSent), nothing on screen (a non-fatal report). It makes the Crashlytics page show the dashboard. Members never send it.
+- Not built here (no Android build tools): build both apps and check they compile.
+
+## Design A for Reports, Deleted numbers, Report a person and Account deleted (21 Nov 2026)
+- Status: design only. No database change, nothing to run in Supabase. Upload the website zip; build the app from the app zip.
+- Admin site (admin.js, style.css): Reports keeps the curved green header. Its tabs are now Check, Banned and Closed, each with a count. The sliders icon on the right of the header opens the Automatic ban pop-up (− number + stepper; 0 = Off). Each person is a card: reason chip, "N reports · time", and a dot meter that fills towards the automatic ban. Tapping a card opens the full report as a bottom sheet over the list, with Dismiss / Ban (or Unban / Keep banned) side by side. The old summary box and the "Automatic ban after …" row at the bottom are gone (the icon replaces them).
+- Admin site: Deleted numbers has an ⓘ icon in the header that opens the explanation as a small pop-up (the long text is no longer on the page), a search field, one row per number with two icon buttons (Message on WhatsApp, Let back in) and a one-line key under the list. Let back in asks first in a centred pop-up.
+- App (ReportSheet.kt, dialog_report.xml, dialog_report_sent.xml): Report is a bottom pop-up again, with one column of reasons (icon, label, round tick), an "Also remove them from my phone" switch (on by default), Report, and the "Only remove from my phone (no report)" link. After sending, a "Report sent" pop-up with Done.
+- App (StopFragment.kt, fragment_deleted.xml) and website (app.html, index.js, style.css): Account deleted is one calm page with no coloured header: person icon with a red ×, "Account deleted", the number, a card with "Everything was removed" and "Want to come back?", then Message the admin and Back to start. In the app the status bar icons turn dark on this page in light mode.
+- Checked: admin site and website pages with test data at 390px, light and dark mode, no page errors. Not built or run on a phone yet (no Android build tools here): build the app and check the Report sheet and the Account deleted page.
+
+## Reports tabs, Deleted cards, Report screen, Account deleted page (21 Nov 2026)
+- Status: database applied (`supabase/migrations/20261121060000_reports_closed_list.sql`; confirmed live 21 Nov 2026: web_admin_reports_closed exists). It adds `web_admin_reports_closed`, used by the Closed tab.
+- Admin site (website zip): Reports has three tabs (To check, Banned, Closed); tap a person to open the full report (sentence, reporters, Ban / Dismiss, or Keep banned / Unban). Deleted numbers are cards with Message and Let back in.
+- Website: a deleted account now lands on a full page (Your account was Deleted), like the app's Banned page.
+- App: the Report pop-up is a full screen with reason tiles (same tick box and wording; Only remove from my phone is a button). New full-screen Account deleted page (StopFragment.DELETED), shown after deleting and when a deleted number logs in or signs up.
+- Not built or run on a phone yet: check the Report screen fills the whole screen.
+
+## Website update (21 Nov 2026): Delete my account on the website
+- Status: website files only (app.html, index.js, screens.css, legal pages). Upload the website zip. Nothing to run in the database: it uses web_delete_account, the same as the app.
+- Profile, Delete my account now opens a pop-up (was a link to the information page): it is permanent; the number goes on the deleted list (the admin can let it back in, Settings, Deleted numbers); contacts already on the phone stay (the website cannot reach the phone; delete the VG contacts yourself). Tick "I understand", then Delete my account. Afterwards the site logs out, forgets the saved number and shows "Your account was deleted." on Log in. Banned or locked accounts get "Message the admin".
+- Delete my account page (/delete-account/): "Delete it yourself" steps first, then "Cannot log in? Ask the admin". Website Privacy (Your choices) and Terms (Deleting your account) say members can delete it themselves and what happens to the number.
+- Checked with test data at 390px, dark mode: pop-up, delete call, logged out with the message; no page errors.
+
+## Legal update (21 Nov 2026): where the data is stored
+- Status: website zip (privacy pages) and app build (Pages.kt). Both Privacy Policies now say the data is stored with Supabase on servers in Ireland (European Union). Checked on the Supabase dashboard: Primary Database West EU (Ireland), eu-west-1, Nano, free plan.
+- Note: the dashboard shows "Last backup: No backups" (free plan). Use the admin page Backup button (Settings, download icon) regularly.
+
+## 20261121050000: report and block, automatic ban after reports, admin Deleted numbers list
+- Status: APPLIED 21 Nov 2026 (after check: every column true). Website zip and app build still to deploy. Order used: check_reports.sql (every ready_* true), then migrations/20261121050000_reports_and_deleted_list.sql, then the check again (every applied_* true). Then upload the website zip and build the app. Undo: rollback/reports_and_deleted_list_rollback.sql.
+- New table web_reports (reporter_id, target_key, target_phone, reason spam/scam/harassment/sexual/under18/other, blocked, status open/dismissed/actioned; one per reporter and person). Setting web_settings report_ban_count = 3 (0 = never automatic).
+- web_report(p_phone, p_pin, p_target, p_reason, p_block): only someone in the member's own web_received (NOT_YOUR_CONTACT otherwise). Enough different reporters -> banned, ban_reason "reported"; under18 -> banned at once, ban_reason "under18_review". These bans also ban the phone and remove the person from members' phones (earlier triggers).
+- Admin: web_admin_reports (open, grouped by person, with reporters), web_admin_report_close (dismiss: closes and lifts a ban that reports caused; ban; keep), web_admin_report_limit (0 or 2-20). web_admin_deleted_list (search by number; a leading 0 works), web_admin_deleted_restore (Let back in).
+- Admin page (website): Today row "Reports" (red badge, people to check) opens a screen per reported person: banned line, count, reason chips, who reported and when, Dismiss/Ban or Unban/Keep banned, and "Automatic ban after N different reports - Change". Settings row "Deleted numbers": search, number with flag, when, chat, Let back in.
+- App: "⋮" on each person in History (day and People) opens Report: six reasons, "Also remove them from my phone" (on), Report, or "Only remove from my phone (no report)". Removed people are kept off the phone by the restore (Store.blocked, this phone only). Ban reasons on the Banned page: "Reported by several members", "Reported as under 18 (being checked)". Files: ReportSheet.kt (new), dialog_report.xml (new), ic_more_vert.xml (new), item_history_contact.xml, HistoryFragment.kt, HistoryDayFragment.kt, Store.kt, Sync.kt, Ban.kt, Pages.kt.
+- Legal: app Privacy Policy says what a report keeps and that the reported person is never told who reported; app Terms explain reports and automatic bans.
+- Not covered: reporting from the website (members there only download files).
+- Rehearsed on Postgres 16 with stand-ins: not your contact, bad reason, repeat counts once, third different reporter bans, under18 bans at once and goes to web_gone, admin list, dismiss lifts the report ban, keep, limit 0 and bad values, wrong key, deleted list and search and restore, banned reporter refused, public access blocked, run twice, undo.
+
+## 20261121040000: members who left or were banned come off other members' phones (app)
+- Status: APPLIED 21 Nov 2026 (after check: every column true, gone_now 0; 0 banned, 1 on the deleted list who was never given to anyone, so nothing to remove yet). App build still to deploy. Order used: check_remove_departed.sql (every ready_* true), then migrations/20261121040000_remove_departed_from_phones.sql, then the check again (every applied_* true; gone_now = how many numbers phones will be told to remove). Then build the app. Undo: rollback/remove_departed_rollback.sql.
+- New table web_gone (phone, reason deleted/banned, gone_at), no direct access. Triggers on web_users: delete -> added; ban -> added; unban -> removed; the same number joins again -> removed. Filled once with every banned member and every received number that is no longer a member (covers Delete my account and the admin's Delete user before today).
+- web_gone_for_me(p_phone, p_pin, p_since): only numbers in web_gone that this member was given (web_received), changed since p_since (5-minute overlap). Answers {ok, now, numbers}. Nobody learns a number they did not already have.
+- App (Departed.kt, ContactsSaver.deleteNumbers, Store.goneSince, Sync.kt BackgroundSync.run): at each background check, asks and removes those numbers, only from contacts ViewGrow saved (company VG or the old note); never contacts the member saved, VIP contacts or ViewGrow Admin. Moves on only when the phone did its part.
+- Not covered: the website (imported files), copies a phone already made elsewhere, and an unbanned member is not put back on phones already cleaned.
+- Rehearsed on Postgres 16 with stand-ins: fill, only own received numbers, banned only to those who got it, delete then ask since, unban and re-join take numbers off, banned caller refused, public access blocked, run twice, undo.
+
+## Legal update (21 Nov 2026): Your rights (NDPA 2023), Age 18+, Security; removal of departed members
+- Status: website zip (all legal pages, app.html) and app build (Pages.kt, SignUpFragment.kt).
+- Both Privacy Policies (website and app): new sections Age (18 or older; under-18 accounts are deleted), Security (HTTPS, checks in the database, scrambled passwords), Your rights (copy, correct, delete, object, withdraw consent; reply within 30 days; Nigeria Data Protection Act 2023; complaint to the Nigeria Data Protection Commission, ndpc.gov.ng).
+- App Privacy Policy: a member who leaves or is banned is removed from other members' phones (only VG contacts); after deletion the number is also kept on the list that tells apps to remove it.
+- Both Terms: "You must be 18 or older". App Terms: one account per phone unless the admin allows it; departed members are removed from your phone.
+- Sign-up: website checkbox now "I am 18 or older, and I agree that ViewGrow can share..."; app line "By signing up you confirm you are 18 or older, accept...".
+- Not stated: where Supabase stores the data (the region is not in these notes). Check it in Supabase (Project Settings, General) and add it if wanted.
+
+## Website update (21 Nov 2026): admin "Flagged sign-ups" (Today)
+- Status: website files only (admin.html, admin.js, style.css). Upload the website zip. Needs 20261121030000_one_account_per_phone.sql for data (before it, the row just says "Second accounts on the same phone").
+- Today, first row of the menu: Flagged sign-ups, with a red count badge and "N waiting for you". Opens a full screen: one card per attempt with the name and number tried (chat button), when, THIS PHONE ALREADY HAS (the existing account(s), Banned tag if banned), Close and Allow one. Allow one asks first and says the person must tap Sign up again; the phone is locked again after that one account. Nothing is ever trusted for good.
+- Uses web_admin_device_flags, web_admin_device_flag_allow, web_admin_device_flag_dismiss. Also in the ViewGrow Admin app (it shows this page). Checked with test data at 390px, dark mode.
+
+## 20261121030000: one account per phone (app sign-up)
+- Status: APPLIED 21 Nov 2026 (before check: ready_device_ban true; after check: every column true). App build and website zip still to deploy. Order used: check_one_account_per_phone.sql (ready_device_ban true), then migrations/20261121030000_one_account_per_phone.sql, then the check again (every applied_* true). Then build the app. Undo: rollback/one_account_per_phone_rollback.sql (keeps the device ban).
+- No SMS code, so a person could make a second account with another number (for example when the limit is full). Now an app sign-up from a phone that already has an account (any member whose device code the database knows) is stopped with DEVICE_HAS_ACCOUNT and recorded in web_device_flags (phone, number and name tried, the account(s) already on that phone). Tapping Sign up again does not add more flags (one per phone and number a day).
+- Admin functions (not on the admin page yet): web_admin_device_flags(p_key, p_all) (open flags with the existing accounts' names and numbers), web_admin_device_flag_allow(p_key, p_flag_id) (that phone may make one more account; used up by the next sign-up), web_admin_device_flag_dismiss(p_key, p_flag_id).
+- web_register_device is replaced (same arguments): banned phone first (DEVICE_BANNED), then the one-account check, then web_register unchanged. Signing up again with the same number on the same phone gives the normal answer, not a flag.
+- App: full-screen amber page (StopFragment.EXISTS): "One account per phone / Already signed up", WHAT HAPPENED "This phone already has a ViewGrow account", WHAT TO DO (1 message the admin, 2 or log in with the first number), Message admin on WhatsApp (pre-filled with the number they tried), Back to log in. New drawable ill_phone_exists.xml. Files: StopFragment.kt, MainActivity.kt, SignUpFragment.kt.
+- Not covered: the website (no device code); members whose phone the database has not seen yet (they are seen at their next log in or app open with the new version); a second phone.
+- Rehearsed on Postgres 16 with stand-ins: second number flagged once, other phone fine, allow then one more account then blocked again, dismiss, wrong admin key, banned phone still DEVICE_BANNED, no device code still signs up, phone free again after its accounts are deleted, run twice, undo.
+
+## App update (21 Nov 2026): full-screen "Sign-up blocked" page for a banned phone
+- Status: app files only (StopFragment.kt, MainActivity.kt, SignUpFragment.kt, new drawable ill_phone_blocked.xml). Needs a new app build. Uses the device ban (20261121020000, applied).
+- Before: DEVICE_BANNED showed one red line under the Sign up form. Now it opens a third version of the Banned / Blocked page (StopFragment.DEVICE): red header "On this phone, sign-up is / Blocked", a phone with a red "not allowed" badge, WHY "An account on this phone was banned", WHAT THIS MEANS (no new accounts on this phone; think this is a mistake? message the admin), Message admin on WhatsApp (pre-filled: the number they tried and that sign-up is blocked on this phone), Back to log in.
+- Nothing is deleted and no ban check runs on this page; the phone's Back goes to Welcome. isBanned now means the Banned page only.
+
+## 20261121020000: device ban (a banned member's phone cannot sign up again in the app)
+- Status: APPLIED 21 Nov 2026 (before check: every ready_* true; after check: every column true). App build and website zip still to deploy, and the Google Play Data safety form to update. Order used: run check_device_ban.sql (every ready_* true), then migrations/20261121020000_device_ban.sql, then check_device_ban.sql again (every applied_* true). Then build the app and upload the website zip (Privacy Policy and Terms). Undo: rollback/device_ban_rollback.sql.
+- Before: a ban blocked the number only; a banned person could sign up again with another number on the same phone. The app sent only the word "android" as the device.
+- The app (new build) sends a device code: "a:" + 32 letters of a SHA-256 of "viewgrow:" + the Android ID, made on the phone (Device.kt). The Android ID is never sent. Same after uninstall/reinstall; changes after a factory reset or on another phone.
+- New tables (row level security on, no direct access): web_devices (device, user_id, first_seen, last_seen; goes with the member) and web_banned_devices (device, user_id, phone, banned_at; kept even if the member is deleted).
+- Recorded from: app log in (trigger on web_sessions; web_login already stores p_device), app sign up (web_register_device), app opening while logged in, also while banned, at most once a day (web_device_seen).
+- Ban (any way the banned column is set) adds the member's devices to web_banned_devices; unban removes them; a device seen later for a banned member is added at once (triggers on web_users and web_devices).
+- web_register_device(p_name, p_phone, p_consent, p_pin, p_device): refuses a banned device with DEVICE_BANNED ("This phone can't be used to make a new account..."), otherwise calls web_register unchanged. The app falls back to web_register if this function is missing (HTTP 404).
+- web_admin_devices(p_key, p_user_id): a member's devices (last 6 letters), first/last seen, banned, and how many other members used the same phone. Not on the admin page yet.
+- Not covered: sign-up on the website (a browser has no Android ID); members banned before this change until they open the new app version while still logged in; a different phone or a factory reset.
+- Nothing existing is edited (web_register, web_login, _web_auth, ban functions unchanged). Rehearsed on Postgres 16 with stand-ins: sign up, log in on a second phone, ban, new number from a banned phone refused, other phone allowed, banned member opening the app on a third phone, wrong token, admin view, unban, old app with no device, delete after ban, public access blocked, running the file twice.
+- App files: Device.kt (new), Session.kt, Store.kt, MainActivity.kt, SignUpFragment.kt, Pages.kt. Not built here (no Android SDK).
+- Legal: the app Privacy Policy (viewgrow.site/android/privacy and Pages.kt) explains the device code (fraud prevention only, not ads or tracking); app Terms say a banned account's phones cannot make a new account. Made with tools/legal.py; every page's date is now 21 November 2026. Google Play Data safety form: add "Device or other IDs", collected, not shared, purpose "Fraud prevention, security, and compliance".
+
+## App fix (21 Nov 2026): sign-up refuses a number that is the right length for the country but not a real number
+- Status: app file only (CountryField.kt). Needs a new app build. Same fix as the website (country.js) the same day.
+- CountryField.problem() used isPossibleNumber (length only), so Åland (+358) 41 5555555555 (12 digits) got through. It now uses isValidNumber (a real number for that country). Message: "That number does not look right for <country> (+code). Check the digits." Nigeria and numbers typed with + are not changed.
+- Not built or run here (no Android SDK in this workspace). Check after the build: Sign up, Åland, 41 5555555555 is refused; 41 2345678 is accepted.
+
+## Website fix (21 Nov 2026): sign-up refuses a number that is the right length for the country but not a real number
+- Status: website file only (country.js). Upload the website zip. Nothing to run in the database.
+- Example: Åland (+358) 41 5555555555. The box allows up to 12 digits because some Finnish and Åland numbers are that long, but a 41 mobile is only 9 or 10 digits. The sign-up check only looked at the length, so it let this through.
+- The sign-up check now uses libphonenumber's isValidPhoneNumber (a real number for that country) instead of validatePhoneNumberLength. Message: "That number does not look right for <country> (+code). Check the digits." Nigeria and numbers typed with + are not changed. Log in has no such check (a wrong number simply fails).
+- Checked: the example number of all 245 countries still passes; the Åland 12-digit number is refused (screenshot at 360px).
+
+## 20261121010000: the admin number and VIP numbers are never handed out as member contacts
+- Status: APPLIED 21 Nov 2026 (the owner ran it in the SQL Editor). File: supabase/migrations/20261121010000_skip_admin_and_vip_numbers.sql.
+- Why: members already get the admin and VIP contacts at the top of every contact file. If the admin or a VIP also had a member account, that person was handed out again as "<name> VG" and took one place of the member's limit.
+- New internal _web_is_admin_number(p) (blocked for the public): true when the number matches, by vg_phone_key (last 10 digits), the admin WhatsApp number (web_settings admin_wa_phone), a whatsapp_dm entry in web_settings contacts, or any web_vip_contacts phone. Adding or removing a VIP takes effect at once, nothing to rerun.
+- _web_candidates: one line added after the banned check (and not public._web_is_admin_number(s.phone)), patched from the live text with a stop if the text was not the expected version.
+- web_received rows for those numbers were deleted once, so the places they used are given back (members can get that many more contacts).
+- Confirmed 21 Nov 2026 with the read-only check below: fn_ok, candidates_ok, received_clean all true.
+- Read-only check (true = applied): `select to_regprocedure('public._web_is_admin_number(text)') is not null as fn_ok, position('_web_is_admin_number' in pg_get_functiondef('public._web_candidates(bigint)'::regprocedure)) > 0 as candidates_ok, not exists (select 1 from public.web_received r where public._web_is_admin_number(r.phone)) as received_clean;`
+
 ## App update (21 Nov 2026): "Stay notified" (step 2) laid out like step 1
 - Status: app files only (PermissionsFragment.kt, new drawable ic_bell_small.xml). Needs a new app build.
 - Step 2 was one long paragraph. Now it has the same layout as step 1: "Why we ask: so you know when something happens,

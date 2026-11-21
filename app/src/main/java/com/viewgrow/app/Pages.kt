@@ -15,7 +15,7 @@ object Pages {
 ViewGrow helps you get more contacts saved on your phone, so more people can see your WhatsApp status. ViewGrow is not made by, or connected to, WhatsApp or Meta.
 
 Your account
-You sign up with your WhatsApp number and a password of 6 to 30 letters or numbers. Keep your password private. You are responsible for what happens on your account. One account per number, and one account per person.
+You must be 18 or older to use ViewGrow. You sign up with your WhatsApp number and a password of 6 to 30 letters or numbers. Keep your password private. You are responsible for what happens on your account. One account per number, and one account per person. In the app, a phone that already has an account cannot make another unless the admin allows it.
 
 How contacts work
 To get contacts you reshare the admin's status and get verified. Your verified reshares decide how many contacts you get: the more you reshare, the more contacts you get. Contacts are released on the schedule the admin sets, and the app saves them to your phone when you open it or with the automatic timer. We cannot promise a number of status views.
@@ -31,10 +31,11 @@ Use contacts fairly
 Only send messages people would be happy to get. Do not spam. Follow WhatsApp's rules and the laws where you live.
 
 Bans
-The admin may suspend or ban an account for leaking contacts, fake reshares, using more than one account, abuse, or breaking these terms. When an account is banned, the app removes the contacts ViewGrow saved to the phone.
+The admin may suspend or ban an account for leaking contacts, fake reshares, using more than one account, abuse, or breaking these terms. You can report anyone ViewGrow gave you (the ⋮ next to them in History). When several different members report the same person, that account is banned automatically; a report that someone is under 18 bans the account at once until the admin checks it. When an account is banned, the app removes the contacts ViewGrow saved to the phone, and the phones that account used cannot be used to make a new account in the app.
 
 Deleting contacts and your account
 Profile, Delete My Contacts removes the contacts ViewGrow saved to your phone. It does not give them back to you or reset your count.
+When a member leaves or is banned, the app removes their contact from your phone (only contacts ViewGrow saved).
 Profile, Delete my account deletes your account and its data for good. Your number stays on a deleted list, so it cannot log in or sign up again unless the admin removes it. See the Privacy Policy for what happens to your data.
 
 Changes and help
@@ -50,7 +51,9 @@ When you sign up we keep your name, your WhatsApp number and your password. Your
 • your Google Play purchases of limit increases (which one, the order number and the date);
 • the last time your app checked in, so the admin can see who uses the app and send app reminders;
 • your login sessions: a scrambled login code for each phone you log in on, and when it was last used. Logging out ends it.
+If you report someone in the app, we keep who reported whom, the reason, when, and whether you also removed them from your phone. The person you report is never told who reported them. Reports are used to keep members safe and can lead to a ban.
 When you sign up we also record your connection address (IP address) and the time. This is used to limit abuse, such as too many sign-ups from one place.
+The app also sends a device code when you sign up, log in, and when you open it (at most once a day). The code is made from your phone's Android ID, scrambled on the phone so the Android ID itself is never sent and cannot be worked out from the code. It is used only to prevent fraud: if an account is banned, the phones it used cannot be used to make a new account. It is not used for ads or tracking, and is not shared with anyone.
 
 On your phone
 So you stay logged in, the app keeps your number, your name and a login code (not your password) on your phone. The login code is encrypted on the phone. The app also keeps its own record of which contacts it saved each day, and the limit increases you bought, so you can see them in History and Purchase history. That record never leaves your phone. Log out removes the login code and name from the app.
@@ -63,6 +66,7 @@ It never uploads, shares or sells your own phone contacts. If you say no, the ap
 
 The contacts you receive
 The names and numbers you receive belong to other members, who agreed to share them when they signed up. In the same way, your name and number may be given to other verified members. Members get contacts by resharing, never by paying: nobody can buy your name or number. Keep the contacts you receive private. Do not share, sell or post them.
+When a member deletes their account, is deleted, or is banned, the app removes their contact from the phones of members who received it, at its next background check. Only contacts ViewGrow saved are removed, never ones you saved yourself. The same happens to your contact on other members' phones if you leave or are banned. ViewGrow cannot reach copies a phone already made elsewhere, such as a Google Contacts backup.
 
 Notifications and background work
 The app checks for new contacts in the background at the interval you choose in Profile (1, 6, 12 or 24 hours), and once more just after each 10pm release so new contacts arrive the same night. You can pause this in Profile. The app can show:
@@ -79,11 +83,14 @@ The app checks for new contacts in the background at the interval you choose in 
 These messages are delivered by Firebase Cloud Messaging, a Google service. It gives the app an ID for this installation so the message can reach your phone. No name, number or other account detail is sent with the message.
 You can turn notifications off in your phone settings.
 
+Crash reports
+If the app crashes, it sends a crash report to Firebase Crashlytics, a Google service, so we can find and fix the problem. A report has technical details only: which part of the app failed, the app version, the phone model and Android version, and an ID for this installation. It does not include your name, phone number, password or contacts. Crash reports are kept for 90 days.
+
 Payments
 You can raise your contact limit with a one-time purchase through Google Play. Google handles your payment details and we never see your card or account details. We receive a confirmation of the purchase (which pack, and the order number), check it with Google, and then raise your limit. The purchase only raises your limit. It does not buy anyone's name or number. Google has its own privacy policy for payments.
 
 Who can see your data
-The admin can see account details in order to run the service and help members. We do not sell your data. Your data is stored with our database provider, Supabase.
+The admin can see account details in order to run the service and help members. We do not sell your data. Your data is stored with our database provider, Supabase, on servers in Ireland (European Union).
 
 Your choices
 • You can log out at any time.
@@ -94,7 +101,17 @@ Your choices
 Delete your account
 In the app: go to Profile and tap Delete my account. When you confirm, ViewGrow removes the contacts it saved to your phone, clears its records on your phone, logs you out and deletes your account, including your name, password, contact history and purchase records. You cannot get the account back. Contacts you added yourself are never touched.
 If you cannot log in: message the admin from your registered WhatsApp number, or email teamlimitlessaffliate@gmail.com with your registered number. The admin confirms it is you and deletes the account. See Delete my account.
-What we keep after deletion: only your phone number, on a deleted-accounts list, so the number cannot log in or sign up again. This stops people deleting and signing up again to get a fresh contact limit. You can ask the admin to remove your number from the list. Some records may also be kept where they are needed to prevent abuse (the sign-up connection records above) or where the law requires it (for example, payment records held by Google Play).
+What we keep after deletion: only your phone number, on a deleted-accounts list, so the number cannot log in or sign up again, and on a list that tells the app to remove your contact from other members' phones. This stops people deleting and signing up again to get a fresh contact limit. You can ask the admin to remove your number from the list. Some records may also be kept where they are needed to prevent abuse (the sign-up connection records above, and the device codes of a banned account) or where the law requires it (for example, payment records held by Google Play).
+
+Age
+ViewGrow is only for people aged 18 or older. If we learn that an account belongs to someone younger, we delete it.
+
+Security
+Your data travels encrypted (HTTPS). Every action is checked by the database itself, not only by the app or website, and passwords are stored scrambled so nobody can read them.
+
+Your rights
+You can ask us for a copy of the data we hold about you, and ask us to correct it or delete it. You can also object to how we use it, or withdraw your consent (this may mean closing your account). Message the admin or email teamlimitlessaffliate@gmail.com with your registered number, and we will reply within 30 days.
+In Nigeria these rights come from the Nigeria Data Protection Act 2023. If you are not happy with our answer, you can complain to the Nigeria Data Protection Commission (ndpc.gov.ng).
 
 Changes
 This policy may change. The latest version is always in the app and at viewgrow.site/android/privacy. Questions? Contact us or email teamlimitlessaffliate@gmail.com."""

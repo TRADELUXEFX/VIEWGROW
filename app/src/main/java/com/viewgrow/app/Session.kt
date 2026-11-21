@@ -14,7 +14,7 @@ object Session {
 
     // Log in with the number and password. done gets the database's web_login answer (status + token).
     fun logIn(phone: String, password: String, done: (ApiResult) -> Unit) {
-        val args = JSONObject().put("p_phone", Phone.forServer(phone)).put("p_pin", password).put("p_device", "android")
+        val args = JSONObject().put("p_phone", Phone.forServer(phone)).put("p_pin", password).put("p_device", Device.forLogin())
         Api.call("web_login", args, done)
     }
 
@@ -30,7 +30,7 @@ object Session {
         if (!Store.loggedIn || isToken(Store.password)) return
         val phone = Store.phone
         val password = Store.password
-        val args = JSONObject().put("p_phone", phone).put("p_pin", password).put("p_device", "android")
+        val args = JSONObject().put("p_phone", phone).put("p_pin", password).put("p_device", Device.forLogin())
         Api.call("web_login", args) { r ->
             val j = r.json ?: return@call
             val t = j.optString("token")

@@ -86,6 +86,7 @@ class HistoryDayFragment : Fragment(R.layout.fragment_history_day) {
             val chat = View.OnClickListener { openChat(p.number) }
             row.findViewById<View>(R.id.c_chat).setOnClickListener(chat)
             row.setOnClickListener(chat)
+            row.findViewById<View>(R.id.c_more).setOnClickListener { ReportSheet.show(it, p.name, p.number) }
             Fonts.apply(row)
             list.addView(row)
         }

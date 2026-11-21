@@ -69,11 +69,24 @@
             android:textSize="12sp" />
     </LinearLayout>
 
+    <!-- Report or remove this person (ReportSheet.kt). -->
+    <ImageView
+        android:id="@+id/c_more"
+        android:layout_width="34dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="Report or remove"
+        android:focusable="true"
+        android:padding="7dp"
+        android:src="@drawable/ic_more_vert" />
+
     <ImageView
         android:id="@+id/c_chat"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_marginStart="10dp"
+        android:layout_marginStart="4dp"
         android:background="@drawable/bg_green_circle"
         android:clickable="true"
         android:contentDescription="Chat on WhatsApp"

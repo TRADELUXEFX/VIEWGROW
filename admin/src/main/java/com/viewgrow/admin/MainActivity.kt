@@ -421,6 +421,14 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun key(): String = if (ours()) Store.key else ""
 
+        // The admin changed the admin password on the page (Settings, Admin password): keep the new one, so the next
+        // opening and the background member sync use it. Ignored if blank.
+        @JavascriptInterface
+        fun keyChanged(newKey: String) {
+            if (!ours() || newKey.isBlank()) return
+            runOnUiThread { Store.key = newKey }
+        }
+
         // The page signed out (wrong key, locked, or the Sign out button): back to the app's Sign in.
         @JavascriptInterface
         fun signedOut(msg: String) {

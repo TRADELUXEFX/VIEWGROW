@@ -80,6 +80,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Store.init(applicationContext)
         Phone.init(applicationContext)
+        Device.init(applicationContext)
         AppTheme.apply(this)
         val splashStart = System.currentTimeMillis()
         installSplashScreen().setKeepOnScreenCondition {
@@ -158,6 +159,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         val stop = supportFragmentManager.findFragmentById(R.id.container) as? StopFragment
         if (Store.banned && (stop == null || !stop.isBanned)) showBanned()
+        // Which phone this member uses (also while banned), at most once a day: for the device ban (Device.kt).
+        Device.report()
         // Back from the phone's Settings: the permission may have changed. Home shows its own banner;
         // this just clears the old notification and the "already warned" flag once it is back on.
         PermissionWatch.onAppOpen(this)
@@ -372,6 +375,24 @@ class MainActivity : AppCompatActivity() {
     fun showBlocked(phone: String) {
         current = -1
         swap(StopFragment.blocked(phone))
+    }
+
+    // Full-screen "sign-up blocked on this phone" page (device ban). "Back to log in" opens Log in.
+    fun showDeviceBanned(phone: String) {
+        current = -1
+        swap(StopFragment.deviceBanned(phone))
+    }
+
+    // Full-screen "this phone already has an account" page (one account per phone).
+    fun showAccountExists(phone: String) {
+        current = -1
+        swap(StopFragment.accountExists(phone))
+    }
+
+    // Full-screen "account deleted" page. Shown right after the member deletes the account, and when a deleted number tries to log in or sign up.
+    fun showDeleted(phone: String) {
+        current = -1
+        swap(StopFragment.deleted(phone))
     }
 
     fun showSignUp() = openAbove(SignUpFragment())

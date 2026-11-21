@@ -52,6 +52,7 @@ class DeleteAccountFragment : Fragment(R.layout.fragment_delete_account) {
 
     private fun deleteNow(view: View, btn: Button) {
         val app = view.context.applicationContext
+        val phone = Store.phone   // kept for the Deleted page: Store is cleared below
         busy = true
         Ui.setBusy(btn, true, "Delete my account", "Deleting")
         val args = JSONObject().put("p_phone", Store.phone).put("p_pin", Store.password)
@@ -68,8 +69,8 @@ class DeleteAccountFragment : Fragment(R.layout.fragment_delete_account) {
                     PurchaseLog.clear(app)
                     Store.clearAll()
                     view.post {
-                        (activity as? MainActivity)?.onLoggedOut()
-                        Ui.toast(view, "Your account was deleted.")
+                        // Same full-screen page as Banned, saying the account was deleted.
+                        (activity as? MainActivity)?.let { it.onLoggedOut(goWelcome = false); it.showDeleted(phone) }
                     }
                 }.start()
             } else {

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Account deleted page: red round badge with a ring in the page colour, so it sits cleanly on the icon's corner. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="@color/btn_red" />
+    <stroke android:width="4dp" android:color="@color/surface" />
+</shape>

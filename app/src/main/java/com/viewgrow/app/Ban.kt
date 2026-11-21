@@ -49,6 +49,8 @@ object Ban {
             "multiple_accounts" -> "Using more than one account"
             "abuse" -> "Abusing the app or the admin"
             "scam" -> "Scamming or misusing the app"
+            "reported" -> "Reported by several members"
+            "under18_review", "under18" -> "Reported as under 18 (being checked)"
             // The admin's own words (typed when banning, e.g. "leaked file"), first letter capital.
             else -> code.replaceFirstChar { it.uppercase() }
         }
@@ -63,7 +65,13 @@ object AccountGate {
     fun handle(main: MainActivity?, j: JSONObject, view: View? = null): Boolean {
         if (main == null) return false
         return when (j.optString("code")) {
-            "WRONG_PIN", "SESSION_EXPIRED", "NOT_FOUND", "INVALID_PHONE", "ACCOUNT_DELETED" -> {
+            "ACCOUNT_DELETED" -> {
+                val phone = Store.phone
+                main.onLoggedOut(goWelcome = false)
+                main.showDeleted(phone)
+                true
+            }
+            "WRONG_PIN", "SESSION_EXPIRED", "NOT_FOUND", "INVALID_PHONE" -> {
                 if (view != null) Ui.toast(view, Api.loginMessage(j))
                 main.onLoggedOut()
                 true

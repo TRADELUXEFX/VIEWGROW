@@ -101,6 +101,10 @@ class LogInFragment : Fragment(R.layout.fragment_login) {
                         (activity as? MainActivity)?.showBanned()
                         return@logIn
                     }
+                    "ACCOUNT_DELETED" -> {
+                        (activity as? MainActivity)?.showDeleted(phone)
+                        return@logIn
+                    }
                     "LOCKED" -> {
                         Store.phone = phone
                         (activity as? MainActivity)?.showBlocked(phone)

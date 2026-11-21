@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Already signed up" screen picture (one account per phone): a phone with an amber badge showing one person. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="160dp"
+    android:viewportWidth="200"
+    android:viewportHeight="160">
+    <path android:fillColor="@color/amber_bg" android:pathData="M100,80m-62,0a62,62 0,1 1,124 0a62,62 0,1 1,-124 0" />
+    <path android:fillColor="#F6E2B8" android:pathData="M34,40m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path android:fillColor="#F6E2B8" android:pathData="M30,116m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path android:fillColor="#F6E2B8" android:pathData="M160,32m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <!-- phone -->
+    <path android:fillColor="#4A5A52" android:pathData="M80,26L120,26A10,10 0,0 1,130 36L130,132A10,10 0,0 1,120 142L80,142A10,10 0,0 1,70 132L70,36A10,10 0,0 1,80 26Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M80,38L120,38A3,3 0,0 1,123 41L123,126A3,3 0,0 1,120 129L80,129A3,3 0,0 1,77 126L77,41A3,3 0,0 1,80 38Z" />
+    <path android:fillColor="#56645D" android:pathData="M93,31L107,31A1.5,1.5 0,0 1,107 34L93,34A1.5,1.5 0,0 1,93 31Z" />
+    <!-- a person on the screen -->
+    <path android:fillColor="#E7ECE9" android:pathData="M100,68m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
+    <path android:fillColor="#E7ECE9" android:pathData="M82,100C82,88 118,88 118,100L118,104L82,104Z" />
+    <path android:fillColor="#E7ECE9" android:pathData="M86,112L114,112A2,2 0,0 1,114 116L86,116A2,2 0,0 1,86 112Z" />
+    <!-- amber badge with one person -->
+    <path android:fillColor="#FFFFFF" android:pathData="M134,112m-27,0a27,27 0,1 1,54 0a27,27 0,1 1,-54 0" />
+    <path android:fillColor="#D9962B" android:pathData="M134,112m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M134,105m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M121,126C121,117 147,117 147,126Z" />
+</vector>

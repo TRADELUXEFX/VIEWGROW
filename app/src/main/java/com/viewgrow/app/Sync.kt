@@ -65,7 +65,10 @@ object Sync {
         lastRestoreTotal = cards.size
         // The admin's VIP contacts are put back too (named as the admin typed them, no VG), but only the member's own
         // people are counted: the "Saved N contacts" message must match "Contacts received".
-        return ContactsSaver.saveMembers(ctx, cards + VipContactSaver.allCards(ctx))
+        // People the member removed with Report / Only remove are not put back (ReportSheet.kt).
+        val blocked = Store.blocked
+        val keep = if (blocked.isEmpty()) cards else cards.filter { it.number.filter { ch -> ch.isDigit() }.takeLast(10) !in blocked }
+        return ContactsSaver.saveMembers(ctx, keep + VipContactSaver.allCards(ctx))
     }
 
     // On a background thread only.
@@ -184,6 +187,8 @@ object BackgroundSync {
         var status = j
         // Verified but the release has not happened yet: at 10pm that means the database is a little late.
         if (j.optString("state") == "PREPARING") retryWanted = true
+        // Members who left or were banned come off this phone (only the contacts ViewGrow saved).
+        Departed.clean(ctx)
         if (j.optString("state") == "READY") {
             val r = Sync.runBlocking(ctx)
             if (!r.ok) {

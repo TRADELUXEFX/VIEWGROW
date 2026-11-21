@@ -103,6 +103,27 @@ object Store {
         get() = p.getString("ban_reason", "") ?: ""
         set(v) { p.edit().putString("ban_reason", v).apply() }
 
+    // People this member removed from the phone with Report / Only remove (ReportSheet.kt), as the last 10 digits.
+    // The restore never puts them back. Kept on this phone only.
+    val blocked: Set<String>
+        get() = p.getStringSet("blocked_keys", emptySet()) ?: emptySet()
+
+    fun addBlocked(number: String) {
+        val k = number.filter { it.isDigit() }.takeLast(10)
+        if (k.isEmpty()) return
+        p.edit().putStringSet("blocked_keys", HashSet(blocked).apply { add(k) }).apply()
+    }
+
+    // Members who left or were banned: the database time of the last check (Departed.kt), "" = never asked.
+    var goneSince: String
+        get() = p.getString("gone_since", "") ?: ""
+        set(v) { p.edit().putString("gone_since", v).apply() }
+
+    // When this phone's device code was last sent to the database (Device.report), at most once a day.
+    var deviceSeenAt: Long
+        get() = p.getLong("device_seen_at", 0L)
+        set(v) { p.edit().putLong("device_seen_at", v).apply() }
+
     fun clearBan() {
         p.edit().remove("banned").remove("ban_reason").apply()
     }
@@ -168,6 +189,11 @@ object Store {
         get() = p.getBoolean("review_asked", false)
         set(v) { p.edit().putBoolean("review_asked", v).apply() }
 
+    // The one practice crash report was sent from this phone (CrashCheck.kt). Kept on log out, so it is sent only once.
+    var crashCheckSent: Boolean
+        get() = p.getBoolean("crash_check_sent", false)
+        set(v) { p.edit().putBoolean("crash_check_sent", v).apply() }
+
     // The member's id in the database, from web_app_seen. Used for reminders meant for this member only
     // (Firebase topic "u<id>"). 0 = not known yet.
     var userId: Long
@@ -206,6 +232,6 @@ object Store {
         p.edit().remove("password").remove("password_enc").remove("name").remove("last_sync_at").remove("last_sync_count").remove("unannounced_saved")
             .remove("first_sync_at") /* left by older versions */.remove("last_bg_sync_at").remove("perm_alerted")
             .remove("topics_joined_at").remove("last_total").remove("last_limit").remove("limit_alerted")
-            .remove("morning_count").remove("missed_notice_for").remove("app_seen_at").apply()
+            .remove("morning_count").remove("missed_notice_for").remove("app_seen_at").remove("device_seen_at").remove("gone_since").apply()
     }
 }

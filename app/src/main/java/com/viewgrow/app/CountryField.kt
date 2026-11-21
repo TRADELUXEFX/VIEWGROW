@@ -233,15 +233,17 @@ class CountryField(private val ctx: Context, private val button: TextView, priva
         "Phone number"
     }
 
-    // null when the number has a possible length for the chosen country, else a message for the member.
+    // null when the number is a real number for the chosen country, else a message for the member.
+    // Real, not just a possible length: an Aland 41 mobile is 9 or 10 digits, though some numbers there have 12.
     fun problem(): String? {
         val t = box.text.toString().trim()
         if (t.isEmpty() || t.startsWith("+") || country.iso == "NG") return null
+        val msg = "That number does not look right for " + country.name + " (+" + country.dial + "). Check the digits."
         return try {
             val n = util.parse(value(), null)
-            if (util.isPossibleNumber(n)) null else "That does not look like a " + country.name + " number. Check the digits."
+            if (util.isValidNumber(n)) null else msg
         } catch (e: Exception) {
-            "That does not look like a " + country.name + " number. Check the digits."
+            msg
         }
     }
 

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Report sent" pop-up (ReportSheet.kt): green tick, a short thank-you, Done. The message is set in code. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="22dp">
+
+    <ImageView
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_green_circle"
+        android:contentDescription="@null"
+        android:padding="15dp"
+        android:src="@drawable/ic_check_white" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:tag="extrabold"
+        android:text="Report sent"
+        android:textColor="@color/dark"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/rs_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:textColor="@color/text2"
+        android:textSize="13.5sp" />
+
+    <TextView
+        android:id="@+id/rs_done"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_pill_fill"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:minHeight="48dp"
+        android:tag="semibold"
+        android:text="Done"
+        android:textColor="@color/white"
+        android:textSize="15sp" />
+</LinearLayout>

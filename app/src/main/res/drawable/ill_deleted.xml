@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Account deleted" screen picture: a grey person with a grey badge and a cross. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="160dp"
+    android:viewportWidth="200"
+    android:viewportHeight="160">
+    <path android:fillColor="@color/seg_track" android:pathData="M100,80m-62,0a62,62 0,1 1,124 0a62,62 0,1 1,-124 0" />
+    <path android:fillColor="#B9C1BC" android:pathData="M34,40m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path android:fillColor="#B9C1BC" android:pathData="M30,116m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path android:fillColor="#B9C1BC" android:pathData="M160,32m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <!-- person -->
+    <path android:fillColor="#9AA8A1" android:pathData="M96,62m-17,0a17,17 0,1 1,34 0a17,17 0,1 1,-34 0" />
+    <path android:fillColor="#9AA8A1" android:pathData="M64,118C64,92 128,92 128,118L128,122L64,122Z" />
+    <!-- grey badge with a cross -->
+    <path android:fillColor="#FFFFFF" android:pathData="M136,112m-27,0a27,27 0,1 1,54 0a27,27 0,1 1,-54 0" />
+    <path android:fillColor="#64766D" android:pathData="M136,112m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M127,103L145,121M145,103L127,121" />
+</vector>

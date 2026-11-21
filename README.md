@@ -23,6 +23,10 @@ It signs up and logs in with the same WhatsApp number and password as the websit
 - `versionCode` is `1 + the run number`, so each build installs over the last. Profile shows the app version.
 - The Play bundle needs the upload key (secrets KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD). Without them the build makes a test APK only.
 
+## Backups and crash reports
+- `.github/workflows/backup.yml` backs up the database every night (locked file, kept 30 days). Needs secrets SUPABASE_DB_URL and BACKUP_PASSWORD; steps at the top of the file.
+- The member app sends crash reports to Firebase Crashlytics (no personal details). See them in the Firebase console, project viewgrow-site, Crashlytics.
+
 ## What the app does
 - **Welcome, Sign up, Log in.** Light and dark mode. Sign-in screens shrink while the keyboard is open. Text size follows the phone's Font size up to 2.0x.
 - **Home.** Contacts used and limit (gauge, red from 90%), countdown to the next release, and every state (not verified, limit reached). Messages are coloured banners with a picture and a close button (`HomeViews.banner`); closing one keeps it closed until the message changes or tomorrow. Small animations (`Anim.kt`, `ShineTextView.kt`) are skipped when the phone has animations turned off. Saves new contacts to the phone tagged VG.
@@ -49,4 +53,5 @@ It signs up and logs in with the same WhatsApp number and password as the websit
 - Send the FULL updated zip (every file, paths from the repo root). Uploading a zip never deletes anything, so remove old files by hand.
 - When something is replaced or dropped, delete the old file and its notes. Do not leave unused files.
 - Keep this file and `docs/STATE_FROM_WEBSITE_REPO.md` in step with the website repo.
+- **Always send every new or changed SQL file in the chat as its own file**, not only inside the zip, and say plainly that it must be run in the Supabase SQL Editor (and in what order if there are several). The person should never have to dig through a zip for a migration.
 - Before Google Play: `docs/PLAY_STORE_CHECKLIST.md`.

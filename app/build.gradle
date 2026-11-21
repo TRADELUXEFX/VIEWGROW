@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
 }
 
 def releaseKsPath = System.getenv('KEYSTORE_FILE')
@@ -89,6 +90,8 @@ dependencies {
     // Firebase Cloud Messaging: the "Today's status is up" alert (StatusPush.kt). No analytics.
     implementation platform('com.google.firebase:firebase-bom:33.5.1')
     implementation 'com.google.firebase:firebase-messaging'
+    // Crash reports: sent to Firebase Crashlytics when the app crashes (no name, number or contacts). Version from the BoM.
+    implementation 'com.google.firebase:firebase-crashlytics'
     // "Update ViewGrow" pop-up: asks Google Play whether a newer version exists (UpdateCheck.kt).
     implementation 'com.google.android.play:app-update:2.1.0'
     // "Rate this app": Google Play's own rating pop-up, asked once after a good save (Rating.kt).

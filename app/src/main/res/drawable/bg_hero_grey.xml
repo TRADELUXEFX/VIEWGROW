@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Grey header, same diagonal gradient as the red and amber ones. Account deleted screen only. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="315" android:startColor="#9DB0A7" android:centerColor="#64766D" android:endColor="#3F4E47" />
+    <corners android:bottomLeftRadius="36dp" android:bottomRightRadius="36dp" />
+</shape>

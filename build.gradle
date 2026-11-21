@@ -6,4 +6,6 @@ plugins {
     id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
     // Reads app/google-services.json (Firebase project viewgrow-site) for the "Status is up" alert.
     id 'com.google.gms.google-services' version '4.4.2' apply false
+    // Crash reports (Firebase Crashlytics). Also uploads the release mapping file so crash reports show real names.
+    id 'com.google.firebase.crashlytics' version '3.0.2' apply false
 }
